@@ -63,10 +63,10 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Replacing with softer, pastel colors for schedule types
-				lecture: '#E5DEFF', // Soft Purple
-				lab: '#F2FCE2',     // Soft Green
-				office: '#FDE1D3',   // Soft Peach
+				// Using the specified Tailwind color classes directly
+				lecture: '#f3e8ff', // bg-purple-50
+				lab: '#f0fdf4',     // bg-green-50
+				office: '#eff6ff',   // bg-blue-50
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
