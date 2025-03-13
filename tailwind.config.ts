@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,11 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Custom colors for our schedule types
+				lecture: '#8b5cf6',
+				lab: '#10b981',
+				office: '#f97316',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
