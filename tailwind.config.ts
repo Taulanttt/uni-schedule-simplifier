@@ -63,10 +63,10 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Custom colors for our schedule types
-				lecture: '#8b5cf6',
-				lab: '#10b981',
-				office: '#f97316',
+				// Replacing with softer, pastel colors for schedule types
+				lecture: '#E5DEFF', // Soft Purple
+				lab: '#F2FCE2',     // Soft Green
+				office: '#FDE1D3',   // Soft Peach
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

@@ -96,18 +96,18 @@
 
 @layer components {
   .schedule-item {
-    @apply rounded-md p-2 mb-2 text-white text-sm;
+    @apply rounded-md p-2 mb-2 text-sm shadow-sm;
   }
 
   .schedule-item-lecture {
-    @apply bg-lecture;
+    @apply bg-lecture border border-purple-200;
   }
 
   .schedule-item-lab {
-    @apply bg-lab;
+    @apply bg-lab border border-green-200;
   }
 
   .schedule-item-office {
-    @apply bg-office;
+    @apply bg-office border border-orange-200;
   }
 }

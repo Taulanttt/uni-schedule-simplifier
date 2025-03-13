@@ -17,9 +17,9 @@ const ScheduleEvent: React.FC<ScheduleEventProps> = ({ event }) => {
         event.type === 'office' && 'schedule-item-office'
       )}
     >
-      <div className="font-semibold">{event.title}</div>
-      <div className="text-xs mt-1">{event.time}</div>
-      <div className="text-xs mt-1">{event.location}</div>
+      <div className="font-semibold text-gray-800">{event.title}</div>
+      <div className="text-xs mt-1 text-gray-700">{event.time}</div>
+      <div className="text-xs mt-1 text-gray-700">{event.location}</div>
     </div>
   );
 };
