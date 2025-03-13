@@ -1,5 +1,5 @@
 
-import { Book, CalendarDays, Menu } from "lucide-react";
+import { Book, CalendarDays, Menu, ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 import {
@@ -13,11 +13,14 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 
 export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { state, toggleSidebar } = useSidebar();
   
   const isActive = (path: string) => location.pathname === path;
 
@@ -66,6 +69,19 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      
+      {/* Toggle sidebar button */}
+      <div className="absolute bottom-4 right-0 translate-x-1/2 z-20">
+        <Button 
+          size="icon" 
+          variant="secondary"
+          className="rounded-full shadow-md"
+          onClick={toggleSidebar}
+          aria-label={state === 'expanded' ? 'Collapse sidebar' : 'Expand sidebar'}
+        >
+          {state === 'expanded' ? <ChevronLeft /> : <ChevronRight />}
+        </Button>
+      </div>
     </Sidebar>
   );
 }
