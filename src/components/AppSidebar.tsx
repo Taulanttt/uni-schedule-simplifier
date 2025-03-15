@@ -1,5 +1,5 @@
 
-import { Book, CalendarDays, Menu, ChevronLeft, ChevronRight, Settings } from "lucide-react";
+import { Book, CalendarDays, Menu, ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 import {
@@ -24,7 +24,7 @@ export function AppSidebar() {
   
   const isActive = (path: string) => location.pathname === path;
 
-  // Navigation items
+  // Navigation items - removed admin link
   const items = [
     {
       title: "Lectures",
@@ -39,7 +39,7 @@ export function AppSidebar() {
   ];
 
   return (
-    <Sidebar>
+    <Sidebar variant="floating">
       <SidebarHeader className="flex items-center justify-between p-4">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-lg">UniSchedule</span>
@@ -49,7 +49,7 @@ export function AppSidebar() {
         </SidebarTrigger>
       </SidebarHeader>
       
-      {/* Toggle sidebar button - moved to top */}
+      {/* Toggle sidebar button - positioned at top */}
       <div className="absolute top-4 right-0 translate-x-1/2 z-20">
         <Button 
           size="icon" 
@@ -79,18 +79,6 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-              
-              {/* Admin link */}
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  isActive={isActive('/admin')} 
-                  onClick={() => navigate('/admin')}
-                  tooltip="Admin"
-                >
-                  <Settings />
-                  <span>Admin</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

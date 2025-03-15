@@ -25,9 +25,9 @@ const App = () => (
             path="*"
             element={
               <SidebarProvider>
-                <div className="flex min-h-screen w-full">
+                <div className="flex min-h-screen w-full overflow-hidden">
                   <AppSidebar />
-                  <main className="flex-1">
+                  <main className="flex-1 overflow-auto">
                     <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/exams" element={<Exams />} />
