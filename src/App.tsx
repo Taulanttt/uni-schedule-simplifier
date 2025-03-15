@@ -24,7 +24,7 @@ const App = () => (
           <Route
             path="*"
             element={
-              <SidebarProvider>
+              <SidebarProvider defaultOpen={false}>
                 <div className="flex min-h-screen w-full overflow-hidden">
                   <AppSidebar />
                   <main className="flex-1 overflow-auto">

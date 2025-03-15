@@ -16,15 +16,17 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { state, toggleSidebar } = useSidebar();
+  const { state, toggleSidebar, openMobile, setOpenMobile } = useSidebar();
+  const isMobile = useIsMobile();
   
   const isActive = (path: string) => location.pathname === path;
 
-  // Navigation items - removed admin link
+  // Navigation items
   const items = [
     {
       title: "Lectures",
@@ -49,18 +51,20 @@ export function AppSidebar() {
         </SidebarTrigger>
       </SidebarHeader>
       
-      {/* Toggle sidebar button - positioned at top */}
-      <div className="absolute top-4 right-0 translate-x-1/2 z-20">
-        <Button 
-          size="icon" 
-          variant="secondary"
-          className="rounded-full shadow-md"
-          onClick={toggleSidebar}
-          aria-label={state === 'expanded' ? 'Collapse sidebar' : 'Expand sidebar'}
-        >
-          {state === 'expanded' ? <ChevronLeft /> : <ChevronRight />}
-        </Button>
-      </div>
+      {/* Toggle sidebar button - only show on desktop */}
+      {!isMobile && (
+        <div className="absolute top-4 right-0 translate-x-1/2 z-20">
+          <Button 
+            size="icon" 
+            variant="secondary"
+            className="rounded-full shadow-md"
+            onClick={toggleSidebar}
+            aria-label={state === 'expanded' ? 'Collapse sidebar' : 'Expand sidebar'}
+          >
+            {state === 'expanded' ? <ChevronLeft /> : <ChevronRight />}
+          </Button>
+        </div>
+      )}
       
       <SidebarContent>
         <SidebarGroup>
@@ -71,7 +75,13 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton 
                     isActive={isActive(item.path)} 
-                    onClick={() => navigate(item.path)}
+                    onClick={() => {
+                      navigate(item.path);
+                      // Close sidebar on mobile after navigation
+                      if (isMobile) {
+                        setOpenMobile(false);
+                      }
+                    }}
                     tooltip={item.title}
                   >
                     <item.icon />
