@@ -1,5 +1,5 @@
 
-import { Book, CalendarDays, Menu, ChevronLeft, ChevronRight } from "lucide-react";
+import { Book, CalendarDays, Menu, ChevronLeft, ChevronRight, Settings } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 import {
@@ -79,6 +79,18 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              
+              {/* Admin link */}
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  isActive={isActive('/admin')} 
+                  onClick={() => navigate('/admin')}
+                  tooltip="Admin"
+                >
+                  <Settings />
+                  <span>Admin</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
