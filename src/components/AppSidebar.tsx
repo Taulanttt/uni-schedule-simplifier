@@ -48,6 +48,20 @@ export function AppSidebar() {
           <Menu className="h-5 w-5" />
         </SidebarTrigger>
       </SidebarHeader>
+      
+      {/* Toggle sidebar button - moved to top */}
+      <div className="absolute top-4 right-0 translate-x-1/2 z-20">
+        <Button 
+          size="icon" 
+          variant="secondary"
+          className="rounded-full shadow-md"
+          onClick={toggleSidebar}
+          aria-label={state === 'expanded' ? 'Collapse sidebar' : 'Expand sidebar'}
+        >
+          {state === 'expanded' ? <ChevronLeft /> : <ChevronRight />}
+        </Button>
+      </div>
+      
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
@@ -69,19 +83,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      
-      {/* Toggle sidebar button */}
-      <div className="absolute bottom-4 right-0 translate-x-1/2 z-20">
-        <Button 
-          size="icon" 
-          variant="secondary"
-          className="rounded-full shadow-md"
-          onClick={toggleSidebar}
-          aria-label={state === 'expanded' ? 'Collapse sidebar' : 'Expand sidebar'}
-        >
-          {state === 'expanded' ? <ChevronLeft /> : <ChevronRight />}
-        </Button>
-      </div>
     </Sidebar>
   );
 }
