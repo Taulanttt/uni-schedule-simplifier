@@ -1,6 +1,7 @@
 
 import { Book, CalendarDays, Menu, ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useState } from "react";
 
 import {
   Sidebar,
@@ -23,6 +24,7 @@ export function AppSidebar() {
   const location = useLocation();
   const { state, toggleSidebar, openMobile, setOpenMobile } = useSidebar();
   const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   
   const isActive = (path: string) => location.pathname === path;
 
@@ -40,9 +42,17 @@ export function AppSidebar() {
     },
   ];
 
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    // Close sidebar on mobile after navigation
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
   return (
     <Sidebar variant="floating">
-      <SidebarHeader className="flex items-center justify-between p-4">
+      <SidebarHeader className="flex items-center justify-between p-4 bg-background">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-lg">UniSchedule</span>
         </div>
@@ -75,16 +85,11 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton 
                     isActive={isActive(item.path)} 
-                    onClick={() => {
-                      navigate(item.path);
-                      // Close sidebar on mobile after navigation
-                      if (isMobile) {
-                        setOpenMobile(false);
-                      }
-                    }}
+                    onClick={() => handleNavigation(item.path)}
                     tooltip={item.title}
+                    className="w-full justify-start"
                   >
-                    <item.icon />
+                    <item.icon className="h-5 w-5 mr-2" />
                     <span>{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
