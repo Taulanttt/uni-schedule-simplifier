@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { BellRing, Calendar, Menu } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import AdminSidebar from './AdminSidebar';
 import NotificationForm from './NotificationForm';
 import ScheduleManagementForm from './ScheduleManagementForm';
@@ -14,7 +14,7 @@ const AdminDashboard: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-gray-100">
       <AdminSidebar 
         isOpen={sidebarOpen} 
         toggleSidebar={toggleSidebar} 
@@ -27,7 +27,8 @@ const AdminDashboard: React.FC = () => {
           <div className="flex items-center">
             <button
               onClick={toggleSidebar}
-              className="p-2 mr-4 rounded-md hover:bg-gray-100 lg:hidden"
+              className="p-2 mr-4 rounded-md hover:bg-gray-100"
+              aria-label="Toggle menu"
             >
               <Menu className="h-6 w-6" />
             </button>
