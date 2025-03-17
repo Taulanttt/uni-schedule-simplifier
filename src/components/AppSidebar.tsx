@@ -94,17 +94,11 @@ export function AppSidebar({ isOpen: propsIsOpen, toggleSidebar: propsToggleSide
     <div
       className={`${
         effectiveIsOpen ? 'w-64' : 'w-0 lg:w-20'
-      } bg-gray-800 text-white transition-all duration-300 relative h-screen`}
+      } bg-gray-800 text-white transition-all duration-300 relative h-screen overflow-hidden`}
     >
       <div className="sticky top-0 left-0 right-0">
         <div className="flex items-center justify-between p-5">
           <h2 className={`font-bold text-xl ${!effectiveIsOpen && 'lg:hidden'}`}>UniSchedule</h2>
-          <button
-            onClick={effectiveToggleSidebar}
-            className="absolute -right-3 top-5 bg-gray-800 text-white p-1 rounded-full hidden lg:block"
-          >
-            {effectiveIsOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
-          </button>
         </div>
 
         <nav className="mt-8 px-4">
@@ -121,7 +115,7 @@ export function AppSidebar({ isOpen: propsIsOpen, toggleSidebar: propsToggleSide
                   onClick={() => handleNavigation(item.path)}
                 >
                   <item.icon className="h-5 w-5 mr-2" />
-                  <span className={`${!effectiveIsOpen && 'lg:hidden'}`}>{item.title}</span>
+                  <span className={`${!effectiveIsOpen ? 'hidden' : ''}`}>{item.title}</span>
                 </Button>
               </li>
             ))}

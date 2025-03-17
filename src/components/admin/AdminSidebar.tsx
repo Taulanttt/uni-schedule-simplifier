@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { BellRing, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { BellRing, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -79,17 +79,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
     <div
       className={`${
         isOpen ? 'w-64' : 'w-0 lg:w-20'
-      } bg-gray-800 text-white transition-all duration-300 relative h-screen`}
+      } bg-gray-800 text-white transition-all duration-300 relative h-screen overflow-hidden`}
     >
       <div className="sticky top-0 left-0 right-0">
         <div className="flex items-center justify-between p-5">
           <h2 className={`font-bold text-xl ${!isOpen && 'lg:hidden'}`}>Admin</h2>
-          <button
-            onClick={toggleSidebar}
-            className="absolute -right-3 top-5 bg-gray-800 text-white p-1 rounded-full hidden lg:block"
-          >
-            {isOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
-          </button>
         </div>
 
         <nav className="mt-8 px-4">
@@ -105,7 +99,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                 onClick={() => handleNavigation('notifications')}
               >
                 <BellRing className="h-5 w-5 mr-2" />
-                <span className={`${!isOpen && 'lg:hidden'}`}>Notifications</span>
+                <span className={`${!isOpen ? 'hidden' : ''}`}>Notifications</span>
               </Button>
             </li>
             <li>
@@ -119,7 +113,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                 onClick={() => handleNavigation('schedule')}
               >
                 <Calendar className="h-5 w-5 mr-2" />
-                <span className={`${!isOpen && 'lg:hidden'}`}>Schedule</span>
+                <span className={`${!isOpen ? 'hidden' : ''}`}>Schedule</span>
               </Button>
             </li>
           </ul>
