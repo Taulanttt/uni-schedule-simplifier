@@ -1,30 +1,27 @@
 
-import { Book, CalendarDays, Menu, ChevronLeft, ChevronRight } from "lucide-react";
+import { Book, CalendarDays, ChevronLeft, ChevronRight, Menu } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
-
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarTrigger,
-  useSidebar,
-} from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  isOpen?: boolean;
+  toggleSidebar?: () => void;
+}
+
+export function AppSidebar({ isOpen: propsIsOpen, toggleSidebar: propsToggleSidebar }: AppSidebarProps = {}) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { state, toggleSidebar, openMobile, setOpenMobile } = useSidebar();
   const isMobile = useIsMobile();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  
+  const toggleSidebarInternal = () => {
+    setIsOpen(!isOpen);
+  };
+  
+  const effectiveIsOpen = propsIsOpen !== undefined ? propsIsOpen : isOpen;
+  const effectiveToggleSidebar = propsToggleSidebar || toggleSidebarInternal;
   
   const isActive = (path: string) => location.pathname === path;
 
@@ -44,61 +41,50 @@ export function AppSidebar() {
 
   const handleNavigation = (path: string) => {
     navigate(path);
-    // Close sidebar on mobile after navigation
     if (isMobile) {
-      setOpenMobile(false);
+      setIsOpen(false);
     }
   };
 
   return (
-    <Sidebar variant="floating">
-      <SidebarHeader className="flex items-center justify-between p-4 bg-background">
-        <div className="flex items-center gap-2">
-          <span className="font-semibold text-lg">UniSchedule</span>
-        </div>
-        <SidebarTrigger>
-          <Menu className="h-5 w-5" />
-        </SidebarTrigger>
-      </SidebarHeader>
-      
-      {/* Toggle sidebar button - only show on desktop */}
-      {!isMobile && (
-        <div className="absolute top-4 right-0 translate-x-1/2 z-20">
-          <Button 
-            size="icon" 
-            variant="secondary"
-            className="rounded-full shadow-md"
-            onClick={toggleSidebar}
-            aria-label={state === 'expanded' ? 'Collapse sidebar' : 'Expand sidebar'}
+    <div
+      className={`${
+        effectiveIsOpen ? 'w-64' : 'w-0 lg:w-20'
+      } bg-gray-800 text-white transition-all duration-300 relative h-screen`}
+    >
+      <div className="sticky top-0 left-0 right-0">
+        <div className="flex items-center justify-between p-5">
+          <h2 className={`font-bold text-xl ${!effectiveIsOpen && 'lg:hidden'}`}>UniSchedule</h2>
+          <button
+            onClick={effectiveToggleSidebar}
+            className="absolute -right-3 top-5 bg-gray-800 text-white p-1 rounded-full hidden lg:block"
           >
-            {state === 'expanded' ? <ChevronLeft /> : <ChevronRight />}
-          </Button>
+            {effectiveIsOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+          </button>
         </div>
-      )}
-      
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton 
-                    isActive={isActive(item.path)} 
-                    onClick={() => handleNavigation(item.path)}
-                    tooltip={item.title}
-                    className="w-full justify-start"
-                  >
-                    <item.icon className="h-5 w-5 mr-2" />
-                    <span>{item.title}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
+
+        <nav className="mt-8 px-4">
+          <ul className="space-y-2">
+            {items.map((item) => (
+              <li key={item.title}>
+                <Button
+                  variant="ghost"
+                  className={`w-full justify-start ${
+                    isActive(item.path)
+                      ? 'bg-gray-700'
+                      : 'hover:bg-gray-700'
+                  } ${!effectiveIsOpen && 'lg:justify-center'}`}
+                  onClick={() => handleNavigation(item.path)}
+                >
+                  <item.icon className="h-5 w-5 mr-2" />
+                  <span className={`${!effectiveIsOpen && 'lg:hidden'}`}>{item.title}</span>
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </div>
+    </div>
   );
 }
 
