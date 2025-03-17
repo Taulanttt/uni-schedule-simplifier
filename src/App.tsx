@@ -37,14 +37,13 @@ const App = () => {
                   <AppSidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
                   <div className="flex-1 overflow-auto">
                     <div className="p-4 lg:p-6">
-                      <div className="lg:hidden mb-4">
-                        <button
-                          onClick={toggleSidebar}
-                          className="p-2 bg-gray-800 text-white rounded-md"
-                        >
-                          <Menu className="h-5 w-5" />
-                        </button>
-                      </div>
+                      <button
+                        onClick={toggleSidebar}
+                        className="p-2 mb-4 bg-gray-800 text-white rounded-md"
+                        aria-label="Toggle menu"
+                      >
+                        <Menu className="h-5 w-5" />
+                      </button>
                       <Routes>
                         <Route path="/" element={<Index />} />
                         <Route path="/exams" element={<Exams />} />

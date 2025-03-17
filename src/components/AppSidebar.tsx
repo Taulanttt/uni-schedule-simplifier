@@ -1,9 +1,10 @@
 
 import { Book, CalendarDays, ChevronLeft, ChevronRight, Menu } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 
 interface AppSidebarProps {
   isOpen?: boolean;
@@ -22,6 +23,13 @@ export function AppSidebar({ isOpen: propsIsOpen, toggleSidebar: propsToggleSide
   
   const effectiveIsOpen = propsIsOpen !== undefined ? propsIsOpen : isOpen;
   const effectiveToggleSidebar = propsToggleSidebar || toggleSidebarInternal;
+
+  // Close sidebar on route change for mobile
+  useEffect(() => {
+    if (isMobile && effectiveIsOpen) {
+      effectiveToggleSidebar();
+    }
+  }, [location.pathname, isMobile]);
   
   const isActive = (path: string) => location.pathname === path;
 
@@ -46,6 +54,42 @@ export function AppSidebar({ isOpen: propsIsOpen, toggleSidebar: propsToggleSide
     }
   };
 
+  // For mobile, use Sheet component
+  if (isMobile) {
+    return (
+      <Sheet open={effectiveIsOpen} onOpenChange={effectiveToggleSidebar}>
+        <SheetContent side="left" className="w-[250px] p-0 bg-gray-800 text-white">
+          <div className="flex flex-col h-full">
+            <div className="flex items-center justify-between p-5 border-b border-gray-700">
+              <h2 className="font-bold text-xl">UniSchedule</h2>
+            </div>
+            <nav className="flex-1 p-4">
+              <ul className="space-y-2">
+                {items.map((item) => (
+                  <li key={item.title}>
+                    <Button
+                      variant="ghost"
+                      className={`w-full justify-start ${
+                        isActive(item.path)
+                          ? 'bg-gray-700'
+                          : 'hover:bg-gray-700'
+                      }`}
+                      onClick={() => handleNavigation(item.path)}
+                    >
+                      <item.icon className="h-5 w-5 mr-2" />
+                      <span>{item.title}</span>
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  // For desktop
   return (
     <div
       className={`${
