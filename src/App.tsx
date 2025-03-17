@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { Menu } from "lucide-react";
 import Index from "./pages/Index";
 import Exams from "./pages/Exams";
 import Admin from "./pages/Admin";
