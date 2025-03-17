@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { BellRing, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { BellRing, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -84,12 +84,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
       <div className="sticky top-0 left-0 right-0">
         <div className="flex items-center justify-between p-5">
           <h2 className={`font-bold text-xl ${!isOpen && 'lg:hidden'}`}>Admin</h2>
-          <button
-            onClick={toggleSidebar}
-            className="absolute -right-3 top-5 bg-gray-800 text-white p-1 rounded-full hidden lg:block"
-          >
-            {isOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
-          </button>
+          {/* Removed the chevron button here */}
         </div>
 
         <nav className="mt-8 px-4">
