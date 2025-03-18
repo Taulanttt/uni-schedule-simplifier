@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { BellRing, Calendar } from 'lucide-react';
+import { BellRing, Calendar, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -8,8 +8,8 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 interface AdminSidebarProps {
   isOpen: boolean;
   toggleSidebar: () => void;
-  currentPage: 'notifications' | 'schedule';
-  setCurrentPage: (page: 'notifications' | 'schedule') => void;
+  currentPage: 'notifications' | 'schedule' | 'exams';
+  setCurrentPage: (page: 'notifications' | 'schedule' | 'exams') => void;
 }
 
 const AdminSidebar: React.FC<AdminSidebarProps> = ({
@@ -20,7 +20,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
 }) => {
   const isMobile = useIsMobile();
 
-  const handleNavigation = (page: 'notifications' | 'schedule') => {
+  const handleNavigation = (page: 'notifications' | 'schedule' | 'exams') => {
     setCurrentPage(page);
     if (isMobile) {
       toggleSidebar();
@@ -64,6 +64,20 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                   >
                     <Calendar className="h-5 w-5 mr-2" />
                     <span>Schedule</span>
+                  </Button>
+                </li>
+                <li>
+                  <Button
+                    variant="ghost"
+                    className={`w-full justify-start ${
+                      currentPage === 'exams'
+                        ? 'bg-gray-700'
+                        : 'hover:bg-gray-700'
+                    }`}
+                    onClick={() => handleNavigation('exams')}
+                  >
+                    <BookOpen className="h-5 w-5 mr-2" />
+                    <span>Exams</span>
                   </Button>
                 </li>
               </ul>
@@ -114,6 +128,20 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
               >
                 <Calendar className="h-5 w-5 mr-2" />
                 <span className={`${!isOpen ? 'hidden' : ''}`}>Schedule</span>
+              </Button>
+            </li>
+            <li>
+              <Button
+                variant="ghost"
+                className={`w-full justify-start ${
+                  currentPage === 'exams'
+                    ? 'bg-gray-700'
+                    : 'hover:bg-gray-700'
+                } ${!isOpen && 'lg:justify-center'}`}
+                onClick={() => handleNavigation('exams')}
+              >
+                <BookOpen className="h-5 w-5 mr-2" />
+                <span className={`${!isOpen ? 'hidden' : ''}`}>Exams</span>
               </Button>
             </li>
           </ul>

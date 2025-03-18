@@ -4,9 +4,10 @@ import { Menu } from 'lucide-react';
 import AdminSidebar from './AdminSidebar';
 import NotificationForm from './NotificationForm';
 import ScheduleManagementForm from './ScheduleManagementForm';
+import ExamsScheduleForm from './ExamsScheduleForm';
 
 const AdminDashboard: React.FC = () => {
-  const [currentPage, setCurrentPage] = useState<'notifications' | 'schedule'>('notifications');
+  const [currentPage, setCurrentPage] = useState<'notifications' | 'schedule' | 'exams'>('notifications');
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const toggleSidebar = () => {
@@ -33,7 +34,11 @@ const AdminDashboard: React.FC = () => {
               <Menu className="h-6 w-6" />
             </button>
             <h1 className="text-xl font-semibold">
-              {currentPage === 'notifications' ? 'Send Student Notification' : 'Schedule Management'}
+              {currentPage === 'notifications' 
+                ? 'Send Student Notification' 
+                : currentPage === 'schedule'
+                ? 'Schedule Management'
+                : 'Exams Schedule'}
             </h1>
           </div>
         </header>
@@ -41,8 +46,10 @@ const AdminDashboard: React.FC = () => {
         <main className="p-6">
           {currentPage === 'notifications' ? (
             <NotificationForm />
-          ) : (
+          ) : currentPage === 'schedule' ? (
             <ScheduleManagementForm />
+          ) : (
+            <ExamsScheduleForm />
           )}
         </main>
       </div>
