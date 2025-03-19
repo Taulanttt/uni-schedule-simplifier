@@ -26,19 +26,23 @@ const Exams: React.FC = () => {
   );
 
   return (
-    <div className="p-4 sm:p-6 md:p-8">
-      <h1 className="text-3xl font-bold mb-6">Exams Schedule</h1>
+    <div className="flex flex-col h-full">
+      <div className="space-y-2 mb-2">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
+          <h1 className="text-2xl font-bold">Exams Schedule</h1>
+          <FilterPanel filters={filters} setFilters={setFilters} compact />
+        </div>
+        
+        <ScheduleHeader
+          currentDate={currentDate}
+          setCurrentDate={setCurrentDate}
+          view={view}
+          setView={setView}
+          className="mt-1"
+        />
+      </div>
       
-      <FilterPanel filters={filters} setFilters={setFilters} />
-      
-      <ScheduleHeader
-        currentDate={currentDate}
-        setCurrentDate={setCurrentDate}
-        view={view}
-        setView={setView}
-      />
-      
-      <div className="bg-white rounded-lg shadow p-4">
+      <div className="bg-white rounded-lg shadow p-4 flex-1 overflow-auto">
         {view === 'day' && (
           <DayView events={filteredEvents} currentDate={currentDate} />
         )}
