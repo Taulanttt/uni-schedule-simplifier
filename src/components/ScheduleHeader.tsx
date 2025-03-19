@@ -3,12 +3,14 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { format, addDays, startOfWeek, endOfWeek } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface ScheduleHeaderProps {
   currentDate: Date;
   setCurrentDate: (date: Date) => void;
   view: 'day' | 'week' | 'month';
   setView: (view: 'day' | 'week' | 'month') => void;
+  className?: string;
 }
 
 const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
@@ -16,6 +18,7 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
   setCurrentDate,
   view,
   setView,
+  className,
 }) => {
   const goToPrevious = () => {
     const newDate = new Date(currentDate);
@@ -55,7 +58,7 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
     : format(currentDate, 'MMMM yyyy');
 
   return (
-    <div className="flex flex-col md:flex-row justify-between items-center mb-6 space-y-3 md:space-y-0">
+    <div className={cn("flex flex-col md:flex-row justify-between items-center mb-6 space-y-3 md:space-y-0", className)}>
       <div className="flex items-center space-x-4">
         <Button variant="outline" onClick={goToPrevious} size="icon">
           <ChevronLeft className="h-4 w-4" />
