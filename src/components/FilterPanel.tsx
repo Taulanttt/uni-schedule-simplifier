@@ -23,13 +23,13 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ filters, setFilters, compact 
 
   if (compact) {
     return (
-      <div className="flex flex-wrap gap-2 items-center">
+      <div className="flex gap-2 items-center">
         <Select
           value={filters.academicYear}
           onValueChange={(value) => updateFilters('academicYear', value)}
         >
-          <SelectTrigger className="w-[130px] h-9">
-            <SelectValue placeholder="Academic Year" />
+          <SelectTrigger className="w-[100px] h-8">
+            <SelectValue placeholder="Year" />
           </SelectTrigger>
           <SelectContent>
             {academicYears.map((year) => (
@@ -44,7 +44,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ filters, setFilters, compact 
           value={filters.semester}
           onValueChange={(value) => updateFilters('semester', value)}
         >
-          <SelectTrigger className="w-[130px] h-9">
+          <SelectTrigger className="w-[120px] h-8">
             <SelectValue placeholder="Semester" />
           </SelectTrigger>
           <SelectContent>
@@ -60,8 +60,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ filters, setFilters, compact 
           value={filters.yearOfStudy}
           onValueChange={(value) => updateFilters('yearOfStudy', value)}
         >
-          <SelectTrigger className="w-[130px] h-9">
-            <SelectValue placeholder="Year of Study" />
+          <SelectTrigger className="w-[100px] h-8">
+            <SelectValue placeholder="Study Year" />
           </SelectTrigger>
           <SelectContent>
             {yearsOfStudy.map((year) => (

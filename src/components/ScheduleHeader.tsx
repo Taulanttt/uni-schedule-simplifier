@@ -1,14 +1,15 @@
 
 import React from 'react';
+import { addDays, addMonths, format, subDays, subMonths } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { format, addDays, startOfWeek, endOfWeek } from 'date-fns';
 
-interface ScheduleHeaderProps {
+export interface ScheduleHeaderProps {
   currentDate: Date;
-  setCurrentDate: (date: Date) => void;
+  setCurrentDate: React.Dispatch<React.SetStateAction<Date>>;
   view: 'day' | 'week' | 'month';
-  setView: (view: 'day' | 'week' | 'month') => void;
+  setView: React.Dispatch<React.SetStateAction<'day' | 'week' | 'month'>>;
+  className?: string;
 }
 
 const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
@@ -16,6 +17,7 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
   setCurrentDate,
   view,
   setView,
+  className = '',
 }) => {
   const goToPrevious = () => {
     const newDate = new Date(currentDate);

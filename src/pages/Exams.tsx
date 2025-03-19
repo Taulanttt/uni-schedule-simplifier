@@ -27,9 +27,9 @@ const Exams: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="space-y-2 mb-2">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
-          <h1 className="text-2xl font-bold">Exams Schedule</h1>
+      <div className="mb-2">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-bold">Exams Schedule</h1>
           <FilterPanel filters={filters} setFilters={setFilters} compact />
         </div>
         
