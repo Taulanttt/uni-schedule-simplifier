@@ -26,8 +26,8 @@ const Index: React.FC = () => {
   );
 
   return (
-    <div className="flex flex-col h-full overflow-auto">
-      <h1 className="text-3xl font-bold mb-4">Lectures Schedule</h1>
+    <div className="p-4 sm:p-6 md:p-8">
+      <h1 className="text-3xl font-bold mb-6">Lectures Schedule</h1>
       
       <FilterPanel filters={filters} setFilters={setFilters} />
       
@@ -36,10 +36,9 @@ const Index: React.FC = () => {
         setCurrentDate={setCurrentDate}
         view={view}
         setView={setView}
-        className="mt-4"
       />
       
-      <div className="bg-white rounded-lg shadow p-4 flex-1 overflow-auto mt-4">
+      <div className="bg-white rounded-lg shadow p-4">
         {view === 'day' && (
           <DayView events={filteredEvents} currentDate={currentDate} />
         )}
