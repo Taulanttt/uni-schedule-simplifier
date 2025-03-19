@@ -35,10 +35,10 @@ const App = () => {
                 <div className="flex h-screen w-full overflow-hidden">
                   <AppSidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
                   <div className="flex-1 flex flex-col overflow-hidden">
-                    <div className="p-4 lg:p-6 flex-1 overflow-auto">
+                    <div className="p-4 lg:p-6 flex-1 overflow-hidden flex flex-col">
                       <button
                         onClick={toggleSidebar}
-                        className="p-2 mb-4 bg-gray-800 text-white rounded-md"
+                        className="p-2 mb-3 bg-gray-800 text-white rounded-md"
                         aria-label="Toggle menu"
                       >
                         <Menu className="h-5 w-5" />
