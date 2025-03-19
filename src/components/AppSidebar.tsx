@@ -1,5 +1,5 @@
 
-import { Book, CalendarDays, ChevronLeft, ChevronRight, Menu } from "lucide-react";
+import { Book, CalendarDays, Menu } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -94,14 +94,14 @@ export function AppSidebar({ isOpen: propsIsOpen, toggleSidebar: propsToggleSide
     <div
       className={`${
         effectiveIsOpen ? 'w-64' : 'w-0 lg:w-20'
-      } bg-gray-800 text-white transition-all duration-300 relative h-screen overflow-hidden`}
+      } bg-gray-800 text-white transition-all duration-300 h-full overflow-hidden flex-shrink-0`}
     >
-      <div className="sticky top-0 left-0 right-0">
+      <div className="h-full flex flex-col">
         <div className="flex items-center justify-between p-5">
-          <h2 className={`font-bold text-xl ${!effectiveIsOpen && 'lg:hidden'}`}>UniSchedule</h2>
+          <h2 className={`font-bold text-xl ${!effectiveIsOpen && 'hidden'}`}>UniSchedule</h2>
         </div>
 
-        <nav className="mt-8 px-4">
+        <nav className="mt-8 px-4 flex-1">
           <ul className="space-y-2">
             {items.map((item) => (
               <li key={item.title}>

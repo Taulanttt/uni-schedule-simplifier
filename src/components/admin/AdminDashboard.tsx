@@ -15,7 +15,7 @@ const AdminDashboard: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-100 overflow-hidden">
       <AdminSidebar 
         isOpen={sidebarOpen} 
         toggleSidebar={toggleSidebar} 
@@ -23,7 +23,7 @@ const AdminDashboard: React.FC = () => {
         setCurrentPage={setCurrentPage}
       />
       
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-white shadow p-4">
           <div className="flex items-center">
             <button
@@ -43,7 +43,7 @@ const AdminDashboard: React.FC = () => {
           </div>
         </header>
         
-        <main className="p-6">
+        <main className="flex-1 p-6 overflow-auto">
           {currentPage === 'notifications' ? (
             <NotificationForm />
           ) : currentPage === 'schedule' ? (

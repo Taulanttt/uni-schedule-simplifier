@@ -93,14 +93,14 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
     <div
       className={`${
         isOpen ? 'w-64' : 'w-0 lg:w-20'
-      } bg-gray-800 text-white transition-all duration-300 relative h-screen overflow-hidden`}
+      } bg-gray-800 text-white transition-all duration-300 h-full overflow-hidden flex-shrink-0`}
     >
-      <div className="sticky top-0 left-0 right-0">
+      <div className="h-full flex flex-col">
         <div className="flex items-center justify-between p-5">
-          <h2 className={`font-bold text-xl ${!isOpen && 'lg:hidden'}`}>Admin</h2>
+          <h2 className={`font-bold text-xl ${!isOpen && 'hidden'}`}>Admin</h2>
         </div>
 
-        <nav className="mt-8 px-4">
+        <nav className="mt-8 px-4 flex-1">
           <ul className="space-y-2">
             <li>
               <Button
