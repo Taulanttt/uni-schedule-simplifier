@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import FilterPanel from '@/components/FilterPanel';
 import ScheduleHeader from '@/components/ScheduleHeader';
@@ -48,10 +49,6 @@ const Exams: React.FC = () => {
         
         {view === 'week' && (
           <WeekView events={filteredEvents} currentDate={currentDate} />
-        )}
-        
-        {view === 'month' && (
-          <MonthView events={filteredEvents} currentDate={currentDate} />
         )}
       </div>
       

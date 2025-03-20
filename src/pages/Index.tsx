@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import FilterPanel from '@/components/FilterPanel';
 import ScheduleHeader from '@/components/ScheduleHeader';
@@ -26,7 +27,7 @@ const Index: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <h1 className="text-2xl font-bold mb-4">Lectures Schedule</h1>
+      <h1 className="text-3xl font-bold mb-6 text-center">Lectures Schedule</h1>
       
       <div className="flex flex-col md:flex-row items-center justify-between mb-4 gap-4">
         <FilterPanel filters={filters} setFilters={setFilters} compact />
