@@ -7,8 +7,8 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 export interface ScheduleHeaderProps {
   currentDate: Date;
   setCurrentDate: React.Dispatch<React.SetStateAction<Date>>;
-  view: 'day' | 'week' | 'month';
-  setView: React.Dispatch<React.SetStateAction<'day' | 'week' | 'month'>>;
+  view: 'day' | 'week';
+  setView: React.Dispatch<React.SetStateAction<'day' | 'week'>>;
   className?: string;
 }
 
@@ -25,8 +25,6 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
       newDate.setDate(newDate.getDate() - 1);
     } else if (view === 'week') {
       newDate.setDate(newDate.getDate() - 7);
-    } else {
-      newDate.setMonth(newDate.getMonth() - 1);
     }
     setCurrentDate(newDate);
   };
@@ -37,8 +35,6 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
       newDate.setDate(newDate.getDate() + 1);
     } else if (view === 'week') {
       newDate.setDate(newDate.getDate() + 7);
-    } else {
-      newDate.setMonth(newDate.getMonth() + 1);
     }
     setCurrentDate(newDate);
   };
@@ -48,9 +44,7 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
   
   const dateRangeText = view === 'day' 
     ? format(currentDate, 'd')
-    : view === 'week'
-    ? `${format(start, 'd')} - ${format(end, 'd')}`
-    : format(currentDate, 'yyyy');
+    : `${format(start, 'd')} - ${format(end, 'd')}`;
 
   return (
     <div className="flex flex-col md:flex-row justify-between items-center mb-6 space-y-3 md:space-y-0">
@@ -76,12 +70,6 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
           onClick={() => setView('week')}
         >
           Week
-        </Button>
-        <Button 
-          variant={view === 'month' ? 'default' : 'outline'} 
-          onClick={() => setView('month')}
-        >
-          Month
         </Button>
       </div>
     </div>
