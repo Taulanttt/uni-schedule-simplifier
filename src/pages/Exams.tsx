@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import FilterPanel from '@/components/FilterPanel';
 import ScheduleHeader from '@/components/ScheduleHeader';
@@ -11,7 +10,7 @@ import { FilterOptions } from '@/types';
 
 const Exams: React.FC = () => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
-  const [view, setView] = useState<'day' | 'week' | 'month'>('week');
+  const [view, setView] = useState<'day' | 'week'>('week');
   const [filters, setFilters] = useState<FilterOptions>({
     academicYear: '2024/25',
     semester: 'All Semesters',

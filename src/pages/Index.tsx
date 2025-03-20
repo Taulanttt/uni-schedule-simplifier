@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import FilterPanel from '@/components/FilterPanel';
 import ScheduleHeader from '@/components/ScheduleHeader';
@@ -7,6 +6,7 @@ import DayView from '@/components/DayView';
 import LegendComponent from '@/components/LegendComponent';
 import { scheduleData, getFilteredSchedule } from '@/data/scheduleData';
 import { FilterOptions } from '@/types';
+import { Button } from '@/components/ui/button';
 
 const Index: React.FC = () => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
@@ -26,20 +26,34 @@ const Index: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="mb-2">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold">Lectures Schedule</h1>
-          <FilterPanel filters={filters} setFilters={setFilters} compact />
-        </div>
+      <h1 className="text-2xl font-bold mb-4">Lectures Schedule</h1>
+      
+      <div className="flex flex-col md:flex-row items-center justify-between mb-4 gap-4">
+        <FilterPanel filters={filters} setFilters={setFilters} compact />
         
-        <ScheduleHeader
-          currentDate={currentDate}
-          setCurrentDate={setCurrentDate}
-          view={view}
-          setView={setView}
-          className="mt-1"
-        />
+        <div className="flex space-x-2">
+          <Button 
+            variant={view === 'day' ? 'default' : 'outline'} 
+            onClick={() => setView('day')}
+          >
+            Day
+          </Button>
+          <Button 
+            variant={view === 'week' ? 'default' : 'outline'} 
+            onClick={() => setView('week')}
+          >
+            Week
+          </Button>
+        </div>
       </div>
+      
+      <ScheduleHeader
+        currentDate={currentDate}
+        setCurrentDate={setCurrentDate}
+        view={view}
+        setView={setView}
+        className="mb-4"
+      />
       
       <div className="bg-white rounded-lg shadow p-4 flex-1 overflow-auto">
         {view === 'day' && (

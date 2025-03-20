@@ -1,5 +1,5 @@
 import React from 'react';
-import { format, startOfWeek, endOfWeek } from 'date-fns';
+import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -44,31 +44,14 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
     : 'Week View'; // Just show "Week View" instead of date range
 
   return (
-    <div className="flex flex-col md:flex-row justify-between items-center mb-6 space-y-3 md:space-y-0">
-      <div className="flex items-center space-x-4">
-        <Button variant="outline" onClick={goToPrevious} size="icon">
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <Button variant="outline" onClick={goToNext} size="icon">
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-        <h2 className="text-xl font-bold">{dateRangeText}</h2>
-      </div>
-      
-      <div className="flex space-x-2">
-        <Button 
-          variant={view === 'day' ? 'default' : 'outline'} 
-          onClick={() => setView('day')}
-        >
-          Day
-        </Button>
-        <Button 
-          variant={view === 'week' ? 'default' : 'outline'} 
-          onClick={() => setView('week')}
-        >
-          Week
-        </Button>
-      </div>
+    <div className={`flex items-center space-x-4 ${className}`}>
+      <Button variant="outline" onClick={goToPrevious} size="icon">
+        <ChevronLeft className="h-4 w-4" />
+      </Button>
+      <h2 className="text-xl font-bold">{dateRangeText}</h2>
+      <Button variant="outline" onClick={goToNext} size="icon">
+        <ChevronRight className="h-4 w-4" />
+      </Button>
     </div>
   );
 };
