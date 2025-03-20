@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { addDays, addMonths, format, subDays, subMonths, startOfWeek, endOfWeek } from 'date-fns';
+import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -43,27 +43,20 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
     setCurrentDate(newDate);
   };
 
-  const goToToday = () => {
-    setCurrentDate(new Date());
-  };
-
   const start = startOfWeek(currentDate, { weekStartsOn: 0 });
   const end = endOfWeek(currentDate, { weekStartsOn: 0 });
   
   const dateRangeText = view === 'day' 
-    ? format(currentDate, 'MMMM d, yyyy')
+    ? format(currentDate, 'd')
     : view === 'week'
-    ? `${format(start, 'MMM d')} - ${format(end, 'MMM d')}`
-    : format(currentDate, 'MMMM yyyy');
+    ? `${format(start, 'd')} - ${format(end, 'd')}`
+    : format(currentDate, 'yyyy');
 
   return (
     <div className="flex flex-col md:flex-row justify-between items-center mb-6 space-y-3 md:space-y-0">
       <div className="flex items-center space-x-4">
         <Button variant="outline" onClick={goToPrevious} size="icon">
           <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <Button variant="outline" onClick={goToToday}>
-          Today
         </Button>
         <Button variant="outline" onClick={goToNext} size="icon">
           <ChevronRight className="h-4 w-4" />
