@@ -29,7 +29,7 @@ const Exams: React.FC = () => {
     <div className="flex flex-col h-full">
       <div className="mb-2">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold">Exams Schedule</h1>
+          {/* <h1 className="text-xl font-bold">Exams Schedule</h1> */}
           <FilterPanel filters={filters} setFilters={setFilters} compact />
         </div>
         
