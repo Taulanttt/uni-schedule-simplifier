@@ -19,8 +19,7 @@ const DayView: React.FC<DayViewProps> = ({ events, currentDate }) => {
   return (
     <div className="border rounded-lg">
       <div className="bg-gray-100 p-3 text-center rounded-t-lg">
-        <div className="font-medium">{format(currentDate, 'EEEE')}</div>
-        <div className="text-2xl font-bold">{format(currentDate, 'd')}</div>
+        <div className="text-xl font-bold">{format(currentDate, 'EEEE')}</div>
       </div>
       <div className="p-4 min-h-[300px]">
         {dayEvents.length > 0 ? (

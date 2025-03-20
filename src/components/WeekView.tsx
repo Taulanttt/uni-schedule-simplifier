@@ -17,10 +17,9 @@ const WeekView: React.FC<WeekViewProps> = ({ events, currentDate }) => {
   const days = Array.from({ length: 7 }, (_, i) => {
     const date = addDays(startDate, i);
     const dayEvents = events.filter(event => event.day === i);
-    const dayName = format(date, 'EEE');
-    const dayNumber = format(date, 'd');
+    const dayName = format(date, 'EEE'); // Short day name (Sun, Mon, etc.)
     
-    return { date, dayName, dayNumber, events: dayEvents };
+    return { date, dayName, events: dayEvents };
   });
 
   return (
@@ -28,8 +27,7 @@ const WeekView: React.FC<WeekViewProps> = ({ events, currentDate }) => {
       {days.map((day, index) => (
         <div key={index} className="border rounded-lg">
           <div className="bg-gray-100 p-2 text-center rounded-t-lg">
-            <div className="font-medium">{day.dayName}</div>
-            <div className="text-2xl font-bold">{day.dayNumber}</div>
+            <div className="text-lg font-bold">{day.dayName}</div>
           </div>
           <div className="p-2 min-h-[200px]">
             {day.events.length > 0 ? (

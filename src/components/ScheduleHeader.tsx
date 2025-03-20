@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -39,12 +38,10 @@ const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
     setCurrentDate(newDate);
   };
 
-  const start = startOfWeek(currentDate, { weekStartsOn: 0 });
-  const end = endOfWeek(currentDate, { weekStartsOn: 0 });
-  
+  // Don't display date numbers in the header, keep it simple
   const dateRangeText = view === 'day' 
-    ? format(currentDate, 'd')
-    : `${format(start, 'd')} - ${format(end, 'd')}`;
+    ? format(currentDate, 'EEEE') // Show only the day name
+    : 'Week View'; // Just show "Week View" instead of date range
 
   return (
     <div className="flex flex-col md:flex-row justify-between items-center mb-6 space-y-3 md:space-y-0">
