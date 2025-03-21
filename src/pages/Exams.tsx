@@ -24,10 +24,9 @@ const Exams: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <h1 className="text-3xl font-bold text-center my-6">Exams Schedule</h1>
-      
-      <div className="bg-white rounded-lg shadow p-4 mb-4">
-        <FilterPanel filters={filters} setFilters={setFilters} />
+      {/* Filters at the top with compact layout like Index page */}
+      <div className="flex flex-col md:flex-row items-center justify-between mb-4 gap-4">
+        <FilterPanel filters={filters} setFilters={setFilters} compact />
       </div>
       
       <div className="text-xl font-semibold text-center mb-4">
