@@ -17,6 +17,7 @@ import ScheduleEventComponent from './ScheduleEvent';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface MonthViewProps {
   events: ScheduleEvent[];
@@ -29,6 +30,7 @@ const MonthView: React.FC<MonthViewProps> = ({
   currentDate,
   setCurrentDate
 }) => {
+  const isMobile = useIsMobile();
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(monthStart);
   const startDate = startOfWeek(monthStart, { weekStartsOn: 1 }); // Week starts on Monday
@@ -61,9 +63,9 @@ const MonthView: React.FC<MonthViewProps> = ({
   );
 
   // Create days of week header
-  const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const daysOfWeek = isMobile ? ['M', 'T', 'W', 'T', 'F', 'S', 'S'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const dayHeaders = daysOfWeek.map((day, index) => (
-    <div key={index} className="p-2 text-center font-medium text-sm">
+    <div key={index} className="p-1 md:p-2 text-center font-medium text-xs md:text-sm">
       {day}
     </div>
   ));
@@ -84,32 +86,18 @@ const MonthView: React.FC<MonthViewProps> = ({
         <div
           key={day.toString()}
           className={cn(
-            'border p-2 min-h-[100px] hover:bg-gray-50 transition-colors',
+            'border p-1 md:p-2 min-h-[60px] md:min-h-[100px] hover:bg-gray-50 transition-colors',
             !isSameMonth(day, monthStart) ? 'bg-gray-100 text-gray-400' : '',
             isSameDay(day, today) ? 'bg-blue-50 border-blue-200' : ''
           )}
         >
-          <div className="text-right mb-1 font-medium">
+          <div className="text-right mb-1 font-medium text-xs md:text-sm">
             {format(day, 'd')}
           </div>
-          <div className="space-y-1 max-h-[80px] overflow-y-auto">
+          <div className="space-y-1 max-h-[45px] md:max-h-[80px] overflow-y-auto">
             {dayEvents.length > 0 ? (
               dayEvents.map((event) => (
-                <div 
-                  key={event.id}
-                  className={cn(
-                    'text-xs p-1 rounded',
-                    event.type === 'lecture' && 'bg-purple-100 text-purple-700',
-                    event.type === 'lab' && 'bg-green-100 text-green-700',
-                    event.type === 'office' && 'bg-blue-100 text-blue-700'
-                  )}
-                >
-                  <div className="font-medium truncate">{event.title}</div>
-                  <div className="flex justify-between mt-1">
-                    <span>{event.time}</span>
-                    <span className="truncate">{event.location}</span>
-                  </div>
-                </div>
+                <ScheduleEventComponent key={event.id} event={event} />
               ))
             ) : (
               <div className="text-xs text-gray-400 text-center">No exams</div>
