@@ -3,18 +3,19 @@
 import React, { useState } from "react";
 import FilterPanel from "@/components/FilterPanel";
 import MonthView from "@/components/MonthView";
+import WeekView from "@/components/weekViewExams";
 import LegendComponent from "@/components/LegendComponent";
 import { examsData } from "@/data/examsData";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { format, addWeeks, subWeeks } from "date-fns";
 
-// You can remove this if you're already importing FilterOptions from "@/types"
 interface FilterOptions {
   academicYear: string;
   semester: string;
   yearOfStudy: string;
 }
 
-// Helper to filter exams by academic year, semester, and year of study
+// Filter logic
 function getFilteredExams(
   data: typeof examsData,
   academicYear: string,
@@ -45,6 +46,7 @@ const Exams: React.FC = () => {
 
   const isMobile = useIsMobile();
 
+  // Filter data
   const filteredEvents = getFilteredExams(
     examsData,
     filters.academicYear,
@@ -52,8 +54,13 @@ const Exams: React.FC = () => {
     filters.yearOfStudy
   );
 
+  // Handlers to move by one week at a time
+  const goToPreviousWeek = () => setCurrentDate(subWeeks(currentDate, 1));
+  const goToNextWeek = () => setCurrentDate(addWeeks(currentDate, 1));
+
   return (
     <div className="flex flex-col h-full">
+      {/* Filters, centered */}
       <div
         className={`flex flex-col ${
           isMobile ? "mb-2" : "md:flex-row"
@@ -63,13 +70,43 @@ const Exams: React.FC = () => {
       </div>
 
       <div className="bg-white rounded-lg shadow p-2 md:p-4 flex-1 overflow-auto">
-        <MonthView
-          events={filteredEvents}
-          currentDate={currentDate}
-          setCurrentDate={setCurrentDate}
-        />
+        {isMobile ? (
+          <>
+            {/* Heading with clickable arrows to move weeks */}
+            <div className="flex items-center justify-center text-lg font-semibold mb-2">
+              <button
+                className="px-2 py-1 text-gray-600 hover:bg-gray-100 rounded"
+                onClick={goToPreviousWeek}
+              >
+                &lt;
+              </button>
+
+              <div className="mx-4">
+                {format(currentDate, "MMMM yyyy")}
+              </div>
+
+              <button
+                className="px-2 py-1 text-gray-600 hover:bg-gray-100 rounded"
+                onClick={goToNextWeek}
+              >
+                &gt;
+              </button>
+            </div>
+
+            {/* Mobile: WeekView */}
+            <WeekView events={filteredEvents} currentDate={currentDate} />
+          </>
+        ) : (
+          /* Desktop: MonthView */
+          <MonthView
+            events={filteredEvents}
+            currentDate={currentDate}
+            setCurrentDate={setCurrentDate}
+          />
+        )}
       </div>
 
+      {/* Legend only on desktop */}
       {!isMobile && <LegendComponent />}
     </div>
   );

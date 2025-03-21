@@ -32,20 +32,18 @@ const MonthView: React.FC<MonthViewProps> = ({
 }) => {
   const isMobile = useIsMobile();
 
+  // Month boundaries
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(monthStart);
   const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
   const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
   const today = new Date();
 
-  const goToPreviousMonth = () => {
-    setCurrentDate(subMonths(currentDate, 1));
-  };
+  // Navigation
+  const goToPreviousMonth = () => setCurrentDate(subMonths(currentDate, 1));
+  const goToNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
 
-  const goToNextMonth = () => {
-    setCurrentDate(addMonths(currentDate, 1));
-  };
-
+  // Header with Month-Year + Nav
   const header = (
     <div className="flex items-center justify-between mb-4">
       <Button variant="outline" size="icon" onClick={goToPreviousMonth}>
@@ -60,6 +58,7 @@ const MonthView: React.FC<MonthViewProps> = ({
     </div>
   );
 
+  // Day-of-week headers
   const daysOfWeek = isMobile
     ? ["M", "T", "W", "T", "F", "S", "S"]
     : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -73,6 +72,7 @@ const MonthView: React.FC<MonthViewProps> = ({
     </div>
   ));
 
+  // Build calendar rows
   let day = startDate;
   const rows: JSX.Element[] = [];
   let days: JSX.Element[] = [];
@@ -81,6 +81,7 @@ const MonthView: React.FC<MonthViewProps> = ({
     for (let i = 0; i < 7; i++) {
       const cloneDay = new Date(day);
 
+      // Match events by exact date
       const dayEvents = events.filter((event) =>
         isSameDay(day, parseISO(event.date))
       );
@@ -99,21 +100,27 @@ const MonthView: React.FC<MonthViewProps> = ({
           <div className="text-right mb-1 font-medium text-xs md:text-sm">
             {format(day, "d")}
           </div>
-          <div className="rounded-md bg-blue-50 px-2 py-1 text-sm text-purple-700 font-medium shadow-sm">
+
+          {/* Event list */}
+          <div className="space-y-1 max-h-[45px] md:max-h-[80px] overflow-y-auto">
             {dayEvents.length > 0 ? (
               dayEvents.map((event) => (
                 <ScheduleEventComponent key={event.id} event={event} />
               ))
             ) : (
-              <div className="text-xs text-muted-foreground text-center">No exams</div>
+              <div className="text-xs text-muted-foreground text-center">
+                No exams
+              </div>
             )}
           </div>
         </div>
       );
+
       day = addDays(day, 1);
     }
 
     rows.push(
+      // For spacing on small screens, we use "gap-2" or "md:gap-4"
       <div key={day.toString()} className="grid grid-cols-7 gap-2 md:gap-4">
         {days}
       </div>
@@ -122,10 +129,18 @@ const MonthView: React.FC<MonthViewProps> = ({
   }
 
   return (
-    <div className="rounded-xl bg-white p-2 md:p-4 shadow-sm">
-      {header}
-      <div className="grid grid-cols-7 gap-2 md:gap-4 mb-2">{dayHeaders}</div>
-      <div className="space-y-2 ">{rows}</div>
+    // The outer container to hold the entire calendar
+    // We add "overflow-x-auto" + a min-width so phones can scroll horizontally
+    <div className="rounded-xl bg-white p-2 md:p-4 shadow-sm overflow-x-auto">
+      <div className="min-w-[600px]">
+        {header}
+
+        <div className="grid grid-cols-7 gap-2 md:gap-4 mb-2">
+          {dayHeaders}
+        </div>
+
+        <div className="space-y-2">{rows}</div>
+      </div>
     </div>
   );
 };
