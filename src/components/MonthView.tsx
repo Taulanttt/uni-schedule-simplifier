@@ -23,6 +23,7 @@ interface MonthViewProps {
   events: ScheduleEvent[];
   currentDate: Date;
   setCurrentDate: React.Dispatch<React.SetStateAction<Date>>;
+  setCurrentDate: React.Dispatch<React.SetStateAction<Date>>;
 }
 
 const MonthView: React.FC<MonthViewProps> = ({
