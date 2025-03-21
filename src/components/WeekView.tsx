@@ -1,3 +1,4 @@
+
 import React from "react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { ScheduleEvent } from "@/types";
@@ -34,13 +35,13 @@ const WeekView: React.FC<WeekViewProps> = ({ events, currentDate }) => {
           <div className="bg-gray-100 p-2 text-center rounded-t-lg">
             <div className="text-lg font-bold">{day.dayName}</div>
           </div>
-          <div className="p-2 min-h-[200px]">
+          <div className="p-2 min-h-[200px] max-h-[500px] overflow-y-auto">
             {day.events.length > 0 ? (
               day.events.map((event) => (
                 <ScheduleEventComponent key={event.id} event={event} />
               ))
             ) : (
-              <div className="text-center text-gray-400 mt-8">No classes</div>
+              <div className="text-center text-gray-400 mt-8">No exams</div>
             )}
           </div>
         </div>
