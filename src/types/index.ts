@@ -7,6 +7,7 @@ export interface ScheduleEvent {
   location: string;
   type: ScheduleEventType;
   day?: number; // 0-6 for Sunday-Saturday
+  instructor?:string;
 
   // Optional fields for filtering
   date?:string;

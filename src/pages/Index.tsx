@@ -16,6 +16,7 @@ const Index: React.FC = () => {
     yearOfStudy: "All Years",
   });
 
+  // Filter the schedule data using your custom function
   const filteredEvents = getFilteredSchedule(
     scheduleData,
     filters.academicYear,
@@ -25,7 +26,7 @@ const Index: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full">
-      {/* e.g. top area: filter + day/week toggle */}
+      {/* Top area: filters + day/week toggle */}
       <div className="flex flex-col md:flex-row items-center justify-between mb-4 gap-4">
         <FilterPanel filters={filters} setFilters={setFilters} compact />
 
@@ -62,6 +63,7 @@ const Index: React.FC = () => {
         )}
       </div>
 
+      {/* Example legend at the bottom */}
       <LegendComponent />
     </div>
   );

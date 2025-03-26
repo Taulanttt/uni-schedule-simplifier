@@ -1,4 +1,4 @@
-
+// DayView.tsx
 import React from "react";
 import { format } from "date-fns";
 import { ScheduleEvent } from "@/types";
@@ -36,7 +36,9 @@ const DayView: React.FC<DayViewProps> = ({
             <ScheduleEventComponent key={event.id} event={event} />
           ))
         ) : (
-          <div className="text-center text-gray-400 mt-10">No exams scheduled</div>
+          <div className="text-center text-gray-400 mt-10">
+            No exams scheduled
+          </div>
         )}
       </div>
     </div>

@@ -1,4 +1,4 @@
-
+// WeekView.tsx
 import React from "react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { ScheduleEvent } from "@/types";
