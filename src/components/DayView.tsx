@@ -1,11 +1,11 @@
-// DayView.tsx
+// components/DayView.tsx
 import React from "react";
 import { format } from "date-fns";
-import { ScheduleEvent } from "@/types";
+import { ScheduleItem } from "@/types";  // new shape
 import ScheduleEventComponent from "./ScheduleEvent";
 
 interface DayViewProps {
-  events: ScheduleEvent[];
+  events: ScheduleItem[];
   currentDate: Date;
   setCurrentDate: React.Dispatch<React.SetStateAction<Date>>;
   view: "day" | "week";
@@ -16,18 +16,17 @@ const DayView: React.FC<DayViewProps> = ({
   events,
   currentDate,
 }) => {
-  // Get the day of week as a number (0-6, where 0 is Sunday)
-  const dayOfWeek = currentDate.getDay();
+  const currentDayStr = format(currentDate, "EEEE");
 
-  // Filter events for the current day
-  const dayEvents = events.filter((event) => event.day === dayOfWeek);
+  // e.g. "Monday", "Tuesday"
+  const dayEvents = events.filter((event) =>
+    event.daysOfWeek?.includes(currentDayStr)
+  );
 
   return (
     <div className="border rounded-lg">
       <div className="bg-gray-100 p-3 flex justify-center items-center rounded-t-lg">
-        <div className="text-xl font-bold">
-          {format(currentDate, "EEEE")}
-        </div>
+        <div className="text-xl font-bold">{currentDayStr}</div>
       </div>
 
       <div className="p-4 min-h-[300px]">

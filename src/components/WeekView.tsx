@@ -1,31 +1,26 @@
-// WeekView.tsx
+// components/WeekView.tsx
 import React from "react";
 import { format, addDays, startOfWeek } from "date-fns";
-import { ScheduleEvent } from "@/types";
+import { ScheduleItem } from "@/types";
 import ScheduleEventComponent from "./ScheduleEvent";
 
 interface WeekViewProps {
-  events: ScheduleEvent[];
+  events: ScheduleItem[];
   currentDate: Date;
 }
 
 const WeekView: React.FC<WeekViewProps> = ({ events, currentDate }) => {
-  // Use "weekStartsOn: 1" so the week begins on Monday
   const startDate = startOfWeek(currentDate, { weekStartsOn: 1 });
 
-  // Create an array of 7 days (Mon-Sun) starting from this "startDate"
   const days = Array.from({ length: 7 }, (_, i) => {
     const date = addDays(startDate, i);
-    // dayOfWeekValue: 0=Sunday, 1=Monday, 2=Tuesday, etc.
-    const dayOfWeekValue = date.getDay();
+    const dayStr = format(date, "EEEE"); // "Monday", "Tuesday"
+    const dayNameShort = format(date, "EEE"); // "Mon", "Tue"
+    const dayEvents = events.filter((event) =>
+      event.daysOfWeek?.includes(dayStr)
+    );
 
-    // Filter events that match this day's dayOfWeekValue
-    const dayEvents = events.filter((event) => event.day === dayOfWeekValue);
-
-    // e.g. format as "Mon", "Tue", "Wed", ...
-    const dayName = format(date, "EEE");
-
-    return { date, dayName, events: dayEvents };
+    return { date, dayStr, dayNameShort, events: dayEvents };
   });
 
   return (
@@ -33,7 +28,7 @@ const WeekView: React.FC<WeekViewProps> = ({ events, currentDate }) => {
       {days.map((day, index) => (
         <div key={index} className="border rounded-lg">
           <div className="bg-gray-100 p-2 text-center rounded-t-lg">
-            <div className="text-lg font-bold">{day.dayName}</div>
+            <div className="text-lg font-bold">{day.dayNameShort}</div>
           </div>
           <div className="p-2 min-h-[200px] max-h-[500px] overflow-y-auto">
             {day.events.length > 0 ? (
