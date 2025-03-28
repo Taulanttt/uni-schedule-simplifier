@@ -1,36 +1,60 @@
+import React, { useState } from "react";
+import { Lock, User } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import axiosInstance from "@/utils/axiosInstance"; 
+import { useNavigate } from "react-router-dom"; 
 
-import React, { useState } from 'react';
-import { Lock, User } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 
-interface AdminLoginProps {
-  onLogin: (username: string, password: string) => boolean;
-}
 
-const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+const AdminLogin: React.FC = () => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate(); 
 
-  const handleSubmit = (e: React.FormEvent) => {
+
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
+    try {
+      // Your endpoint is `POST /auth/login` with { email, password }
+      const res = await axiosInstance.post("/auth/login", {
+        email: username,
+        password: password,
+      });
+
+      // Destructure the token, user from response
+      const { token, user, payload } = res.data;
+
+      // Save token in localStorage
+      localStorage.setItem("token", token);
+      localStorage.setItem("payload",payload);
+
+      // Show success toast
+      toast({
+        title: "Login Successful",
+        description: `Welcome, ${user.name}`,
+      });
+      navigate("/admin"); // or wherever you want to go after login
+
+
     
-    const success = onLogin(username, password);
-    
-    if (!success) {
+    } catch (error) {
+      console.error("Login error:", error);
       toast({
         title: "Login Failed",
-        description: "Invalid username or password. Try again.",
-        variant: "destructive"
+        description: "Invalid credentials. Try again.",
+        variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   return (
@@ -46,15 +70,15 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username">Email</Label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                   <User className="h-5 w-5 text-gray-400" />
                 </div>
                 <Input
                   id="username"
                   type="text"
-                  placeholder="admin"
+                  placeholder="johndoe@example.com"
                   className="pl-10"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -66,7 +90,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                   <Lock className="h-5 w-5 text-gray-400" />
                 </div>
                 <Input
@@ -79,17 +103,13 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
                   required
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              {/* <p className="mt-1 text-xs text-gray-500">
                 For demo: username: admin, password: password
-              </p>
+              </p> */}
             </div>
           </div>
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={isLoading}
-          >
+          <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? "Signing in..." : "Sign in"}
           </Button>
         </form>

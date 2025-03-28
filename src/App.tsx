@@ -10,6 +10,7 @@ import Exams from "./pages/Exams";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import AppSidebar from "./components/AppSidebar";
+import AdminDashboard from "@/components/admin/AdminDashboard"; 
 
 const queryClient = new QueryClient();
 
@@ -37,7 +38,9 @@ function MainApp() {
   return (
     <Routes>
       {/* Admin route (doesn't use the sidebar layout) */}
-      <Route path="/admin" element={<Admin />} />
+      <Route path="/login" element={<Admin />} />
+      <Route path="/admin" element={<AdminDashboard />} />
+
 
       {/* Main Layout */}
       <Route
@@ -69,6 +72,7 @@ function MainApp() {
                   <Route path="/" element={<Index />} />
                   <Route path="/exams" element={<Exams />} />
                   <Route path="*" element={<NotFound />} />
+
                 </Routes>
               </div>
             </div>
