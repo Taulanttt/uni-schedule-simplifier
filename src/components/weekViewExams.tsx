@@ -1,4 +1,4 @@
-
+// weekViewExams.tsx
 import React from "react";
 import {
   format,
@@ -7,17 +7,16 @@ import {
   parseISO,
   isSameDay
 } from "date-fns";
-import { ScheduleEvent } from "@/types";
-import ScheduleEventComponent from "./ScheduleEvent";
+import { ExamItem } from "@/pages/Exams";
+import ScheduleEventComponent from "./ScheduleEventComponentExams";
 
 interface WeekViewProps {
-  events: ScheduleEvent[];
+  events: ExamItem[];  // now using ExamItem
   currentDate: Date;
 }
 
 /**
- * Mobile-friendly: 1 column per day stacked (since we do "grid-cols-1" by default).
- * Desktop isn't used for this layout, but you can easily adapt if needed.
+ * Mobile-friendly: 1 column per day stacked
  */
 const WeekView: React.FC<WeekViewProps> = ({ events, currentDate }) => {
   // Start the week on Monday
@@ -30,7 +29,7 @@ const WeekView: React.FC<WeekViewProps> = ({ events, currentDate }) => {
     const dayEvents = events.filter((event) =>
       isSameDay(date, parseISO(event.date))
     );
-    // Day label e.g. "Mon 24"
+    // e.g. "Mon 24"
     const dayLabel = format(date, "EEE dd");
 
     return { date, dayLabel, events: dayEvents };

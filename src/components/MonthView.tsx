@@ -12,15 +12,15 @@ import {
   subMonths,
   parseISO,
 } from "date-fns";
-import { ScheduleEvent } from "@/types";
-import ScheduleEventComponent from "./ScheduleEvent";
+import { ExamItem } from "@/pages/Exams"; // or move `ExamItem` to @/types
+import ScheduleEventComponent from "./ScheduleEventComponentExams";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MonthViewProps {
-  events: ScheduleEvent[];
+  events: ExamItem[]; // changed to ExamItem[]
   currentDate: Date;
   setCurrentDate: React.Dispatch<React.SetStateAction<Date>>;
 }
@@ -92,7 +92,9 @@ const MonthView: React.FC<MonthViewProps> = ({
           className={cn(
             "border p-1 md:p-2 min-h-[60px] md:min-h-[100px] transition-colors",
             "rounded-md overflow-hidden",
-            !isSameMonth(day, monthStart) ? "bg-gray-100 text-gray-400" : "bg-white",
+            !isSameMonth(day, monthStart)
+              ? "bg-gray-100 text-gray-400"
+              : "bg-white",
             isSameDay(day, today) ? "bg-blue-50 border-blue-300" : "",
             "hover:bg-muted/10"
           )}
@@ -120,7 +122,6 @@ const MonthView: React.FC<MonthViewProps> = ({
     }
 
     rows.push(
-      // For spacing on small screens, we use "gap-2" or "md:gap-4"
       <div key={day.toString()} className="grid grid-cols-7 gap-2 md:gap-4">
         {days}
       </div>
@@ -129,8 +130,6 @@ const MonthView: React.FC<MonthViewProps> = ({
   }
 
   return (
-    // The outer container to hold the entire calendar
-    // We add "overflow-x-auto" + a min-width so phones can scroll horizontally
     <div className="rounded-xl bg-white p-2 md:p-4 shadow-sm overflow-x-auto">
       <div className="min-w-[600px]">
         {header}
