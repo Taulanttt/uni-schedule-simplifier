@@ -1,15 +1,29 @@
+import React from "react";
+import {
+  BellRing,
+  Calendar,
+  BookOpen,
+  Database,
+  ListOrdered,
+  ClipboardList,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 
-import React from 'react';
-import { BellRing, Calendar, BookOpen } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
+type AdminPage =
+  | "notifications"
+  | "schedule"
+  | "exams"
+  | "crud"
+  | "schedulesAdmin"
+  | "examsAdmin";
 
 interface AdminSidebarProps {
   isOpen: boolean;
   toggleSidebar: () => void;
-  currentPage: 'notifications' | 'schedule' | 'exams';
-  setCurrentPage: (page: 'notifications' | 'schedule' | 'exams') => void;
+  currentPage: AdminPage;
+  setCurrentPage: (page: AdminPage) => void;
 }
 
 const AdminSidebar: React.FC<AdminSidebarProps> = ({
@@ -20,14 +34,13 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
 }) => {
   const isMobile = useIsMobile();
 
-  const handleNavigation = (page: 'notifications' | 'schedule' | 'exams') => {
+  const handleNavigation = (page: AdminPage) => {
     setCurrentPage(page);
     if (isMobile) {
       toggleSidebar();
     }
   };
 
-  // For mobile, use Sheet component
   if (isMobile) {
     return (
       <Sheet open={isOpen} onOpenChange={toggleSidebar}>
@@ -38,16 +51,13 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
             </div>
             <nav className="flex-1 p-4">
               <ul className="space-y-2">
-                
                 <li>
                   <Button
                     variant="ghost"
                     className={`w-full justify-start ${
-                      currentPage === 'schedule'
-                        ? 'bg-gray-700'
-                        : 'hover:bg-gray-700'
+                      currentPage === "schedule" ? "bg-gray-700" : "hover:bg-gray-700"
                     }`}
-                    onClick={() => handleNavigation('schedule')}
+                    onClick={() => handleNavigation("schedule")}
                   >
                     <Calendar className="h-5 w-5 mr-2" />
                     <span>Schedule</span>
@@ -57,11 +67,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                   <Button
                     variant="ghost"
                     className={`w-full justify-start ${
-                      currentPage === 'exams'
-                        ? 'bg-gray-700'
-                        : 'hover:bg-gray-700'
+                      currentPage === "exams" ? "bg-gray-700" : "hover:bg-gray-700"
                     }`}
-                    onClick={() => handleNavigation('exams')}
+                    onClick={() => handleNavigation("exams")}
                   >
                     <BookOpen className="h-5 w-5 mr-2" />
                     <span>Exams</span>
@@ -71,14 +79,48 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                   <Button
                     variant="ghost"
                     className={`w-full justify-start ${
-                      currentPage === 'notifications'
-                        ? 'bg-gray-700'
-                        : 'hover:bg-gray-700'
+                      currentPage === "notifications" ? "bg-gray-700" : "hover:bg-gray-700"
                     }`}
-                    onClick={() => handleNavigation('notifications')}
+                    onClick={() => handleNavigation("notifications")}
                   >
                     <BellRing className="h-5 w-5 mr-2" />
                     <span>Notifications</span>
+                  </Button>
+                </li>
+                <li>
+                  <Button
+                    variant="ghost"
+                    className={`w-full justify-start ${
+                      currentPage === "crud" ? "bg-gray-700" : "hover:bg-gray-700"
+                    }`}
+                    onClick={() => handleNavigation("crud")}
+                  >
+                    <Database className="h-5 w-5 mr-2" />
+                    <span>CRUD</span>
+                  </Button>
+                </li>
+                <li>
+                  <Button
+                    variant="ghost"
+                    className={`w-full justify-start ${
+                      currentPage === "schedulesAdmin" ? "bg-gray-700" : "hover:bg-gray-700"
+                    }`}
+                    onClick={() => handleNavigation("schedulesAdmin")}
+                  >
+                    <ListOrdered className="h-5 w-5 mr-2" />
+                    <span>Schedules Admin</span>
+                  </Button>
+                </li>
+                <li>
+                  <Button
+                    variant="ghost"
+                    className={`w-full justify-start ${
+                      currentPage === "examsAdmin" ? "bg-gray-700" : "hover:bg-gray-700"
+                    }`}
+                    onClick={() => handleNavigation("examsAdmin")}
+                  >
+                    <ClipboardList className="h-5 w-5 mr-2" />
+                    <span>Exams Admin</span>
                   </Button>
                 </li>
               </ul>
@@ -89,61 +131,90 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
     );
   }
 
-  // For desktop
+  // Desktop layout
   return (
     <div
       className={`${
-        isOpen ? 'w-64' : 'w-0 lg:w-20'
+        isOpen ? "w-64" : "w-0 lg:w-20"
       } bg-gray-800 text-white transition-all duration-300 h-full overflow-hidden flex-shrink-0`}
     >
       <div className="h-full flex flex-col">
         <div className="flex items-center justify-between p-5">
-          <h2 className={`font-bold text-xl ${!isOpen && 'hidden'}`}>Admin</h2>
+          <h2 className={`font-bold text-xl ${!isOpen && "hidden"}`}>Admin</h2>
         </div>
 
         <nav className="mt-8 px-4 flex-1">
           <ul className="space-y-2">
-            
             <li>
               <Button
                 variant="ghost"
                 className={`w-full justify-start ${
-                  currentPage === 'schedule'
-                    ? 'bg-gray-700'
-                    : 'hover:bg-gray-700'
-                } ${!isOpen && 'lg:justify-center'}`}
-                onClick={() => handleNavigation('schedule')}
+                  currentPage === "schedule" ? "bg-gray-700" : "hover:bg-gray-700"
+                } ${!isOpen && "lg:justify-center"}`}
+                onClick={() => handleNavigation("schedule")}
               >
                 <Calendar className="h-5 w-5 mr-2" />
-                <span className={`${!isOpen ? 'hidden' : ''}`}>Schedule</span>
+                <span className={`${!isOpen ? "hidden" : ""}`}>Schedule</span>
               </Button>
             </li>
             <li>
               <Button
                 variant="ghost"
                 className={`w-full justify-start ${
-                  currentPage === 'exams'
-                    ? 'bg-gray-700'
-                    : 'hover:bg-gray-700'
-                } ${!isOpen && 'lg:justify-center'}`}
-                onClick={() => handleNavigation('exams')}
+                  currentPage === "exams" ? "bg-gray-700" : "hover:bg-gray-700"
+                } ${!isOpen && "lg:justify-center"}`}
+                onClick={() => handleNavigation("exams")}
               >
                 <BookOpen className="h-5 w-5 mr-2" />
-                <span className={`${!isOpen ? 'hidden' : ''}`}>Exams</span>
+                <span className={`${!isOpen ? "hidden" : ""}`}>Exams</span>
               </Button>
             </li>
             <li>
               <Button
                 variant="ghost"
                 className={`w-full justify-start ${
-                  currentPage === 'notifications'
-                    ? 'bg-gray-700'
-                    : 'hover:bg-gray-700'
-                } ${!isOpen && 'lg:justify-center'}`}
-                onClick={() => handleNavigation('notifications')}
+                  currentPage === "notifications" ? "bg-gray-700" : "hover:bg-gray-700"
+                } ${!isOpen && "lg:justify-center"}`}
+                onClick={() => handleNavigation("notifications")}
               >
                 <BellRing className="h-5 w-5 mr-2" />
-                <span className={`${!isOpen ? 'hidden' : ''}`}>Notifications</span>
+                <span className={`${!isOpen ? "hidden" : ""}`}>Notifications</span>
+              </Button>
+            </li>
+            <li>
+              <Button
+                variant="ghost"
+                className={`w-full justify-start ${
+                  currentPage === "crud" ? "bg-gray-700" : "hover:bg-gray-700"
+                } ${!isOpen && "lg:justify-center"}`}
+                onClick={() => handleNavigation("crud")}
+              >
+                <Database className="h-5 w-5 mr-2" />
+                <span className={`${!isOpen ? "hidden" : ""}`}>CRUD</span>
+              </Button>
+            </li>
+            <li>
+              <Button
+                variant="ghost"
+                className={`w-full justify-start ${
+                  currentPage === "schedulesAdmin" ? "bg-gray-700" : "hover:bg-gray-700"
+                } ${!isOpen && "lg:justify-center"}`}
+                onClick={() => handleNavigation("schedulesAdmin")}
+              >
+                <ListOrdered className="h-5 w-5 mr-2" />
+                <span className={`${!isOpen ? "hidden" : ""}`}>Schedules Admin</span>
+              </Button>
+            </li>
+            <li>
+              <Button
+                variant="ghost"
+                className={`w-full justify-start ${
+                  currentPage === "examsAdmin" ? "bg-gray-700" : "hover:bg-gray-700"
+                } ${!isOpen && "lg:justify-center"}`}
+                onClick={() => handleNavigation("examsAdmin")}
+              >
+                <ClipboardList className="h-5 w-5 mr-2" />
+                <span className={`${!isOpen ? "hidden" : ""}`}>Exams Admin</span>
               </Button>
             </li>
           </ul>

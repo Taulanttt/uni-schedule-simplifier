@@ -1,28 +1,55 @@
+import React, { useState } from "react";
+import { Menu } from "lucide-react";
+import AdminSidebar from "./AdminSidebar";
+import NotificationForm from "./NotificationForm";
+import ScheduleManagementForm from "./ScheduleManagementForm";
+import ExamsScheduleForm from "./ExamsScheduleForm";
+import AdminCrudPage from "./AdminCrudPage";
+import SchedulesAdminPage from "./SchedulesAdminPage";
+import ExamsAdminPage from "./ExamsAdminPage"; // <== newly added
 
-import React, { useState } from 'react';
-import { Menu } from 'lucide-react';
-import AdminSidebar from './AdminSidebar';
-import NotificationForm from './NotificationForm';
-import ScheduleManagementForm from './ScheduleManagementForm';
-import ExamsScheduleForm from './ExamsScheduleForm';
+type AdminPage =
+  | "notifications"
+  | "schedule"
+  | "exams"
+  | "crud"
+  | "schedulesAdmin"
+  | "examsAdmin";
 
 const AdminDashboard: React.FC = () => {
-  const [currentPage, setCurrentPage] = useState<'notifications' | 'schedule' | 'exams'>('notifications');
+  const [currentPage, setCurrentPage] = useState<AdminPage>("notifications");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
+  const getPageTitle = () => {
+    switch (currentPage) {
+      case "notifications":
+        return "Send Student Notification";
+      case "schedule":
+        return "Schedule Management";
+      case "exams":
+        return "Exams Schedule";
+      case "crud":
+        return "CRUD Management";
+      case "schedulesAdmin":
+        return "Schedules Admin";
+      case "examsAdmin":
+        return "Exams Admin";
+    }
+  };
+
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
-      <AdminSidebar 
-        isOpen={sidebarOpen} 
-        toggleSidebar={toggleSidebar} 
+      <AdminSidebar
+        isOpen={sidebarOpen}
+        toggleSidebar={toggleSidebar}
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}
       />
-      
+
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-white shadow p-4">
           <div className="flex items-center">
@@ -33,23 +60,23 @@ const AdminDashboard: React.FC = () => {
             >
               <Menu className="h-6 w-6" />
             </button>
-            <h1 className="text-xl font-semibold">
-              {currentPage === 'notifications' 
-                ? 'Send Student Notification' 
-                : currentPage === 'schedule'
-                ? 'Schedule Management'
-                : 'Exams Schedule'}
-            </h1>
+            <h1 className="text-xl font-semibold">{getPageTitle()}</h1>
           </div>
         </header>
-        
+
         <main className="flex-1 p-6 overflow-auto">
-          {currentPage === 'notifications' ? (
+          {currentPage === "notifications" ? (
             <NotificationForm />
-          ) : currentPage === 'schedule' ? (
+          ) : currentPage === "schedule" ? (
             <ScheduleManagementForm />
-          ) : (
+          ) : currentPage === "exams" ? (
             <ExamsScheduleForm />
+          ) : currentPage === "crud" ? (
+            <AdminCrudPage />
+          ) : currentPage === "schedulesAdmin" ? (
+            <SchedulesAdminPage />
+          ) : (
+            <ExamsAdminPage />
           )}
         </main>
       </div>
