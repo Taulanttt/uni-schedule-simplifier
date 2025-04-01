@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -11,7 +10,6 @@ import { Calendar } from "@/components/ui/calendar";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -33,51 +31,51 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+// 1) Define the Zod schema
 const formSchema = z.object({
-  afati: z.string().min(2, {
-    message: "Afati must be at least 2 characters.",
-  }),
-  year: z.string({
-    required_error: "Please select a year.",
-  }),
-  subject: z.string().min(2, {
-    message: "Subject must be at least 2 characters.",
-  }),
-  instructor: z.string().min(2, {
-    message: "Instructor must be at least 2 characters.",
-  }),
-  date: z.date({
-    required_error: "Please select a date.",
-  }),
-  time: z.string().min(1, {
-    message: "Please select a time.",
-  }),
+  academicYear: z.string().min(1, "Academic year is required"),
+  studyYear: z.string().min(1, "Study year is required"),
+  afati: z.string().min(1, "Exam period is required"), // e.g. "February"
+  subjectId: z.string().min(1, "Subject ID is required"),
+  instructorId: z.string().min(1, "Instructor ID is required"),
+  date: z.date({ required_error: "Please select a date." }),
+  hour: z.string().min(1, "Please select a time."),
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 const ExamsScheduleForm: React.FC = () => {
-  const form = useForm<z.infer<typeof formSchema>>({
+  // 2) React Hook Form
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      academicYear: "",
+      studyYear: "",
       afati: "",
-      subject: "",
-      instructor: "",
-      time: "",
+      subjectId: "",
+      instructorId: "",
+      date: undefined,
+      hour: "",
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // In a real app, this would send data to the server
-    console.log(values);
-    
+  // 3) On submit, log the values + show toast
+  function onSubmit(values: FormValues) {
+    console.log("Exam data:", values);
+
+    // Show a success toast with the JSON
     toast({
       title: "Exam scheduled successfully",
       description: (
         <pre className="mt-2 w-full rounded-md bg-slate-950 p-4">
-          <code className="text-white text-xs">{JSON.stringify(values, null, 2)}</code>
+          <code className="text-white text-xs">
+            {JSON.stringify(values, null, 2)}
+          </code>
         </pre>
       ),
     });
-    
+
+    // Reset form
     form.reset();
   }
 
@@ -85,40 +83,46 @@ const ExamsScheduleForm: React.FC = () => {
     <div className="max-w-2xl mx-auto">
       <div className="bg-white p-6 rounded-lg shadow-md">
         <h2 className="text-2xl font-semibold mb-6">Schedule New Exam</h2>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Row 1: academicYear, studyYear, afati */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* academicYear */}
               <FormField
                 control={form.control}
-                name="afati"
+                name="academicYear"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Afati (Exam Period)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. Feb 2025" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      Enter the exam period (e.g. Feb 2025)
-                    </FormDescription>
+                    <FormLabel>Academic Year</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select academic year" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="2023/24">2023/24</SelectItem>
+                        <SelectItem value="2024/25">2024/25</SelectItem>
+                        <SelectItem value="2025/26">2025/26</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
+              {/* studyYear */}
               <FormField
                 control={form.control}
-                name="year"
+                name="studyYear"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Year of Study</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                    >
+                    <FormLabel>Study Year</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select year" />
+                          <SelectValue placeholder="Select year of study" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -128,72 +132,83 @@ const ExamsScheduleForm: React.FC = () => {
                         <SelectItem value="4">Year 4</SelectItem>
                       </SelectContent>
                     </Select>
-                    <FormDescription>
-                      Select the year of study
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
+              {/* afati */}
               <FormField
                 control={form.control}
-                name="subject"
+                name="afati"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Subject</FormLabel>
+                    <FormLabel>Afati</FormLabel>
                     <FormControl>
-                      <Input placeholder="Mathematics 101" {...field} />
+                      <Input placeholder="e.g. February" {...field} />
                     </FormControl>
-                    <FormDescription>
-                      Enter the subject name
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+            </div>
+
+            {/* Row 2: subjectId, instructorId */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* subjectId */}
               <FormField
                 control={form.control}
-                name="instructor"
+                name="subjectId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Instructor</FormLabel>
+                    <FormLabel>Subject ID</FormLabel>
                     <FormControl>
-                      <Input placeholder="Dr. Smith" {...field} />
+                      <Input placeholder="8d71c4da-fc15" {...field} />
                     </FormControl>
-                    <FormDescription>
-                      Enter the instructor's name
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
+              {/* instructorId */}
+              <FormField
+                control={form.control}
+                name="instructorId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Instructor ID</FormLabel>
+                    <FormControl>
+                      <Input placeholder="ffd55ca7-60e1" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Row 3: date, hour */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* date */}
               <FormField
                 control={form.control}
                 name="date"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Exam Date</FormLabel>
+                    <FormLabel>Date</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value
+                            ? format(field.value, "PPP")
+                            : "Pick a date"}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
@@ -201,43 +216,35 @@ const ExamsScheduleForm: React.FC = () => {
                           selected={field.value}
                           onSelect={field.onChange}
                           initialFocus
-                          className={cn("p-3 pointer-events-auto")}
+                          className="pointer-events-auto"
                         />
                       </PopoverContent>
                     </Popover>
-                    <FormDescription>
-                      Select the exam date
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
+              {/* hour */}
               <FormField
                 control={form.control}
-                name="time"
+                name="hour"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Exam Time</FormLabel>
+                    <FormLabel>Hour</FormLabel>
                     <div className="relative">
                       <FormControl>
-                        <Input
-                          type="time"
-                          {...field}
-                          className="pl-10"
-                        />
+                        <Input type="time" {...field} className="pl-10" />
                       </FormControl>
                       <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                     </div>
-                    <FormDescription>
-                      Select the exam time
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-            
+
+            {/* Submit */}
             <Button type="submit" className="w-full md:w-auto">
               Schedule Exam
             </Button>

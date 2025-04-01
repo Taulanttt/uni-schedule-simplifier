@@ -38,20 +38,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
             </div>
             <nav className="flex-1 p-4">
               <ul className="space-y-2">
-                <li>
-                  <Button
-                    variant="ghost"
-                    className={`w-full justify-start ${
-                      currentPage === 'notifications'
-                        ? 'bg-gray-700'
-                        : 'hover:bg-gray-700'
-                    }`}
-                    onClick={() => handleNavigation('notifications')}
-                  >
-                    <BellRing className="h-5 w-5 mr-2" />
-                    <span>Notifications</span>
-                  </Button>
-                </li>
+                
                 <li>
                   <Button
                     variant="ghost"
@@ -80,6 +67,20 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                     <span>Exams</span>
                   </Button>
                 </li>
+                <li>
+                  <Button
+                    variant="ghost"
+                    className={`w-full justify-start ${
+                      currentPage === 'notifications'
+                        ? 'bg-gray-700'
+                        : 'hover:bg-gray-700'
+                    }`}
+                    onClick={() => handleNavigation('notifications')}
+                  >
+                    <BellRing className="h-5 w-5 mr-2" />
+                    <span>Notifications</span>
+                  </Button>
+                </li>
               </ul>
             </nav>
           </div>
@@ -102,20 +103,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
 
         <nav className="mt-8 px-4 flex-1">
           <ul className="space-y-2">
-            <li>
-              <Button
-                variant="ghost"
-                className={`w-full justify-start ${
-                  currentPage === 'notifications'
-                    ? 'bg-gray-700'
-                    : 'hover:bg-gray-700'
-                } ${!isOpen && 'lg:justify-center'}`}
-                onClick={() => handleNavigation('notifications')}
-              >
-                <BellRing className="h-5 w-5 mr-2" />
-                <span className={`${!isOpen ? 'hidden' : ''}`}>Notifications</span>
-              </Button>
-            </li>
+            
             <li>
               <Button
                 variant="ghost"
@@ -142,6 +130,20 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
               >
                 <BookOpen className="h-5 w-5 mr-2" />
                 <span className={`${!isOpen ? 'hidden' : ''}`}>Exams</span>
+              </Button>
+            </li>
+            <li>
+              <Button
+                variant="ghost"
+                className={`w-full justify-start ${
+                  currentPage === 'notifications'
+                    ? 'bg-gray-700'
+                    : 'hover:bg-gray-700'
+                } ${!isOpen && 'lg:justify-center'}`}
+                onClick={() => handleNavigation('notifications')}
+              >
+                <BellRing className="h-5 w-5 mr-2" />
+                <span className={`${!isOpen ? 'hidden' : ''}`}>Notifications</span>
               </Button>
             </li>
           </ul>
