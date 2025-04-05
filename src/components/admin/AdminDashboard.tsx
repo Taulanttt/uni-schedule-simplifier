@@ -18,7 +18,7 @@ type AdminPage =
   | "examsAdmin";
 
 const AdminDashboard: React.FC = () => {
-  const [currentPage, setCurrentPage] = useState<AdminPage>("notifications");
+  const [currentPage, setCurrentPage] = useState<AdminPage>("schedule");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const toggleSidebar = () => {
@@ -27,10 +27,10 @@ const AdminDashboard: React.FC = () => {
 
   const getPageTitle = () => {
     switch (currentPage) {
-      case "notifications":
-        return "Send Student Notification";
       case "schedule":
         return "Schedule Management";
+      case "notifications":
+        return "Send Student Notification";
       case "exams":
         return "Exams Schedule";
       case "crud":

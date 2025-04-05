@@ -1,21 +1,23 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "@/utils/axiosInstance";
 import { useForm } from "react-hook-form";
-import FilterPanel from "@/components/FilterPanel";
+import FilterPanelExams from "@/components/FilterPanelExams";
 
-// The exam shape
+// The exam shape, with afatiId + optional Afati object
 interface ExamItem {
   id: string;
-  eventType: string;    // usually "exam"
-  academicYear: string; // e.g. "2024/25"
-  studyYear: number;    // e.g. 2
-  date: string;         // e.g. "2025-02-15"
-  hour: string;         // e.g. "10:00:00"
-  afati: string;        // e.g. "February"
-  subjectId: string;    // foreign key
-  instructorId: string; // foreign key
+  eventType: string;         // "exam"
+  academicYear: string;      // e.g. "2024/25"
+  studyYear: number;         // e.g. 2
+  date: string;              // e.g. "2025-02-15"
+  hour: string;              // e.g. "10:00:00"
 
-  // For display
+  // Here we store the foreign key ID
+  afatiId: string;           // e.g. "afb6-..."
+  subjectId: string;
+  instructorId: string;
+
+  // Associations from backend:
   Subject?: {
     id: string;
     name: string;
@@ -23,6 +25,10 @@ interface ExamItem {
   Instructor?: {
     id: string;
     name: string;
+  };
+  Afati?: {
+    id: string;
+    name: string;  // e.g. "February"
   };
 }
 
@@ -38,34 +44,32 @@ interface InstructorData {
   role: string;
 }
 
-// The filter object from your FilterPanel
-interface FilterOptions {
-  academicYear: string; // e.g. "2024/25" or "All Years"
-  semester: string;     // e.g. "All Semesters" (we do not actually filter by it, as exam has no semester)
-  yearOfStudy: string;  // e.g. "Year 1" or "All Years"
+// For afati dropdown
+interface AfatiData {
+  id: string;
+  name: string;
 }
 
-// Local array for academic years if needed:
-const ACADEMIC_YEARS = ["2023/24", "2024/25", "2025/26"];
+// The filter interface for exam
+import { FilterOptionsexam } from "@/types";
 
 const ExamsAdminPage: React.FC = () => {
   const [exams, setExams] = useState<ExamItem[]>([]);
   const [loading, setLoading] = useState(false);
-
-  // For editing
   const [editId, setEditId] = useState<string | null>(null);
 
-  // React Hook Form
-  const { register, handleSubmit, reset, setValue } = useForm<any>();
-
-  // For subject/instructor dropdown
+  // For subject/instructor/afati dropdowns
   const [subjects, setSubjects] = useState<SubjectData[]>([]);
   const [instructors, setInstructors] = useState<InstructorData[]>([]);
+  const [afatis, setAfatis] = useState<AfatiData[]>([]);
 
-  // === FILTER ===
-  const [filters, setFilters] = useState<FilterOptions>({
+  // Hook Form for editing an exam
+  const { register, handleSubmit, reset, setValue } = useForm<any>();
+
+  // Our exam filters state
+  const [filters, setFilters] = useState<FilterOptionsexam>({
     academicYear: "All Years",
-    semester: "All Semesters",
+    afati: "All Afati",
     yearOfStudy: "All Years",
   });
 
@@ -82,15 +86,17 @@ const ExamsAdminPage: React.FC = () => {
     }
   }
 
-  // 2) Fetch subjects & instructors
+  // 2) Fetch subjects & instructors & afati
   async function fetchDropdownData() {
     try {
-      const [subRes, instRes] = await Promise.all([
+      const [subRes, instRes, afatiRes] = await Promise.all([
         axiosInstance.get<SubjectData[]>("/subjects"),
         axiosInstance.get<InstructorData[]>("/instructors"),
+        axiosInstance.get<AfatiData[]>("/afati"),
       ]);
       setSubjects(subRes.data);
       setInstructors(instRes.data);
+      setAfatis(afatiRes.data);
     } catch (error) {
       console.error("Error fetching dropdown data:", error);
     }
@@ -101,9 +107,9 @@ const ExamsAdminPage: React.FC = () => {
     fetchDropdownData();
   }, []);
 
-  // === FILTER logic (client-side) ===
+  // 3) Filter logic for exams
   const filteredExams = exams.filter((exam) => {
-    // 1) academicYear
+    // By academicYear
     if (
       filters.academicYear !== "All Years" &&
       exam.academicYear !== filters.academicYear
@@ -111,16 +117,19 @@ const ExamsAdminPage: React.FC = () => {
       return false;
     }
 
-    // 2) semester => skipping because exam doesn't have a .semester field
-    // if (
-    //   filters.semester !== "All Semesters" &&
-    //   exam.semester !== ...
-    // ) { ... }
+    // By afati name
+    // The exam has exam.Afati?.name, and user picked filters.afati
+    if (filters.afati !== "All Afati") {
+      // Only show if exam.Afati?.name === filters.afati
+      if (exam.Afati?.name !== filters.afati) {
+        return false;
+      }
+    }
 
-    // 3) yearOfStudy => parse out number
+    // By yearOfStudy
     if (filters.yearOfStudy !== "All Years") {
-      const numericYear = parseInt(filters.yearOfStudy.replace(/\D/g, ""), 10);
-      if (exam.studyYear !== numericYear) {
+      const numeric = parseInt(filters.yearOfStudy.replace(/\D/g, ""), 10);
+      if (exam.studyYear !== numeric) {
         return false;
       }
     }
@@ -128,11 +137,12 @@ const ExamsAdminPage: React.FC = () => {
     return true;
   });
 
-  // 3) Start editing
+  // Start editing
   const startEdit = (exam: ExamItem) => {
     setEditId(exam.id);
 
-    setValue("afati", exam.afati);
+    // We'll set the form values to the actual data
+    setValue("afatiId", exam.afatiId);
     setValue("academicYear", exam.academicYear);
     setValue("studyYear", String(exam.studyYear));
     setValue("date", exam.date);
@@ -141,21 +151,22 @@ const ExamsAdminPage: React.FC = () => {
     setValue("instructorId", exam.instructorId);
   };
 
-  // 4) Cancel edit
+  // Cancel edit
   const cancelEdit = () => {
     setEditId(null);
     reset({});
   };
 
-  // 5) Submit => PUT /exams/:id
+  // 4) Submit => PUT /exams/:id
   const onSubmit = async (data: any) => {
     if (!editId) return;
     try {
       const numericYear = parseInt(data.studyYear, 10) || 1;
 
       await axiosInstance.put(`/exams/${editId}`, {
-        eventType: "exam", // usually "exam"
-        afati: data.afati,
+        eventType: "exam",
+        // We store the foreign key as "afatiId"
+        afatiId: data.afatiId,
         academicYear: data.academicYear,
         studyYear: numericYear,
         date: data.date,
@@ -171,7 +182,7 @@ const ExamsAdminPage: React.FC = () => {
     }
   };
 
-  // 6) Delete => DELETE /exams/:id
+  // 5) Delete => /exams/:id
   const deleteExam = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this exam?")) return;
     try {
@@ -188,11 +199,10 @@ const ExamsAdminPage: React.FC = () => {
 
       {/* Filter Panel */}
       <div className="mb-6">
-        {/* Reuse your existing FilterPanel */}
-        <FilterPanel filters={filters} setFilters={setFilters} />
+        <FilterPanelExams filters={filters} setFilters={setFilters} />
       </div>
 
-      {/* Exams Table */}
+      {/* Table of Exams */}
       <div className="bg-white p-4 rounded shadow">
         <h2 className="text-lg font-semibold mb-3">All Exams</h2>
         {loading ? (
@@ -214,7 +224,8 @@ const ExamsAdminPage: React.FC = () => {
               <tbody>
                 {filteredExams.map((exam) => (
                   <tr key={exam.id} className="border-b">
-                    <td className="p-2">{exam.afati}</td>
+                    {/* We display exam.Afati?.name */}
+                    <td className="p-2">{exam.Afati?.name}</td>
                     <td className="p-2">
                       {exam.date} / {exam.hour}
                     </td>
@@ -257,17 +268,23 @@ const ExamsAdminPage: React.FC = () => {
           <h2 className="text-lg font-semibold mb-3">Edit Exam</h2>
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              {/* afati */}
+              {/* afatiId => pick from the list of afatis */}
               <div>
                 <label className="block font-medium mb-1">Afati (Exam Period)</label>
-                <input
-                  {...register("afati")}
-                  placeholder="e.g. February"
+                <select
+                  {...register("afatiId")}
                   className="border p-1 rounded w-full"
-                />
+                >
+                  <option value="">-- Select Afati --</option>
+                  {afatis.map((af) => (
+                    <option key={af.id} value={af.id}>
+                      {af.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              {/* academicYear dropdown */}
+              {/* academicYear */}
               <div>
                 <label className="block font-medium mb-1">Academic Year</label>
                 <select
@@ -275,11 +292,9 @@ const ExamsAdminPage: React.FC = () => {
                   className="border p-1 rounded w-full"
                 >
                   <option value="">-- Select Year --</option>
-                  {ACADEMIC_YEARS.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
+                  <option value="2023/24">2023/24</option>
+                  <option value="2024/25">2024/25</option>
+                  <option value="2025/26">2025/26</option>
                 </select>
               </div>
 
@@ -294,7 +309,7 @@ const ExamsAdminPage: React.FC = () => {
                 />
               </div>
 
-              {/* date -> date input */}
+              {/* date */}
               <div>
                 <label className="block font-medium mb-1">Date</label>
                 <input
@@ -304,7 +319,7 @@ const ExamsAdminPage: React.FC = () => {
                 />
               </div>
 
-              {/* hour -> time input */}
+              {/* hour */}
               <div>
                 <label className="block font-medium mb-1">Hour</label>
                 <input
@@ -314,7 +329,7 @@ const ExamsAdminPage: React.FC = () => {
                 />
               </div>
 
-              {/* subject dropdown */}
+              {/* subjectId */}
               <div>
                 <label className="block font-medium mb-1">Subject</label>
                 <select
@@ -330,7 +345,7 @@ const ExamsAdminPage: React.FC = () => {
                 </select>
               </div>
 
-              {/* instructor dropdown */}
+              {/* instructorId */}
               <div>
                 <label className="block font-medium mb-1">Instructor</label>
                 <select

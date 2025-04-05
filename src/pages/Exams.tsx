@@ -1,7 +1,5 @@
-// Exams.tsx
-
 import React, { useState, useEffect } from "react";
-import FilterPanel from "@/components/FilterPanel";
+import FilterPanelExams from "@/components/FilterPanelExams";
 import MonthView from "@/components/MonthView";
 import WeekView from "@/components/weekViewExams";
 import LegendComponent from "@/components/LegendComponent";
@@ -9,52 +7,65 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { format, addWeeks, subWeeks } from "date-fns";
 import axiosInstance from "@/utils/axiosInstance";
 
-// The shape of each exam returned from backend (GET /exams)
+// 1) The shape of each exam returned from the backend.
+//    Notice we store "afatiId" plus an optional "Afati" object with { id, name }.
 export interface ExamItem {
   id: string;
-  eventType: string;     // e.g. "exam"
-  academicYear: string;  // e.g. "2024/25"
-  studyYear: number;     // e.g. 2
-  date: string;          // e.g. "2025-02-15"
-  hour: string;          // e.g. "10:00:00"
-  afati: string;         // e.g. "February"
-  subjectId: string;     // foreign key
-  instructorId: string;  // foreign key
+  eventType: string;       // e.g. "exam"
+  academicYear: string;    // e.g. "2024/25"
+  studyYear: number;       // e.g. 2
+  date: string;            // e.g. "2025-02-15"
+  hour: string;            // e.g. "10:00:00"
+  afatiId: string;         // foreign key
+  subjectId: string;
+  instructorId: string;
+
+  // The associated "Afati" object from the backend
+  Afati?: {
+    id: string;
+    name: string;  // e.g. "February", "June"
+  };
+
   Subject?: {
     id: string;
     name: string;
   };
+
   Instructor?: {
     id: string;
     name: string;
   };
 }
 
-interface FilterOptions {
-  academicYear: string;
-  semester: string;
-  yearOfStudy: string;
+// 2) The filter object from your FilterPanelExams
+interface FilterOptionsexam {
+  academicYear: string; // e.g. "All Years" or "2024/25"
+  afati: string;        // e.g. "All Afati" or "February"
+  yearOfStudy: string;  // e.g. "All Years" or "Year 2"
 }
 
-// Filter logic
+// 3) Filter logic. We compare exam.Afati?.name to "afati" if it's not "All Afati".
 function getFilteredExams(
   data: ExamItem[],
   academicYear: string,
-  semester: string,
+  afati: string,
   yearOfStudy: string
 ): ExamItem[] {
   return data.filter((exam) => {
-    // Filter by academicYear
+    // By academicYear
     if (academicYear !== "All Years" && exam.academicYear !== academicYear) {
       return false;
     }
 
-    // If your real data doesn't have 'exam.semester', skip or remove this filter
-    // if (semester !== "All Semesters" && exam.semester !== semester) {
-    //   return false;
-    // }
+    // By Afati name
+    if (afati !== "All Afati") {
+      // If exam.Afati exists, we compare .name to the filter
+      if (exam.Afati?.name !== afati) {
+        return false;
+      }
+    }
 
-    // Filter by studyYear
+    // By studyYear
     if (yearOfStudy !== "All Years") {
       const numericYear = parseInt(yearOfStudy.replace(/\D/g, ""), 10) || 0;
       if (exam.studyYear !== numericYear) {
@@ -69,10 +80,10 @@ function getFilteredExams(
 const Exams: React.FC = () => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
 
-  // Filter state
-  const [filters, setFilters] = useState<FilterOptions>({
+  // 4) Filter state with "afati"
+  const [filters, setFilters] = useState<FilterOptionsexam>({
     academicYear: "2024/25",
-    semester: "All Semesters",
+    afati: "All Afati",
     yearOfStudy: "All Years",
   });
 
@@ -82,7 +93,7 @@ const Exams: React.FC = () => {
   // Detect mobile
   const isMobile = useIsMobile();
 
-  // 1) Fetch from backend on mount
+  // 5) Fetch from backend on mount
   useEffect(() => {
     async function fetchExams() {
       try {
@@ -95,11 +106,11 @@ const Exams: React.FC = () => {
     fetchExams();
   }, []);
 
-  // 2) Filter data
+  // 6) Filter data
   const filteredEvents = getFilteredExams(
     exams,
     filters.academicYear,
-    filters.semester, // not actually used in filtering
+    filters.afati,
     filters.yearOfStudy
   );
 
@@ -115,12 +126,11 @@ const Exams: React.FC = () => {
           isMobile ? "mb-2" : "md:flex-row"
         } items-center justify-center mb-4 gap-2`}
       >
-        <FilterPanel filters={filters} setFilters={setFilters} compact />
+        <FilterPanelExams filters={filters} setFilters={setFilters} compact />
       </div>
 
       {/* Main exam area */}
       <div className="bg-white rounded-lg shadow p-2 md:p-4 flex-1 overflow-auto">
-        {/* On mobile → show weekly view; On desktop → show monthly view */}
         {isMobile ? (
           <>
             {/* Weekly arrows + label */}

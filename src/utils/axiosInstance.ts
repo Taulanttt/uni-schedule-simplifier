@@ -3,7 +3,7 @@ import axios from "axios";
 
 const axiosInstance = axios.create({
   baseURL: "http://localhost:5000/api", // Your backend URL
-  withCredentials: true,               // If sending cookies
+  withCredentials: true, // If sending cookies
 });
 
 // 1) Request Interceptor - attach token from localStorage
@@ -20,13 +20,18 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// 2) Response Interceptor (Optional) - handle 401, etc.
+// 2) Response Interceptor - handle 401 "Invalid or expired token"
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error?.response?.status === 401) {
-      // e.g., redirect to login
-      // window.location.href = "/login";
+    // If we get a 401 from the backend with { error: "Invalid or expired token" },
+    // we remove the token from localStorage and redirect user to /login
+    if (
+      error?.response?.status === 401 &&
+      error?.response?.data?.error === "Invalid or expired token"
+    ) {
+      localStorage.removeItem("token");
+      window.location.href = "/login";
     }
     return Promise.reject(error);
   }

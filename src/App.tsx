@@ -9,15 +9,14 @@ import { Menu } from "lucide-react";
 
 import Index from "./pages/Index";
 import Exams from "./pages/Exams";
-import AdminLogin from "@/components/admin/AdminLogin"; // Replacing old "Admin" with "AdminLogin"
+import AdminLogin from "@/components/admin/AdminLogin"; 
 import NotFound from "./pages/NotFound";
 import AppSidebar from "./components/AppSidebar";
 import AdminDashboard from "@/components/admin/AdminDashboard";
 
-// 1) Query client
 const queryClient = new QueryClient();
 
-// 2) A small function to get the heading for the main layout
+// A small function to get the heading for the main layout
 function getPageTitle(pathname: string) {
   switch (pathname) {
     case "/":
@@ -29,17 +28,17 @@ function getPageTitle(pathname: string) {
   }
 }
 
-// 3) A PrivateRoute to protect /admin
+// A PrivateRoute to protect /admin
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const token = localStorage.getItem("token");
-  // If no token in localStorage => user not logged in => redirect to /login
+  // If no token => redirect to /login
   if (!token) {
     return <Navigate to="/login" replace />;
   }
   return <>{children}</>;
 }
 
-// 4) The main app layout with the side nav for /, /exams, etc.
+// The main layout with side nav for /, /exams, etc.
 function MainLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
@@ -63,7 +62,6 @@ function MainLayout() {
               <Menu className="h-5 w-5" />
             </button>
 
-            {/* Centered Heading */}
             <div className="flex-1 flex justify-center">
               <h1 className="text-2xl font-bold text-center">{headingText}</h1>
             </div>
@@ -81,14 +79,14 @@ function MainLayout() {
   );
 }
 
-// 5) The main router for the entire app
+// The main router
 function MainApp() {
   return (
     <Routes>
       {/* Public route for login */}
       <Route path="/login" element={<AdminLogin />} />
 
-      {/* Protected /admin route via PrivateRoute */}
+      {/* Protected /admin route */}
       <Route
         path="/admin"
         element={

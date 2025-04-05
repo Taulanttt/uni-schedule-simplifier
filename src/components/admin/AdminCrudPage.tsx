@@ -2,8 +2,13 @@ import React, { useEffect, useState } from "react";
 import axiosInstance from "@/utils/axiosInstance";
 import { useForm } from "react-hook-form";
 
-// The possible resources
-type ResourceType = "semesters" | "instructors" | "subjects" | "class-locations";
+// The possible resources, now includes "afati"
+type ResourceType =
+  | "semesters"
+  | "instructors"
+  | "subjects"
+  | "class-locations"
+  | "afati";
 
 // Basic shapes
 interface Semester {
@@ -24,9 +29,14 @@ interface ClassLocation {
   id: string;
   roomName: string;
 }
+interface Afati {
+  id: string;
+  name: string;
+}
 
 // A generic union of data items
-type ResourceItem = Semester | Instructor | Subject | ClassLocation;
+// We'll unify them with a base "name" property, for the table, etc.
+type ResourceItem = Semester | Instructor | Subject | ClassLocation | Afati;
 
 const AdminCrudPage: React.FC = () => {
   const [resource, setResource] = useState<ResourceType>("semesters");
@@ -36,7 +46,7 @@ const AdminCrudPage: React.FC = () => {
   // For Create/Edit form
   const { register, handleSubmit, reset, setValue } = useForm<any>();
 
-  // For "edit mode" we store the current item ID
+  // "edit mode": store the current item ID
   const [editId, setEditId] = useState<string | null>(null);
 
   // 1) Fetch items from the selected resource
@@ -57,9 +67,10 @@ const AdminCrudPage: React.FC = () => {
     fetchItems();
     setEditId(null);
     reset({});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resource]);
 
-  // 3) Handle Create/Update
+  // 3) Handle Create or Update
   const onSubmit = async (data: any) => {
     try {
       if (editId) {
@@ -80,6 +91,7 @@ const AdminCrudPage: React.FC = () => {
   // 4) Start editing
   const startEdit = (item: ResourceItem) => {
     setEditId((item as any).id);
+
     // Fill the form with existing item fields
     switch (resource) {
       case "semesters":
@@ -95,6 +107,9 @@ const AdminCrudPage: React.FC = () => {
         break;
       case "class-locations":
         setValue("roomName", (item as ClassLocation).roomName);
+        break;
+      case "afati":
+        setValue("name", (item as Afati).name);
         break;
     }
   };
@@ -169,6 +184,17 @@ const AdminCrudPage: React.FC = () => {
             />
           </>
         );
+      case "afati":
+        return (
+          <>
+            <label className="block font-medium mt-2">Name</label>
+            <input
+              {...register("name")}
+              placeholder="e.g. June"
+              className="border px-3 py-1 rounded w-full"
+            />
+          </>
+        );
     }
   }
 
@@ -193,6 +219,8 @@ const AdminCrudPage: React.FC = () => {
         );
       case "class-locations":
         return <th className="p-2 text-left">Room Name</th>;
+      case "afati":
+        return <th className="p-2 text-left">Name</th>;
     }
   }
 
@@ -224,6 +252,10 @@ const AdminCrudPage: React.FC = () => {
         const loc = item as ClassLocation;
         return <td className="p-2">{loc.roomName}</td>;
       }
+      case "afati": {
+        const a = item as Afati;
+        return <td className="p-2">{a.name}</td>;
+      }
     }
   }
 
@@ -244,6 +276,7 @@ const AdminCrudPage: React.FC = () => {
           <option value="instructors">Instructors</option>
           <option value="subjects">Subjects</option>
           <option value="class-locations">Class Locations</option>
+          <option value="afati">Afati</option>
         </select>
       </div>
 
@@ -316,8 +349,21 @@ const AdminCrudPage: React.FC = () => {
                 ))}
                 {items.length === 0 && (
                   <tr>
+                    {/* Each resource has a different # of columns:
+                        instructors: 3
+                        subjects: 3
+                        else: 2
+                        We'll handle it dynamically. */}
                     <td
-                      colSpan={resource === "instructors" ? 3 : 2}
+                      colSpan={
+                        resource === "instructors"
+                          ? 3
+                          : resource === "subjects"
+                          ? 3
+                          : resource === "afati"
+                          ? 2
+                          : 2
+                      }
                       className="p-2 text-center text-gray-500"
                     >
                       No items found

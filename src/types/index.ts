@@ -1,4 +1,4 @@
-// types.ts
+// src/types/index.ts
 
 //
 // 1) The possible event types
@@ -6,7 +6,7 @@
 export type ScheduleEventType = 'lecture' | 'lab' | 'office' | 'exam';
 
 //
-// 2) The schedule event interface your DayView & WeekView expect
+// 2) The schedule event interface your DayView & WeekView might expect
 //
 export interface ScheduleEvent {
   id: string;
@@ -14,17 +14,32 @@ export interface ScheduleEvent {
   time: string;
   location: string;
   type: ScheduleEventType;
-  instructor?: string;        // e.g. "Dr. Thompson"
-  daysOfWeek?: string[];      // e.g. ['Monday','Wednesday']
-
-  // optional fields if needed
-  academicYear?: string;      // e.g. "2024/25"
-  semester?: string;          // e.g. "Fall"
-  yearOfStudy?: string;       // or number 
+  instructor?: string;
+  daysOfWeek?: string[];
+  academicYear?: string;
+  semester?: string;
+  yearOfStudy?: string;
 }
 
 //
-// 3) Filter options for your filter panel
+// 3) The shape returned by /schedules
+//    (for reference; your code might differ)
+export interface ScheduleItem {
+  id: string;
+  eventType: string;
+  academicYear: string;
+  studyYear: number;
+  semesterName?: string;
+  daysOfWeek?: string[];
+  startTime?: string;
+  endTime?: string;
+  locationName?: string;
+  instructorName?: string;
+  subjectName?: string;
+}
+
+//
+// 4) FilterOptions (for schedules?):
 //
 export interface FilterOptions {
   academicYear: string;
@@ -32,18 +47,11 @@ export interface FilterOptions {
   yearOfStudy: string;
 }
 
-// The shape returned by /schedules
-export interface ScheduleItem {
-  id: string;
-  eventType: string;       // e.g. "exam group1"
-  academicYear: string;
-  studyYear: number;
-  semesterName?: string;
-  daysOfWeek?: string[];
-  startTime?: string;      // e.g. "09:00:00"
-  endTime?: string;        // e.g. "10:30:00"
-  locationName?: string;   // e.g. "Room 205"
-  instructorName?: string; // e.g. "Prof. John"
-  subjectName?: string; 
-  // Add anything else from your backend
+//
+// 5) FilterOptionsexam (for exam filtering):
+//
+export interface FilterOptionsexam {
+  academicYear: string; // "2024/25" or "All Years"
+  afati: string;        // e.g. "February" or "All Afati"
+  yearOfStudy: string;  // e.g. "Year 1" or "All Years"
 }

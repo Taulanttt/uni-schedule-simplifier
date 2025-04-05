@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -30,21 +30,42 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import axiosInstance from "@/utils/axiosInstance";
 
-// 1) Define the Zod schema
+// 1) Zod schema
 const formSchema = z.object({
   academicYear: z.string().min(1, "Academic year is required"),
   studyYear: z.string().min(1, "Study year is required"),
-  afati: z.string().min(1, "Exam period is required"), // e.g. "February"
-  subjectId: z.string().min(1, "Subject ID is required"),
-  instructorId: z.string().min(1, "Instructor ID is required"),
+  afati: z.string().min(1, "Exam period is required"), // store the "name" of Afati
+  subjectId: z.string().min(1, "Subject ID is required"), // store the "id"
+  instructorId: z.string().min(1, "Instructor ID is required"), // store the "id"
   date: z.date({ required_error: "Please select a date." }),
   hour: z.string().min(1, "Please select a time."),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
+interface AfatiData {
+  id: string;
+  name: string;
+}
+interface SubjectData {
+  id: string;
+  name: string;
+  code: string;
+}
+interface InstructorData {
+  id: string;
+  name: string;
+  role: string;
+}
+
 const ExamsScheduleForm: React.FC = () => {
+  // States for dropdown options
+  const [afatiList, setAfatiList] = useState<AfatiData[]>([]);
+  const [subjects, setSubjects] = useState<SubjectData[]>([]);
+  const [instructors, setInstructors] = useState<InstructorData[]>([]);
+
   // 2) React Hook Form
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -59,22 +80,42 @@ const ExamsScheduleForm: React.FC = () => {
     },
   });
 
-  // 3) On submit, log the values + show toast
+  // 3) On mount, fetch data for dropdowns
+  useEffect(() => {
+    async function fetchDropdownData() {
+      try {
+        // GET /afati -> array of { id, name }
+        const afatiRes = await axiosInstance.get<AfatiData[]>("/afati");
+        setAfatiList(afatiRes.data);
+
+        // GET /subjects -> array of { id, name, code }
+        const subRes = await axiosInstance.get<SubjectData[]>("/subjects");
+        setSubjects(subRes.data);
+
+        // GET /instructors -> array of { id, name, role }
+        const insRes = await axiosInstance.get<InstructorData[]>("/instructors");
+        setInstructors(insRes.data);
+      } catch (error) {
+        console.error("Error fetching dropdown data:", error);
+      }
+    }
+    fetchDropdownData();
+  }, []);
+
+  // 4) Submit → show data in toast + reset
   function onSubmit(values: FormValues) {
     console.log("Exam data:", values);
-
-    // Show a success toast with the JSON
+    // Show success toast
     toast({
       title: "Exam scheduled successfully",
-      description: (
-        <pre className="mt-2 w-full rounded-md bg-slate-950 p-4">
-          <code className="text-white text-xs">
-            {JSON.stringify(values, null, 2)}
-          </code>
-        </pre>
-      ),
+      // description: (
+      //   <pre className="mt-2 w-full rounded-md bg-slate-950 p-4">
+      //     <code className="text-white text-xs">
+      //       {JSON.stringify(values, null, 2)}
+      //     </code>
+      //   </pre>
+      // ),
     });
-
     // Reset form
     form.reset();
   }
@@ -122,7 +163,7 @@ const ExamsScheduleForm: React.FC = () => {
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select year of study" />
+                          <SelectValue placeholder="Year of study" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -143,10 +184,21 @@ const ExamsScheduleForm: React.FC = () => {
                 name="afati"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Afati</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. February" {...field} />
-                    </FormControl>
+                    <FormLabel>Afati (Exam Period)</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select exam period" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {afatiList.map((af) => (
+                          <SelectItem key={af.id} value={af.name}>
+                            {af.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -161,10 +213,21 @@ const ExamsScheduleForm: React.FC = () => {
                 name="subjectId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Subject ID</FormLabel>
-                    <FormControl>
-                      <Input placeholder="8d71c4da-fc15" {...field} />
-                    </FormControl>
+                    <FormLabel>Subject</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Subject" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {subjects.map((sub) => (
+                          <SelectItem key={sub.id} value={sub.id}>
+                            {sub.name} ({sub.code})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -176,10 +239,21 @@ const ExamsScheduleForm: React.FC = () => {
                 name="instructorId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Instructor ID</FormLabel>
-                    <FormControl>
-                      <Input placeholder="ffd55ca7-60e1" {...field} />
-                    </FormControl>
+                    <FormLabel>Instructor</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Instructor" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {instructors.map((inst) => (
+                          <SelectItem key={inst.id} value={inst.id}>
+                            {inst.name} ({inst.role})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
