@@ -1,7 +1,7 @@
-// ExamsAdminPage.tsx
 import React, { useEffect, useState } from "react";
 import axiosInstance from "@/utils/axiosInstance";
 import { useForm } from "react-hook-form";
+import FilterPanel from "@/components/FilterPanel";
 
 // The exam shape
 interface ExamItem {
@@ -15,6 +15,7 @@ interface ExamItem {
   subjectId: string;    // foreign key
   instructorId: string; // foreign key
 
+  // For display
   Subject?: {
     id: string;
     name: string;
@@ -37,13 +38,21 @@ interface InstructorData {
   role: string;
 }
 
-// Optional local array for academic years
+// The filter object from your FilterPanel
+interface FilterOptions {
+  academicYear: string; // e.g. "2024/25" or "All Years"
+  semester: string;     // e.g. "All Semesters" (we do not actually filter by it, as exam has no semester)
+  yearOfStudy: string;  // e.g. "Year 1" or "All Years"
+}
+
+// Local array for academic years if needed:
 const ACADEMIC_YEARS = ["2023/24", "2024/25", "2025/26"];
 
 const ExamsAdminPage: React.FC = () => {
   const [exams, setExams] = useState<ExamItem[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // For editing
   const [editId, setEditId] = useState<string | null>(null);
 
   // React Hook Form
@@ -52,6 +61,13 @@ const ExamsAdminPage: React.FC = () => {
   // For subject/instructor dropdown
   const [subjects, setSubjects] = useState<SubjectData[]>([]);
   const [instructors, setInstructors] = useState<InstructorData[]>([]);
+
+  // === FILTER ===
+  const [filters, setFilters] = useState<FilterOptions>({
+    academicYear: "All Years",
+    semester: "All Semesters",
+    yearOfStudy: "All Years",
+  });
 
   // 1) Fetch exams
   async function fetchExams() {
@@ -85,6 +101,33 @@ const ExamsAdminPage: React.FC = () => {
     fetchDropdownData();
   }, []);
 
+  // === FILTER logic (client-side) ===
+  const filteredExams = exams.filter((exam) => {
+    // 1) academicYear
+    if (
+      filters.academicYear !== "All Years" &&
+      exam.academicYear !== filters.academicYear
+    ) {
+      return false;
+    }
+
+    // 2) semester => skipping because exam doesn't have a .semester field
+    // if (
+    //   filters.semester !== "All Semesters" &&
+    //   exam.semester !== ...
+    // ) { ... }
+
+    // 3) yearOfStudy => parse out number
+    if (filters.yearOfStudy !== "All Years") {
+      const numericYear = parseInt(filters.yearOfStudy.replace(/\D/g, ""), 10);
+      if (exam.studyYear !== numericYear) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
   // 3) Start editing
   const startEdit = (exam: ExamItem) => {
     setEditId(exam.id);
@@ -111,7 +154,7 @@ const ExamsAdminPage: React.FC = () => {
       const numericYear = parseInt(data.studyYear, 10) || 1;
 
       await axiosInstance.put(`/exams/${editId}`, {
-        eventType: "exam", // usually it's "exam" by default
+        eventType: "exam", // usually "exam"
         afati: data.afati,
         academicYear: data.academicYear,
         studyYear: numericYear,
@@ -143,6 +186,12 @@ const ExamsAdminPage: React.FC = () => {
     <div className="max-w-4xl mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Exams Admin</h1>
 
+      {/* Filter Panel */}
+      <div className="mb-6">
+        {/* Reuse your existing FilterPanel */}
+        <FilterPanel filters={filters} setFilters={setFilters} />
+      </div>
+
       {/* Exams Table */}
       <div className="bg-white p-4 rounded shadow">
         <h2 className="text-lg font-semibold mb-3">All Exams</h2>
@@ -163,7 +212,7 @@ const ExamsAdminPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {exams.map((exam) => (
+                {filteredExams.map((exam) => (
                   <tr key={exam.id} className="border-b">
                     <td className="p-2">{exam.afati}</td>
                     <td className="p-2">
@@ -176,7 +225,7 @@ const ExamsAdminPage: React.FC = () => {
                     <td className="p-2 space-x-2">
                       <button
                         onClick={() => startEdit(exam)}
-                        className="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600"
+                        className="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
                       >
                         Edit
                       </button>
@@ -189,7 +238,7 @@ const ExamsAdminPage: React.FC = () => {
                     </td>
                   </tr>
                 ))}
-                {exams.length === 0 && (
+                {filteredExams.length === 0 && (
                   <tr>
                     <td colSpan={7} className="p-2 text-center text-gray-500">
                       No exams found

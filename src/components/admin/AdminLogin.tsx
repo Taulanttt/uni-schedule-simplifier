@@ -1,50 +1,42 @@
+// AdminLogin.tsx
 import React, { useState } from "react";
 import { Lock, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import axiosInstance from "@/utils/axiosInstance"; 
-import { useNavigate } from "react-router-dom"; 
-
-
+import axiosInstance from "@/utils/axiosInstance";
+import { useNavigate } from "react-router-dom";
 
 const AdminLogin: React.FC = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate(); 
-
-
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      // Your endpoint is `POST /auth/login` with { email, password }
+      // e.g. POST /auth/login with { email, password }
       const res = await axiosInstance.post("/auth/login", {
         email: username,
         password: password,
       });
 
-      // Destructure the token, user from response
-      const { token, user, payload } = res.data;
-
-      // Save token in localStorage
+      // store token in localStorage
+      const { token, user } = res.data; 
       localStorage.setItem("token", token);
-      localStorage.setItem("payload",payload);
 
-      // Show success toast
       toast({
         title: "Login Successful",
         description: `Welcome, ${user.name}`,
       });
-      navigate("/admin"); // or wherever you want to go after login
 
-
-    
+      // Now we can navigate to /admin
+      navigate("/admin");
     } catch (error) {
       console.error("Login error:", error);
       toast({
@@ -103,9 +95,6 @@ const AdminLogin: React.FC = () => {
                   required
                 />
               </div>
-              {/* <p className="mt-1 text-xs text-gray-500">
-                For demo: username: admin, password: password
-              </p> */}
             </div>
           </div>
 

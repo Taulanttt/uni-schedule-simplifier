@@ -262,7 +262,7 @@ const SchedulesAdminPage: React.FC = () => {
                     <td className="p-2 space-x-2">
                       <button
                         onClick={() => startEdit(sch)}
-                        className="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600"
+                        className="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
                       >
                         Edit
                       </button>

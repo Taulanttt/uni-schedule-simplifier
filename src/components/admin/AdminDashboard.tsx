@@ -1,3 +1,4 @@
+// AdminDashboard.tsx
 import React, { useState } from "react";
 import { Menu } from "lucide-react";
 import AdminSidebar from "./AdminSidebar";
