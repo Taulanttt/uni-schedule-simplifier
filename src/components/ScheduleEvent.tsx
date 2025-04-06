@@ -26,7 +26,7 @@ const ScheduleEventComponent: React.FC<ScheduleEventProps> = ({ event }) => {
   const eventType = typeLabel.toLowerCase();
   if (eventType.includes("exam")) {
     containerClass = cn(containerClass, "bg-indigo-50 border-indigo-200 text-indigo-700");
-  } else if (eventType.includes("lab")) {
+  } else if (eventType.includes("Ushtrime")) {
     containerClass = cn(containerClass, "bg-green-50 border-green-200 text-green-700");
   } else if (eventType.includes("office")) {
     containerClass = cn(containerClass, "bg-blue-50 border-blue-200 text-blue-700");

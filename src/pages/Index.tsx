@@ -17,7 +17,7 @@ const Index: React.FC = () => {
   const [filters, setFilters] = useState<FilterOptions>({
     academicYear: "2024/25",
     semester: "All Semesters",
-    yearOfStudy: "All Years",
+    yearOfStudy: "Year 1",
   });
 
   // The array of schedules from the API

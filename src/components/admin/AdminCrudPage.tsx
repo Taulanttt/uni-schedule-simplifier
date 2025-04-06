@@ -23,7 +23,6 @@ interface Instructor {
 interface Subject {
   id: string;
   name: string;
-  code: string;
 }
 interface ClassLocation {
   id: string;
@@ -35,7 +34,6 @@ interface Afati {
 }
 
 // A generic union of data items
-// We'll unify them with a base "name" property, for the table, etc.
 type ResourceItem = Semester | Instructor | Subject | ClassLocation | Afati;
 
 const AdminCrudPage: React.FC = () => {
@@ -103,7 +101,6 @@ const AdminCrudPage: React.FC = () => {
         break;
       case "subjects":
         setValue("name", (item as Subject).name);
-        setValue("code", (item as Subject).code);
         break;
       case "class-locations":
         setValue("roomName", (item as ClassLocation).roomName);
@@ -149,11 +146,10 @@ const AdminCrudPage: React.FC = () => {
               className="border px-3 py-1 rounded w-full"
             />
             <label className="block font-medium mt-2">Role</label>
-            <input
-              {...register("role")}
-              placeholder="assistant"
-              className="border px-3 py-1 rounded w-full"
-            />
+            <select {...register("role")} className="border px-3 py-1 rounded w-full">
+              <option value="assistant">assistant</option>
+              <option value="professor">professor</option>
+            </select>
           </>
         );
       case "subjects":
@@ -163,12 +159,6 @@ const AdminCrudPage: React.FC = () => {
             <input
               {...register("name")}
               placeholder="Matematika 1"
-              className="border px-3 py-1 rounded w-full"
-            />
-            <label className="block font-medium mt-2">Code</label>
-            <input
-              {...register("code")}
-              placeholder="MAT1"
               className="border px-3 py-1 rounded w-full"
             />
           </>
@@ -211,12 +201,7 @@ const AdminCrudPage: React.FC = () => {
           </>
         );
       case "subjects":
-        return (
-          <>
-            <th className="p-2 text-left">Name</th>
-            <th className="p-2 text-left">Code</th>
-          </>
-        );
+        return <th className="p-2 text-left">Name</th>;
       case "class-locations":
         return <th className="p-2 text-left">Room Name</th>;
       case "afati":
@@ -241,12 +226,7 @@ const AdminCrudPage: React.FC = () => {
       }
       case "subjects": {
         const sub = item as Subject;
-        return (
-          <>
-            <td className="p-2">{sub.name}</td>
-            <td className="p-2">{sub.code}</td>
-          </>
-        );
+        return <td className="p-2">{sub.name}</td>;
       }
       case "class-locations": {
         const loc = item as ClassLocation;
@@ -349,17 +329,12 @@ const AdminCrudPage: React.FC = () => {
                 ))}
                 {items.length === 0 && (
                   <tr>
-                    {/* Each resource has a different # of columns:
-                        instructors: 3
-                        subjects: 3
-                        else: 2
-                        We'll handle it dynamically. */}
                     <td
                       colSpan={
                         resource === "instructors"
                           ? 3
                           : resource === "subjects"
-                          ? 3
+                          ? 2
                           : resource === "afati"
                           ? 2
                           : 2
