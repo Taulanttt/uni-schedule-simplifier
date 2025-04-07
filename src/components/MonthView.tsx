@@ -12,15 +12,15 @@ import {
   subMonths,
   parseISO,
 } from "date-fns";
-import { ExamItem } from "@/pages/Exams"; // or move `ExamItem` to @/types
-import ScheduleEventComponent from "./ScheduleEventComponentExams";
+import { ExamItem } from "@/pages/Exams"; // or import from @/types
+import ScheduleEventComponentExams from "./ScheduleEventComponentExams";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MonthViewProps {
-  events: ExamItem[]; // changed to ExamItem[]
+  events: ExamItem[];
   currentDate: Date;
   setCurrentDate: React.Dispatch<React.SetStateAction<Date>>;
 }
@@ -90,8 +90,7 @@ const MonthView: React.FC<MonthViewProps> = ({
         <div
           key={cloneDay.toString()}
           className={cn(
-            "border p-1 md:p-2 min-h-[60px] md:min-h-[100px] transition-colors",
-            "rounded-md overflow-hidden",
+            "border p-1 md:p-2 min-h-[60px] md:min-h-[100px] transition-colors rounded-md",
             !isSameMonth(day, monthStart)
               ? "bg-gray-100 text-gray-400"
               : "bg-white",
@@ -103,11 +102,11 @@ const MonthView: React.FC<MonthViewProps> = ({
             {format(day, "d")}
           </div>
 
-          {/* Event list */}
-          <div className="space-y-1 max-h-[45px] md:max-h-[80px] overflow-y-auto">
+          {/* --- Remove max-h and overflow to remove scrollbar --- */}
+          <div className="space-y-1">
             {dayEvents.length > 0 ? (
               dayEvents.map((event) => (
-                <ScheduleEventComponent key={event.id} event={event} />
+                <ScheduleEventComponentExams key={event.id} event={event} />
               ))
             ) : (
               <div className="text-xs text-muted-foreground text-center">

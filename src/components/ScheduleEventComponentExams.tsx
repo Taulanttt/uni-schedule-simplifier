@@ -1,67 +1,49 @@
 import React from "react";
-import { ExamItem } from "@/pages/Exams"; // or @/types if you prefer
+import { ExamItem } from "@/pages/Exams";
 import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
 
-interface ScheduleEventProps {
-  event: ExamItem; // changed to ExamItem
+// A small helper to parse event type and pick the style
+function getEventClasses(eventType: string) {
+  const lower = eventType.toLowerCase();
+
+  if (lower.includes("provim")) {
+    // "provime", "Provime"
+    return "bg-blue-50 border border-blue-200 text-blue-700";
+  } else if (lower.includes("ligjerata")) {
+    return "bg-purple-50 border border-purple-200 text-purple-700";
+  } else if (lower.includes("ushtrime")) {
+    return "bg-green-50 border border-green-200 text-green-700";
+  }
+  // fallback
+  return "bg-gray-50 border border-gray-200 text-gray-700";
 }
 
-const ScheduleEventComponent: React.FC<ScheduleEventProps> = ({ event }) => {
-  const isMobile = useIsMobile();
+interface ScheduleEventProps {
+  event: ExamItem;
+}
 
-  // Format times (hour fields) from "13:00:00" → "13:00"
-  const formatTime = (timeStr?: string) => {
-    if (!timeStr) return "";
-    const [h, m] = timeStr.split(":");
-    return `${h}:${m}`;
-  };
+const ScheduleEventComponentExams: React.FC<ScheduleEventProps> = ({ event }) => {
+  const containerClass = cn(
+    "rounded-md px-2 py-1 text-sm mb-1",
+    getEventClasses(event.eventType || "")
+  );
 
-  const subject = event.Subject?.name || event.eventType; // e.g. "Matematika 2" or "exam"
-  const professor = event.Instructor?.name || "";
-  const typeLabel = event.eventType;  // e.g. "exam"
-  const timeRange = `${formatTime(event.hour)}`; 
-  // If you want endTime logic, do event.endTime or similar. Right now we only have "hour" in exam data
-  // or if you do have startTime/endTime, use that as well
-
-  // Styling logic
-  let containerClass = "schedule-item rounded-md border";
-  const eventType = typeLabel.toLowerCase();
-  if (eventType.includes("exam")) {
-    containerClass = cn(containerClass, "bg-indigo-50 border-indigo-200 text-indigo-700");
-  } else if (eventType.includes("lab")) {
-    containerClass = cn(containerClass, "bg-green-50 border-green-200 text-green-700");
-  } else if (eventType.includes("office")) {
-    containerClass = cn(containerClass, "bg-blue-50 border-blue-200 text-blue-700");
-  } else if (eventType.includes("lecture")) {
-    containerClass = cn(containerClass, "bg-purple-50 border-purple-200 text-purple-700");
-  } else {
-    containerClass = cn(containerClass, "bg-gray-50 border-gray-200 text-gray-700");
-  }
-
-  // Mobile layout
-  if (isMobile) {
-    return (
-      <div className={cn(containerClass, "mb-1 p-1 text-[10px]")}>
-        <div className="font-semibold truncate">{subject}</div>
-        {professor && <div className="mt-0.5 truncate">{professor}</div>}
-        <div className="mt-0.5 truncate">{typeLabel}</div>
-        <div className="mt-0.5 truncate">{timeRange}</div>
-      </div>
-    );
-  }
-
-  // Desktop layout
   return (
-    <div className={cn(containerClass, "mb-2 p-2 text-xs")}>
-      <div className="font-semibold truncate">{subject}</div>
-      {professor && (
-        <div className="mt-0.5 font-medium truncate">{professor}</div>
+    <div className={containerClass}>
+      {/* Subject name */}
+      <div className="font-semibold truncate">
+        {event.Subject?.name || "No subject"}
+      </div>
+      {/* Instructor */}
+      {event.Instructor && (
+        <div className="truncate">{event.Instructor.name}</div>
       )}
-      <div className="mt-0.5 truncate">{typeLabel}</div>
-      <div className="mt-0.5">{timeRange}</div>
+      {/* Type */}
+      <div className="truncate">{event.eventType}</div>
+      {/* Hour */}
+      <div>{event.hour?.slice(0, 5)}</div>
     </div>
   );
 };
 
-export default ScheduleEventComponent;
+export default ScheduleEventComponentExams;

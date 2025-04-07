@@ -7,44 +7,39 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { format, addWeeks, subWeeks } from "date-fns";
 import axiosInstance from "@/utils/axiosInstance";
 
-// 1) The shape of each exam returned from the backend.
-//    Notice we store "afatiId" plus an optional "Afati" object with { id, name }.
 export interface ExamItem {
   id: string;
-  eventType: string;       // e.g. "exam"
-  academicYear: string;    // e.g. "2024/25"
-  studyYear: number;       // e.g. 2
-  date: string;            // e.g. "2025-02-15"
-  hour: string;            // e.g. "10:00:00"
-  afatiId: string;         // foreign key
+  eventType: string;    // e.g. "Provime"
+  academicYear: string; // "2024/25"
+  studyYear: number;    // 2
+  date: string;         // "2025-02-15"
+  hour: string;         // "10:00:00"
+  afatiId: string;      // foreign key
   subjectId: string;
   instructorId: string;
 
-  // The associated "Afati" object from the backend
   Afati?: {
     id: string;
-    name: string;  // e.g. "February", "June"
+    name: string; // e.g. "February", "June"
   };
-
   Subject?: {
     id: string;
     name: string;
   };
-
   Instructor?: {
     id: string;
     name: string;
   };
 }
 
-// 2) The filter object from your FilterPanelExams
+// Filter object from FilterPanelExams
 interface FilterOptionsexam {
-  academicYear: string; // e.g. "All Years" or "2024/25"
-  afati: string;        // e.g. "All Afati" or "February"
-  yearOfStudy: string;  // e.g. "All Years" or "Year 2"
+  academicYear: string;
+  afati: string;
+  yearOfStudy: string;
 }
 
-// 3) Filter logic. We compare exam.Afati?.name to "afati" if it's not "All Afati".
+// Filter logic
 function getFilteredExams(
   data: ExamItem[],
   academicYear: string,
@@ -59,7 +54,6 @@ function getFilteredExams(
 
     // By Afati name
     if (afati !== "All Afati") {
-      // If exam.Afati exists, we compare .name to the filter
       if (exam.Afati?.name !== afati) {
         return false;
       }
@@ -80,11 +74,11 @@ function getFilteredExams(
 const Exams: React.FC = () => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
 
-  // 4) Filter state with "afati"
+  // Filter state
   const [filters, setFilters] = useState<FilterOptionsexam>({
     academicYear: "2024/25",
-    afati: "All Afati",
-    yearOfStudy: "All Years",
+    afati: "Janar",
+    yearOfStudy: "Year 1",
   });
 
   // The array of exams from your API
@@ -93,7 +87,7 @@ const Exams: React.FC = () => {
   // Detect mobile
   const isMobile = useIsMobile();
 
-  // 5) Fetch from backend on mount
+  // Fetch from backend on mount
   useEffect(() => {
     async function fetchExams() {
       try {
@@ -106,7 +100,7 @@ const Exams: React.FC = () => {
     fetchExams();
   }, []);
 
-  // 6) Filter data
+  // Filter data
   const filteredEvents = getFilteredExams(
     exams,
     filters.academicYear,
@@ -114,12 +108,12 @@ const Exams: React.FC = () => {
     filters.yearOfStudy
   );
 
-  // Handlers to move by one week at a time
+  // Move by one week
   const goToPreviousWeek = () => setCurrentDate(subWeeks(currentDate, 1));
   const goToNextWeek = () => setCurrentDate(addWeeks(currentDate, 1));
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col">
       {/* Filters at the top */}
       <div
         className={`flex flex-col ${
@@ -130,7 +124,7 @@ const Exams: React.FC = () => {
       </div>
 
       {/* Main exam area */}
-      <div className="bg-white rounded-lg shadow p-2 md:p-4 flex-1 overflow-auto">
+      <div className="bg-white rounded-lg shadow p-2 md:p-4">
         {isMobile ? (
           <>
             {/* Weekly arrows + label */}

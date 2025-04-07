@@ -32,13 +32,15 @@ import {
 } from "@/components/ui/select";
 import axiosInstance from "@/utils/axiosInstance";
 
+// -------------------
 // 1) Zod schema
+// -------------------
 const formSchema = z.object({
   academicYear: z.string().min(1, "Academic year is required"),
   studyYear: z.string().min(1, "Study year is required"),
-  afati: z.string().min(1, "Exam period is required"), // store the "name" of Afati
-  subjectId: z.string().min(1, "Subject ID is required"), // store the "id"
-  instructorId: z.string().min(1, "Instructor ID is required"), // store the "id"
+  afati: z.string().min(1, "Exam period is required"),     // we store the 'afatiId' or 'afatiName'
+  subjectId: z.string().min(1, "Subject ID is required"),
+  instructorId: z.string().min(1, "Instructor ID is required"),
   date: z.date({ required_error: "Please select a date." }),
   hour: z.string().min(1, "Please select a time."),
 });
@@ -102,22 +104,51 @@ const ExamsScheduleForm: React.FC = () => {
     fetchDropdownData();
   }, []);
 
-  // 4) Submit → show data in toast + reset
-  function onSubmit(values: FormValues) {
-    console.log("Exam data:", values);
-    // Show success toast
-    toast({
-      title: "Exam scheduled successfully",
-      // description: (
-      //   <pre className="mt-2 w-full rounded-md bg-slate-950 p-4">
-      //     <code className="text-white text-xs">
-      //       {JSON.stringify(values, null, 2)}
-      //     </code>
-      //   </pre>
-      // ),
-    });
-    // Reset form
-    form.reset();
+  // -------------------
+  // 4) Actual SUBMIT
+  // -------------------
+  async function onSubmit(values: FormValues) {
+    try {
+      // 4a) Find the Afati ID based on the user's selection
+      //     Right now, the user is storing "afati = afatiName".
+      //     If your backend needs the "afatiId", we find it here:
+      const selectedAfati = afatiList.find((af) => af.name === values.afati);
+
+      // 4b) Build the request body
+      const requestBody = {
+        eventType: "exam",
+        academicYear: values.academicYear,
+        studyYear: Number(values.studyYear),
+        // convert the date into "YYYY-MM-DD" string if needed
+        date: format(values.date, "yyyy-MM-dd"),
+        hour: values.hour,
+
+        // If your backend expects "afatiId", we pass the ID:
+        afatiId: selectedAfati ? selectedAfati.id : "",
+
+        // The user already selected these as IDs:
+        subjectId: values.subjectId,
+        instructorId: values.instructorId,
+      };
+
+      // 4c) POST /exams with the request body
+      await axiosInstance.post("/exams", requestBody);
+
+      // 4d) Show success toast
+      toast({
+        title: "Exam scheduled successfully",
+      });
+
+      // 4e) Reset the form
+      form.reset();
+    } catch (error) {
+      console.error("Error scheduling exam:", error);
+      toast({
+        title: "Error scheduling exam",
+        description: "Please check console or try again.",
+        variant: "destructive",
+      });
+    }
   }
 
   return (
@@ -223,7 +254,7 @@ const ExamsScheduleForm: React.FC = () => {
                       <SelectContent>
                         {subjects.map((sub) => (
                           <SelectItem key={sub.id} value={sub.id}>
-                            {sub.name} ({sub.code})
+                            {sub.name} 
                           </SelectItem>
                         ))}
                       </SelectContent>

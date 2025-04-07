@@ -1,17 +1,16 @@
-// weekViewExams.tsx
 import React from "react";
 import {
   format,
   addDays,
   startOfWeek,
   parseISO,
-  isSameDay
+  isSameDay,
 } from "date-fns";
 import { ExamItem } from "@/pages/Exams";
-import ScheduleEventComponent from "./ScheduleEventComponentExams";
+import ScheduleEventComponentExams from "./ScheduleEventComponentExams";
 
 interface WeekViewProps {
-  events: ExamItem[];  // now using ExamItem
+  events: ExamItem[];
   currentDate: Date;
 }
 
@@ -42,10 +41,11 @@ const WeekView: React.FC<WeekViewProps> = ({ events, currentDate }) => {
           <div className="bg-gray-100 p-2 text-center rounded-t-lg">
             <div className="text-lg font-bold">{dayInfo.dayLabel}</div>
           </div>
-          <div className="p-2 min-h-[120px] max-h-[500px] overflow-y-auto">
+          {/* Remove or modify overflow-y-auto if you don't want a scroll */}
+          <div className="p-2">
             {dayInfo.events.length > 0 ? (
               dayInfo.events.map((event) => (
-                <ScheduleEventComponent key={event.id} event={event} />
+                <ScheduleEventComponentExams key={event.id} event={event} />
               ))
             ) : (
               <div className="text-center text-gray-400 mt-2">No exams</div>

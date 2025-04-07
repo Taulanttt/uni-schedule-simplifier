@@ -270,7 +270,7 @@ const ExamsAdminPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               {/* afatiId => pick from the list of afatis */}
               <div>
-                <label className="block font-medium mb-1">Afati (Exam Period)</label>
+                <label className="block font-medium mb-1">Afati</label>
                 <select
                   {...register("afatiId")}
                   className="border p-1 rounded w-full"
@@ -339,7 +339,7 @@ const ExamsAdminPage: React.FC = () => {
                   <option value="">-- Select Subject --</option>
                   {subjects.map((sub) => (
                     <option key={sub.id} value={sub.id}>
-                      {sub.name} ({sub.code})
+                      {sub.name} 
                     </option>
                   ))}
                 </select>
