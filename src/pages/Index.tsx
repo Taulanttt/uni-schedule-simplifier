@@ -1,5 +1,3 @@
-// pages/index.tsx (or similar)
-
 import React, { useState, useEffect } from "react";
 import FilterPanel from "@/components/FilterPanel";
 import WeekView from "@/components/WeekView";
@@ -13,10 +11,10 @@ const Index: React.FC = () => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [view, setView] = useState<"day" | "week">("week");
 
-  // Typed filter state
+  // Filter state
   const [filters, setFilters] = useState<FilterOptions>({
     academicYear: "2024/25",
-    semester: "All Semesters",
+    semester: "Verore",
     yearOfStudy: "Year 1",
   });
 
@@ -36,7 +34,7 @@ const Index: React.FC = () => {
     fetchSchedules();
   }, []);
 
-  // Filter schedules
+  // Filter schedules based on user selections
   const filteredSchedules = schedules.filter((item) => {
     // Filter by academicYear if not "All Semesters"/"All Years"
     if (
@@ -66,7 +64,7 @@ const Index: React.FC = () => {
   });
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col">
       {/* Top: FilterPanel + day/week toggle */}
       <div className="flex flex-col md:flex-row items-center justify-between mb-4 gap-4">
         <FilterPanel filters={filters} setFilters={setFilters} compact />
@@ -106,6 +104,7 @@ const Index: React.FC = () => {
         )}
       </div>
 
+      {/* Legend */}
       <LegendComponent />
     </div>
   );
