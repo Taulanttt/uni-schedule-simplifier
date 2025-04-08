@@ -20,9 +20,9 @@ const queryClient = new QueryClient();
 function getPageTitle(pathname: string) {
   switch (pathname) {
     case "/":
-      return "Lectures Schedule";
+      return "Orari i Ligjeratave dhe Ushtrimeve";
     case "/exams":
-      return "Exams Schedule";
+      return "Orari i Provimeve";
     default:
       return "Schedule";
   }

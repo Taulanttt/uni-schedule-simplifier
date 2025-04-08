@@ -20,28 +20,28 @@ const AdminLogin: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // e.g. POST /auth/login with { email, password }
+      // p.sh. POST /auth/login me { email, password }
       const res = await axiosInstance.post("/auth/login", {
         email: username,
         password: password,
       });
 
-      // store token in localStorage
-      const { token, user } = res.data; 
+      // Ruajmë token në localStorage
+      const { token, user } = res.data;
       localStorage.setItem("token", token);
 
       toast({
-        title: "Login Successful",
-        description: `Welcome, ${user.name}`,
+        title: "Hyrja u realizua me sukses",
+        description: `Mirë se erdhe, ${user.name}`,
       });
 
-      // Now we can navigate to /admin
+      // Tani mund të lëvizim te /admin
       navigate("/admin");
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("Gabim gjatë hyrjes:", error);
       toast({
-        title: "Login Failed",
-        description: "Invalid credentials. Try again.",
+        title: "Hyrja dështoi",
+        description: "Të dhënat e futura janë të pasakta. Provoni përsëri.",
         variant: "destructive",
       });
     } finally {
@@ -53,16 +53,16 @@ const AdminLogin: React.FC = () => {
     <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-md space-y-8 rounded-xl bg-white p-8 shadow-lg">
         <div className="text-center">
-          <h1 className="text-2xl font-bold tracking-tight">Admin Login</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Hyrja si Admin</h1>
           <p className="mt-2 text-sm text-gray-500">
-            Sign in to access the admin dashboard
+            Kyçuni për të hyrë në panelin administrativ
           </p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Email</Label>
+              <Label htmlFor="username">Email-i</Label>
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                   <User className="h-5 w-5 text-gray-400" />
@@ -80,7 +80,7 @@ const AdminLogin: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Fjalëkalimi</Label>
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                   <Lock className="h-5 w-5 text-gray-400" />
@@ -88,7 +88,7 @@ const AdminLogin: React.FC = () => {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="password"
+                  placeholder="fjalëkalimi"
                   className="pl-10"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -99,7 +99,7 @@ const AdminLogin: React.FC = () => {
           </div>
 
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Signing in..." : "Sign in"}
+            {isLoading ? "Duke u kyçur..." : "Kyçu"}
           </Button>
         </form>
       </div>

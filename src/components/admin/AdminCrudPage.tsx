@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axiosInstance from "@/utils/axiosInstance";
 import { useForm } from "react-hook-form";
 
-// The possible resources, now includes "afati"
+// Llojet e burimeve
 type ResourceType =
   | "semesters"
   | "instructors"
@@ -10,7 +10,7 @@ type ResourceType =
   | "class-locations"
   | "afati";
 
-// Basic shapes
+// Format bazë
 interface Semester {
   id: string;
   name: string;
@@ -33,7 +33,7 @@ interface Afati {
   name: string;
 }
 
-// A generic union of data items
+// Unioni i artikujve
 type ResourceItem = Semester | Instructor | Subject | ClassLocation | Afati;
 
 const AdminCrudPage: React.FC = () => {
@@ -41,26 +41,26 @@ const AdminCrudPage: React.FC = () => {
   const [items, setItems] = useState<ResourceItem[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // For Create/Edit form
+  // Form për Krijim / Përditësim
   const { register, handleSubmit, reset, setValue } = useForm<any>();
 
-  // "edit mode": store the current item ID
+  // ID e artikullit që po editojmë
   const [editId, setEditId] = useState<string | null>(null);
 
-  // 1) Fetch items from the selected resource
+  // 1) Marrim artikujt e burimit
   async function fetchItems() {
     setLoading(true);
     try {
       const res = await axiosInstance.get(`/${resource}`);
       setItems(res.data);
     } catch (error) {
-      console.error("Fetch error:", error);
+      console.error("Gabim në marrjen e të dhënave:", error);
     } finally {
       setLoading(false);
     }
   }
 
-  // 2) On resource change → refetch
+  // 2) Kur ndryshon burimi => rifresko
   useEffect(() => {
     fetchItems();
     setEditId(null);
@@ -68,7 +68,7 @@ const AdminCrudPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resource]);
 
-  // 3) Handle Create or Update
+  // 3) Ruaj (Create ose Update)
   const onSubmit = async (data: any) => {
     try {
       if (editId) {
@@ -82,15 +82,15 @@ const AdminCrudPage: React.FC = () => {
       reset({});
       setEditId(null);
     } catch (error) {
-      console.error("Save error:", error);
+      console.error("Gabim në ruajtje:", error);
     }
   };
 
-  // 4) Start editing
+  // 4) Fillo Edit
   const startEdit = (item: ResourceItem) => {
     setEditId((item as any).id);
 
-    // Fill the form with existing item fields
+    // Mbush formën me fushat ekzistuese
     switch (resource) {
       case "semesters":
         setValue("name", (item as Semester).name);
@@ -111,27 +111,27 @@ const AdminCrudPage: React.FC = () => {
     }
   };
 
-  // 5) Delete
+  // 5) Fshij
   const deleteItem = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this item?")) return;
+    if (!window.confirm("A jeni i sigurt që doni ta fshini këtë artikull?")) return;
     try {
       await axiosInstance.delete(`/${resource}/${id}`);
       fetchItems();
     } catch (error) {
-      console.error("Delete error:", error);
+      console.error("Gabim në fshirje:", error);
     }
   };
 
-  // 6) Render the correct form fields
+  // 6) Fushat e formës sipas burimit
   function renderFormFields() {
     switch (resource) {
       case "semesters":
         return (
           <>
-            <label className="block font-medium mt-2">Name</label>
+            <label className="block font-medium mt-2">Emri i Semestrit</label>
             <input
               {...register("name")}
-              placeholder="e.g. Fall"
+              placeholder="p.sh. Vjeshta"
               className="border px-3 py-1 rounded w-full"
             />
           </>
@@ -139,26 +139,26 @@ const AdminCrudPage: React.FC = () => {
       case "instructors":
         return (
           <>
-            <label className="block font-medium mt-2">Name</label>
+            <label className="block font-medium mt-2">Emri i Profesorit</label>
             <input
               {...register("name")}
-              placeholder="Prof. John Doe"
+              placeholder="p.sh. Prof. John Doe"
               className="border px-3 py-1 rounded w-full"
             />
-            <label className="block font-medium mt-2">Role</label>
+            <label className="block font-medium mt-2">Roli</label>
             <select {...register("role")} className="border px-3 py-1 rounded w-full">
-              <option value="assistant">assistant</option>
-              <option value="professor">professor</option>
+              <option value="assistant">Asistent</option>
+              <option value="professor">Profesor</option>
             </select>
           </>
         );
       case "subjects":
         return (
           <>
-            <label className="block font-medium mt-2">Name</label>
+            <label className="block font-medium mt-2">Emri i Lëndës</label>
             <input
               {...register("name")}
-              placeholder="Matematika 1"
+              placeholder="p.sh. Matematika 1"
               className="border px-3 py-1 rounded w-full"
             />
           </>
@@ -166,10 +166,10 @@ const AdminCrudPage: React.FC = () => {
       case "class-locations":
         return (
           <>
-            <label className="block font-medium mt-2">Room Name</label>
+            <label className="block font-medium mt-2">Emri i Sallës</label>
             <input
               {...register("roomName")}
-              placeholder="Room 205"
+              placeholder="p.sh. Salla 205"
               className="border px-3 py-1 rounded w-full"
             />
           </>
@@ -177,10 +177,10 @@ const AdminCrudPage: React.FC = () => {
       case "afati":
         return (
           <>
-            <label className="block font-medium mt-2">Name</label>
+            <label className="block font-medium mt-2">Emri i Afatit</label>
             <input
               {...register("name")}
-              placeholder="e.g. June"
+              placeholder="p.sh. Qershor"
               className="border px-3 py-1 rounded w-full"
             />
           </>
@@ -188,27 +188,28 @@ const AdminCrudPage: React.FC = () => {
     }
   }
 
-  // 7) Table columns
+  // 7) Kokat e tabelës
   function renderTableHeaders() {
     switch (resource) {
       case "semesters":
-        return <th className="p-2 text-left">Name</th>;
+        return <th className="p-2 text-left">Emri</th>;
       case "instructors":
         return (
           <>
-            <th className="p-2 text-left">Name</th>
-            <th className="p-2 text-left">Role</th>
+            <th className="p-2 text-left">Emri</th>
+            <th className="p-2 text-left">Roli</th>
           </>
         );
       case "subjects":
-        return <th className="p-2 text-left">Name</th>;
+        return <th className="p-2 text-left">Emri</th>;
       case "class-locations":
-        return <th className="p-2 text-left">Room Name</th>;
+        return <th className="p-2 text-left">Salla</th>;
       case "afati":
-        return <th className="p-2 text-left">Name</th>;
+        return <th className="p-2 text-left">Emri</th>;
     }
   }
 
+  // Shfaq rreshtat e tabelës
   function renderTableRow(item: ResourceItem) {
     switch (resource) {
       case "semesters": {
@@ -241,40 +242,40 @@ const AdminCrudPage: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto p-6">
-      {/* Heading */}
-      <h1 className="text-2xl font-bold mb-4">Admin CRUD Page</h1>
+      {/* Titulli */}
+      <h1 className="text-2xl font-bold mb-4">Faqja Admin CRUD</h1>
 
-      {/* Resource Selector */}
+      {/* Zgjedhja e burimit */}
       <div className="mb-6 bg-white p-4 rounded shadow">
-        <label className="font-semibold mr-2">Select Resource:</label>
+        <label className="font-semibold mr-2">Zgjidh Burimin:</label>
         <select
           value={resource}
           onChange={(e) => setResource(e.target.value as ResourceType)}
           className="border px-3 py-1 rounded"
         >
-          <option value="semesters">Semesters</option>
-          <option value="instructors">Instructors</option>
-          <option value="subjects">Subjects</option>
-          <option value="class-locations">Class Locations</option>
-          <option value="afati">Afati</option>
+          <option value="semesters">Semestrat</option>
+          <option value="instructors">Profesorët</option>
+          <option value="subjects">Lëndët</option>
+          <option value="class-locations">Sallat</option>
+          <option value="afati">Afatet</option>
         </select>
       </div>
 
-      {/* Create / Edit Form */}
+      {/* Forma për Krijim / Edit */}
       <div className="mb-6 bg-white p-4 rounded shadow">
         <h2 className="text-lg font-semibold mb-3">
-          {editId ? "Edit Item" : "Create New Item"}
+          {editId ? "Përditëso Artikullin" : "Krijo Artikull të Ri"}
         </h2>
         <form onSubmit={handleSubmit(onSubmit)}>
           {renderFormFields()}
 
-          {/* Buttons */}
+          {/* Butonat */}
           <div className="mt-4 space-x-2">
             <button
               type="submit"
               className="bg-blue-600 text-white px-4 py-1.5 rounded hover:bg-blue-700 transition"
             >
-              {editId ? "Update" : "Create"}
+              {editId ? "Përditëso" : "Krijo"}
             </button>
             {editId && (
               <button
@@ -285,26 +286,26 @@ const AdminCrudPage: React.FC = () => {
                 }}
                 className="bg-gray-400 text-white px-4 py-1.5 rounded hover:bg-gray-500 transition"
               >
-                Cancel
+                Anulo
               </button>
             )}
           </div>
         </form>
       </div>
 
-      {/* Items Table */}
+      {/* Tabela e artikujve ekzistues */}
       <div className="bg-white p-4 rounded shadow">
-        <h2 className="text-lg font-semibold mb-3">Existing Items</h2>
+        <h2 className="text-lg font-semibold mb-3">Artikujt Ekzistues</h2>
 
         {loading ? (
-          <p>Loading {resource}...</p>
+          <p>Duke ngarkuar {resource}...</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full border text-sm">
               <thead>
                 <tr className="bg-gray-100 border-b">
                   {renderTableHeaders()}
-                  <th className="p-2 text-left">Actions</th>
+                  <th className="p-2 text-left">Veprime</th>
                 </tr>
               </thead>
               <tbody>
@@ -316,13 +317,13 @@ const AdminCrudPage: React.FC = () => {
                         onClick={() => startEdit(item)}
                         className="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 transition"
                       >
-                        Edit
+                        Edito
                       </button>
                       <button
                         onClick={() => deleteItem((item as any).id)}
                         className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700 transition"
                       >
-                        Delete
+                        Fshij
                       </button>
                     </td>
                   </tr>
@@ -341,7 +342,7 @@ const AdminCrudPage: React.FC = () => {
                       }
                       className="p-2 text-center text-gray-500"
                     >
-                      No items found
+                      Asnjë artikull nuk u gjet
                     </td>
                   </tr>
                 )}

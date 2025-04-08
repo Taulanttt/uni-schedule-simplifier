@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -7,7 +7,6 @@ import axiosInstance from "@/utils/axiosInstance";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
@@ -18,12 +17,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-// 1) Define Zod schema
-// We keep it simple: recipients, subject, message
+// 1) Skema e validimit (Zod)
 const formSchema = z.object({
-  recipients: z.string().min(1, "At least one recipient is required"),
-  subject: z.string().min(5, "Subject must be at least 5 characters"),
-  message: z.string().min(10, "Message must be at least 10 characters"),
+  recipients: z.string().min(1, "Të paktën një marrës është i nevojshëm"),
+  subject: z.string().min(5, "Subjekti duhet të ketë të paktën 5 karaktere"),
+  message: z.string().min(10, "Mesazhi duhet të ketë të paktën 10 karaktere"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -41,16 +39,15 @@ const NotificationForm: React.FC = () => {
     },
   });
 
-  // 3) On Submit → post to /email/send
+  // 3) Kur dërgohet formulari → POST në /email/send
   const onSubmit = async (data: FormValues) => {
     try {
-      // Convert 'recipients' string into an array
-      // e.g. "abc@example.com, def@example.com" => ["abc@example.com","def@example.com"]
+      // Ndaj adresat e email-it nga string në array
       const toArray = data.recipients
-        .split(/[\s,]+/) // split by spaces or commas
+        .split(/[\s,]+/)
         .filter(Boolean);
 
-      // POST with axiosInstance
+      // POST për dërgimin e email-it
       await axiosInstance.post("/email/send", {
         to: toArray,
         subject: data.subject,
@@ -58,16 +55,16 @@ const NotificationForm: React.FC = () => {
       });
 
       toast({
-        title: "Email Sent",
-        description: `Your email has been sent to: ${toArray.join(", ")}`,
+        title: "Email-i u dërgua me sukses",
+        description: `Email-i është dërguar te: ${toArray.join(", ")}`,
       });
 
       form.reset();
     } catch (error) {
-      console.error("Email send error:", error);
+      console.error("Gabim në dërgimin e email-it:", error);
       toast({
-        title: "Error",
-        description: "Failed to send email. Check console.",
+        title: "Gabim",
+        description: "Dërgimi i email-it dështoi. Kontrollo konsolën.",
         variant: "destructive",
       });
     }
@@ -75,20 +72,20 @@ const NotificationForm: React.FC = () => {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow max-w-xl mx-auto">
-      <h2 className="text-xl font-semibold mb-4">Send Email Notification</h2>
+      <h2 className="text-xl font-semibold mb-4">Dërgo Njoftim me Email</h2>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Recipients */}
+          {/* Marrësit */}
           <FormField
             control={form.control}
             name="recipients"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Recipients</FormLabel>
+                <FormLabel>Marrësit</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="Paste or type email addresses (comma or space separated)"
+                    placeholder="Shkruaj adresat e email-it të ndara me presje ose hapësirë"
                     className="h-24"
                     {...field}
                   />
@@ -98,31 +95,31 @@ const NotificationForm: React.FC = () => {
             )}
           />
 
-          {/* Subject */}
+          {/* Subjekti */}
           <FormField
             control={form.control}
             name="subject"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Subject</FormLabel>
+                <FormLabel>Subjekti</FormLabel>
                 <FormControl>
-                  <Input placeholder="Class Cancellation" {...field} />
+                  <Input placeholder="Anulimi i ligjëratës" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
 
-          {/* Message */}
+          {/* Mesazhi */}
           <FormField
             control={form.control}
             name="message"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Message</FormLabel>
+                <FormLabel>Mesazhi</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="Type your email body here..."
+                    placeholder="Shkruani përmbajtjen e mesazhit këtu..."
                     className="h-32"
                     {...field}
                   />
@@ -132,9 +129,9 @@ const NotificationForm: React.FC = () => {
             )}
           />
 
-          {/* Send Button */}
+          {/* Butoni për dërgim */}
           <Button type="submit" className="w-full md:w-auto">
-            Send Email
+            Dërgo Email
           </Button>
         </form>
       </Form>

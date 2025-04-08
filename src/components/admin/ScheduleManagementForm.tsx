@@ -30,26 +30,24 @@ import {
 } from "@/components/ui/popover";
 import { ChevronsUpDown } from "lucide-react";
 
-//
-// 1) Validation schema
-//
+// 1) Validimi në shqip
 const formSchema = z.object({
-  academicYear: z.string().min(1, { message: "Academic year is required" }),
-  studyYear: z.string().min(1, { message: "Study year is required" }),
-  semesterId: z.string().min(1, { message: "Semester is required" }),
-  subjectId: z.string().min(1, { message: "Subject is required" }),
-  instructorId: z.string().min(1, { message: "Instructor is required" }),
-  eventType: z.string().min(1, { message: "Event type is required" }),
-  classroom: z.string().min(1, { message: "Classroom is required" }),
-  startTime: z.string().min(1, { message: "Start time is required" }),
-  endTime: z.string().min(1, { message: "End time is required" }),
+  academicYear: z.string().min(1, { message: "Viti akademik është i detyrueshëm" }),
+  studyYear: z.string().min(1, { message: "Viti i studimit është i detyrueshëm" }),
+  semesterId: z.string().min(1, { message: "Semestri është i detyrueshëm" }),
+  subjectId: z.string().min(1, { message: "Lënda është e detyrueshme" }),
+  instructorId: z.string().min(1, { message: "Profesori është i detyrueshëm" }),
+  eventType: z.string().min(1, { message: "Lloji i orarit është i detyrueshëm" }),
+  classroom: z.string().min(1, { message: "Salla është e detyrueshme" }),
+  startTime: z.string().min(1, { message: "Ora e fillimit është e detyrueshme" }),
+  endTime: z.string().min(1, { message: "Ora e përfundimit është e detyrueshme" }),
   daysOfWeek: z.array(z.string()).min(1, {
-    message: "At least one day must be selected",
+    message: "Duhet të zgjidhni të paktën një ditë",
   }),
 });
 type FormValues = z.infer<typeof formSchema>;
 
-// 2) Data shape for dropdown fetch
+// Të dhënat për dropdown
 interface SubjectData {
   id: string;
   name: string;
@@ -67,19 +65,14 @@ interface LocationData {
   roomName: string;
 }
 
-//
-// 3) The component
-//
 const ScheduleManagementForm: React.FC = () => {
   const { toast } = useToast();
 
-  // State for dropdown data
   const [subjects, setSubjects] = useState<SubjectData[]>([]);
   const [instructors, setInstructors] = useState<InstructorData[]>([]);
   const [semesters, setSemesters] = useState<SemesterData[]>([]);
   const [locations, setLocations] = useState<LocationData[]>([]);
 
-  // 4) React Hook Form config
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -96,7 +89,6 @@ const ScheduleManagementForm: React.FC = () => {
     },
   });
 
-  // 5) On mount, fetch dropdown data
   useEffect(() => {
     async function fetchData() {
       try {
@@ -111,331 +103,218 @@ const ScheduleManagementForm: React.FC = () => {
         setSemesters(semRes.data);
         setLocations(locRes.data);
       } catch (error) {
-        console.error("Error fetching dropdown data:", error);
+        console.error("Gabim gjatë marrjes së të dhënave:", error);
       }
     }
     fetchData();
   }, []);
 
-  // 6) Submission => POST /schedules
   const onSubmit = async (data: FormValues) => {
     try {
-      const scheduleToPost = {
-        ...data,
-        studyYear: Number(data.studyYear), // parse if needed
-      };
-
-      const res = await axiosInstance.post("/schedules", scheduleToPost);
-      console.log("Schedule created:", res.data);
+      const payload = { ...data, studyYear: Number(data.studyYear) };
+      await axiosInstance.post("/schedules", payload);
 
       toast({
-        title: "Schedule Created",
-        description: "Your schedule event was added successfully!",
+        title: "Orari u shtua me sukses",
+        description: "Ngjarja u regjistrua me sukses në sistem.",
       });
 
       form.reset();
     } catch (error) {
-      console.error("Error creating schedule:", error);
+      console.error("Gabim në krijimin e orarit:", error);
       toast({
-        title: "Error",
-        description: "Failed to create schedule. Check console.",
+        title: "Gabim",
+        description: "Nuk u arrit të shtohet orari. Kontrolloni konsolen.",
         variant: "destructive",
       });
     }
   };
 
-  //
-  // 7) The Layout
-  //
   return (
     <div className="bg-white p-8 md:p-10 rounded-lg shadow max-w-5xl mx-auto">
-      {/* Heading */}
-      <h2 className="text-2xl font-bold mb-6 text-center">Schedule Management</h2>
+      <h2 className="text-2xl font-bold mb-6 text-center">Menaxhimi i Orarit</h2>
       <p className="text-gray-600 mb-6 text-center">
-        Create or update a schedule event for a class or exam
+        Shto ose përditëso një ngjarje në orar për një klasë apo provim.
       </p>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          {/* ROW 1: (Academic Year, Study Year, Semester) */}
+          {/* Rreshti 1 */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Academic Year */}
-            <FormField
-              control={form.control}
-              name="academicYear"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Academic Year</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select academic year" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="2023/24">2023/24</SelectItem>
-                      <SelectItem value="2024/25">2024/25</SelectItem>
-                      <SelectItem value="2025/26">2025/26</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Study Year */}
-            <FormField
-              control={form.control}
-              name="studyYear"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Study Year</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select study year" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="1">Year 1</SelectItem>
-                      <SelectItem value="2">Year 2</SelectItem>
-                      <SelectItem value="3">Year 3</SelectItem>
-                      <SelectItem value="4">Year 4</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Semester */}
-            <FormField
-              control={form.control}
-              name="semesterId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Semester</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Semester" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {semesters.map((sem) => (
-                        <SelectItem key={sem.id} value={sem.id}>
-                          {sem.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          {/* ROW 2: (Subject, Instructor) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Subject */}
-            <FormField
-              control={form.control}
-              name="subjectId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Subject</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Subject" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {subjects.map((sub) => (
-                        <SelectItem key={sub.id} value={sub.id}>
-                          {sub.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Instructor */}
-            <FormField
-              control={form.control}
-              name="instructorId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Instructor</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Instructor" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {instructors.map((inst) => (
-                        <SelectItem key={inst.id} value={inst.id}>
-                          {inst.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          {/* ROW 3: (Event Type, Classroom) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Event Type */}
-            <FormField
-              control={form.control}
-              name="eventType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Event Type</FormLabel>
+            <FormField name="academicYear" control={form.control} render={({ field }) => (
+              <FormItem>
+                <FormLabel>Viti Akademik</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
-                    <Input placeholder="e.g. Lecture, Lab Group 1" {...field} />
+                    <SelectTrigger><SelectValue placeholder="Zgjidh vitin" /></SelectTrigger>
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Classroom */}
-            <FormField
-              control={form.control}
-              name="classroom"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Classroom</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Classroom" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {locations.map((loc) => (
-                        <SelectItem key={loc.id} value={loc.id}>
-                          {loc.roomName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  <SelectContent>
+                    <SelectItem value="2023/24">2023/24</SelectItem>
+                    <SelectItem value="2024/25">2024/25</SelectItem>
+                    <SelectItem value="2025/26">2025/26</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField name="studyYear" control={form.control} render={({ field }) => (
+              <FormItem>
+                <FormLabel>Viti i Studimit</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger><SelectValue placeholder="Zgjidh vitin" /></SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="1">Viti 1</SelectItem>
+                    <SelectItem value="2">Viti 2</SelectItem>
+                    <SelectItem value="3">Viti 3</SelectItem>
+                    <SelectItem value="4">Viti 4</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField name="semesterId" control={form.control} render={({ field }) => (
+              <FormItem>
+                <FormLabel>Semestri</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger><SelectValue placeholder="Zgjidh semestrin" /></SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {semesters.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )} />
           </div>
 
-          {/* ROW 4: (StartTime/EndTime) + (DaysOfWeek) */}
+          {/* Rreshti 2 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Start/End Times in one column */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Start Time */}
-              <FormField
-                control={form.control}
-                name="startTime"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Start Time</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <FormField name="subjectId" control={form.control} render={({ field }) => (
+              <FormItem>
+                <FormLabel>Lënda</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger><SelectValue placeholder="Zgjidh lëndën" /></SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {subjects.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField name="instructorId" control={form.control} render={({ field }) => (
+              <FormItem>
+                <FormLabel>Profesori</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger><SelectValue placeholder="Zgjidh profesorin" /></SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {instructors.map((i) => (
+                      <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )} />
+          </div>
 
-              {/* End Time */}
-              <FormField
-                control={form.control}
-                name="endTime"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>End Time</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          {/* Rreshti 3 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField name="eventType" control={form.control} render={({ field }) => (
+              <FormItem>
+                <FormLabel>Lloji i Orës</FormLabel>
+                <FormControl><Input placeholder="p.sh. Ligjëratë, Grup 1" {...field} /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField name="classroom" control={form.control} render={({ field }) => (
+              <FormItem>
+                <FormLabel>Salla</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger><SelectValue placeholder="Zgjidh sallën" /></SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {locations.map((l) => (
+                      <SelectItem key={l.id} value={l.id}>{l.roomName}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )} />
+          </div>
+
+          {/* Rreshti 4 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField name="startTime" control={form.control} render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Ora e Fillimit</FormLabel>
+                  <FormControl><Input type="time" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField name="endTime" control={form.control} render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Ora e Përfundimit</FormLabel>
+                  <FormControl><Input type="time" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
             </div>
 
-            {/* DaysOfWeek in the other column */}
-            <FormField
-              control={form.control}
-              name="daysOfWeek"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Days of Week</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        className="w-full justify-between"
-                      >
-                        {field.value.length > 0
-                          ? field.value.join(", ")
-                          : "Select days"}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50 shrink-0" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-2 space-y-2">
-                      {[
-                        "Monday",
-                        "Tuesday",
-                        "Wednesday",
-                        "Thursday",
-                        "Friday",
-                        "Saturday",
-                        "Sunday",
-                      ].map((day) => {
-                        const isChecked = field.value.includes(day);
-                        return (
-                          <FormItem
-                            key={day}
-                            className="flex items-center space-x-2"
-                          >
-                            <FormControl>
-                              <Checkbox
-                                checked={isChecked}
-                                onCheckedChange={(checked) => {
-                                  if (checked) {
-                                    field.onChange([...field.value, day]);
-                                  } else {
-                                    field.onChange(
-                                      field.value.filter((d) => d !== day)
-                                    );
-                                  }
-                                }}
-                              />
-                            </FormControl>
-                            <Label className="text-sm">{day}</Label>
-                          </FormItem>
-                        );
-                      })}
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormField name="daysOfWeek" control={form.control} render={({ field }) => (
+              <FormItem>
+                <FormLabel>Ditët</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full justify-between">
+                      {field.value.length > 0 ? field.value.join(", ") : "Zgjidh ditët"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50 shrink-0" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-2 space-y-2">
+                    {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((day) => {
+                      const isChecked = field.value.includes(day);
+                      return (
+                        <FormItem key={day} className="flex items-center space-x-2">
+                          <FormControl>
+                            <Checkbox
+                              checked={isChecked}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  field.onChange([...field.value, day]);
+                                } else {
+                                  field.onChange(field.value.filter((d) => d !== day));
+                                }
+                              }}
+                            />
+                          </FormControl>
+                          <Label className="text-sm">{day}</Label>
+                        </FormItem>
+                      );
+                    })}
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )} />
           </div>
 
-          {/* Submit Button */}
+          {/* Submit */}
           <div className="flex justify-end">
-            <Button type="submit" className="px-8 py-3">
-              Add Event
-            </Button>
+            <Button type="submit" className="px-8 py-3">Shto Ngjarjen</Button>
           </div>
         </form>
       </Form>

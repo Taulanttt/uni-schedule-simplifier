@@ -7,7 +7,7 @@ import ScheduleManagementForm from "./ScheduleManagementForm";
 import ExamsScheduleForm from "./ExamsScheduleForm";
 import AdminCrudPage from "./AdminCrudPage";
 import SchedulesAdminPage from "./SchedulesAdminPage";
-import ExamsAdminPage from "./ExamsAdminPage"; // <== newly added
+import ExamsAdminPage from "./ExamsAdminPage"; // newly added
 
 type AdminPage =
   | "notifications"
@@ -28,17 +28,17 @@ const AdminDashboard: React.FC = () => {
   const getPageTitle = () => {
     switch (currentPage) {
       case "schedule":
-        return "Schedule Management";
+        return "Menaxhimi i Orarit";
       case "notifications":
-        return "Send Student Notification";
+        return "Dërgo Njoftime për Studentët";
       case "exams":
-        return "Exams Schedule";
+        return "Orari i Provimeve";
       case "crud":
-        return "CRUD Management";
+        return "Menaxhimi CRUD";
       case "schedulesAdmin":
-        return "Schedules Admin";
+        return "Admin i Orareve";
       case "examsAdmin":
-        return "Exams Admin";
+        return "Admin i Provimeve";
     }
   };
 

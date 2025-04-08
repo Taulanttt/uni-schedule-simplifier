@@ -3,14 +3,14 @@ import axiosInstance from "@/utils/axiosInstance";
 import { useForm } from "react-hook-form";
 import FilterPanel from "@/components/FilterPanel";
 
-// The filter interface from your FilterPanel
+// Struktura e filtrit
 interface FilterOptions {
   academicYear: string;
   semester: string;
   yearOfStudy: string;
 }
 
-// The schedule interface
+// Formati i një orari (Schedule)
 interface ScheduleItem {
   id: string;
   eventType: string;
@@ -23,14 +23,15 @@ interface ScheduleItem {
   instructorName: string;
   semesterName: string;
   locationName: string;
-  // foreign keys
+
+  // Foreign keys
   subjectId: string;
   instructorId: string;
   semesterId: string;
   classLocationId: string;
 }
 
-// For dropdown data
+// Për dropdown
 interface SubjectData {
   id: string;
   name: string;
@@ -50,10 +51,10 @@ interface ClassLocationData {
   roomName: string;
 }
 
-// We can define some academic year options:
+// Vitet akademike e mundshme
 const ACADEMIC_YEARS = ["2023/24", "2024/25", "2025/26"];
 
-// The 7 days for multi-select
+// Ditët e javës (mund t'i përktheni po të doni)
 const DAY_OPTIONS = [
   "Monday",
   "Tuesday",
@@ -65,44 +66,44 @@ const DAY_OPTIONS = [
 ];
 
 const SchedulesAdminPage: React.FC = () => {
-  // State for all schedules
+  // Lista e orareve
   const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Filter state
+  // Filtrat e orareve
   const [filters, setFilters] = useState<FilterOptions>({
     academicYear: "All Years",
     semester: "All Semesters",
     yearOfStudy: "All Years",
   });
 
-  // For editing a schedule (id + modal toggle)
+  // Gjendja e modalit + ID e orarit që editohet
   const [editId, setEditId] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  // React Hook Form
+  // Hook Form
   const { register, handleSubmit, reset, setValue } = useForm<any>();
 
-  // Dropdown data states
+  // Të dhëna për dropdown
   const [subjects, setSubjects] = useState<SubjectData[]>([]);
   const [instructors, setInstructors] = useState<InstructorData[]>([]);
   const [semesters, setSemesters] = useState<SemesterData[]>([]);
   const [locations, setLocations] = useState<ClassLocationData[]>([]);
 
-  // Fetch schedules
+  // 1) Marrim oraret
   async function fetchSchedules() {
     setLoading(true);
     try {
       const res = await axiosInstance.get<ScheduleItem[]>("/schedules");
       setSchedules(res.data);
     } catch (error) {
-      console.error("Error fetching schedules:", error);
+      console.error("Gabim gjatë marrjes së orareve:", error);
     } finally {
       setLoading(false);
     }
   }
 
-  // Fetch dropdown data for subjects, instructors, etc.
+  // 2) Marrim të dhënat për subject, instructor, semester, location
   async function fetchDropdownData() {
     try {
       const [subRes, insRes, semRes, locRes] = await Promise.all([
@@ -116,7 +117,7 @@ const SchedulesAdminPage: React.FC = () => {
       setSemesters(semRes.data);
       setLocations(locRes.data);
     } catch (error) {
-      console.error("Error fetching dropdown data:", error);
+      console.error("Gabim gjatë marrjes së dropdown-ve:", error);
     }
   }
 
@@ -125,7 +126,7 @@ const SchedulesAdminPage: React.FC = () => {
     fetchDropdownData();
   }, []);
 
-  // 1) Filter schedules client-side
+  // Filterojmë oraret client-side
   const filteredSchedules = schedules.filter((sch) => {
     if (
       filters.academicYear !== "All Years" &&
@@ -150,11 +151,11 @@ const SchedulesAdminPage: React.FC = () => {
     return true;
   });
 
-  // 2) Start editing => fill form & show modal
+  // 3) Fillojmë editimin => hapim modalin
   const startEdit = (sch: ScheduleItem) => {
     setEditId(sch.id);
 
-    // fill the form fields
+    // Mbushim formularin me vlerat ekzistuese
     setValue("eventType", sch.eventType);
     setValue("startTime", sch.startTime);
     setValue("endTime", sch.endTime);
@@ -166,22 +167,21 @@ const SchedulesAdminPage: React.FC = () => {
     setValue("classLocationId", sch.classLocationId);
     setValue("daysOfWeek", sch.daysOfWeek);
 
-    // Show modal
     setShowEditModal(true);
   };
 
-  // 3) Cancel edit => close modal
+  // 4) Mbyllja e modalit
   const closeModal = () => {
     setEditId(null);
     reset({});
     setShowEditModal(false);
   };
 
-  // 4) On submit => PUT
+  // 5) Ruaj me PUT
   const onSubmit = async (data: any) => {
     if (!editId) return;
     try {
-      // daysOfWeek might be a single string if user only selects 1 option, or an array if multiple
+      // Mund të zgjidhen disa ditë, ose vetëm një
       let daysArr = data.daysOfWeek;
       if (!daysArr) daysArr = [];
       if (typeof daysArr === "string") {
@@ -206,50 +206,50 @@ const SchedulesAdminPage: React.FC = () => {
       fetchSchedules();
       closeModal();
     } catch (error) {
-      console.error("Update error:", error);
+      console.error("Gabim gjatë përditësimit:", error);
     }
   };
 
-  // 5) Delete
+  // 6) Fshirja
   const deleteSchedule = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this schedule?")) return;
+    if (!window.confirm("A jeni i sigurt që dëshironi ta fshini këtë orar?")) return;
     try {
       await axiosInstance.delete(`/schedules/${id}`);
       fetchSchedules();
     } catch (error) {
-      console.error("Delete error:", error);
+      console.error("Gabim gjatë fshirjes:", error);
     }
   };
 
   return (
     <div className="max-w-6xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Schedules Admin</h1>
+      <h1 className="text-2xl font-bold mb-4">Admin i Orareve</h1>
 
-      {/* Filter panel */}
+      {/* Paneli i filtrit */}
       <div className="mb-6">
         <FilterPanel filters={filters} setFilters={setFilters} />
       </div>
 
-      {/* Table of schedules */}
+      {/* Tabela e orareve */}
       <div className="bg-white p-4 rounded shadow">
-        <h2 className="text-lg font-semibold mb-3">All Schedules</h2>
+        <h2 className="text-lg font-semibold mb-3">Të Gjitha Oraret</h2>
         {loading ? (
-          <p>Loading schedules...</p>
+          <p>Po ngarkohet lista e orareve...</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full border text-sm">
               <thead>
                 <tr className="bg-gray-100 border-b">
-                  <th className="p-2 text-left">Event Type</th>
-                  <th className="p-2 text-left">Time</th>
-                  <th className="p-2 text-left">Days</th>
-                  <th className="p-2 text-left">AcademicYear</th>
-                  <th className="p-2 text-left">StudyYear</th>
-                  <th className="p-2 text-left">Subject</th>
-                  <th className="p-2 text-left">Instructor</th>
-                  <th className="p-2 text-left">Semester</th>
-                  <th className="p-2 text-left">Location</th>
-                  <th className="p-2 text-left">Actions</th>
+                  <th className="p-2 text-left">Lloji i Ngjarjes</th>
+                  <th className="p-2 text-left">Ora</th>
+                  <th className="p-2 text-left">Ditët</th>
+                  <th className="p-2 text-left">Viti Akademik</th>
+                  <th className="p-2 text-left">Viti Studimeve</th>
+                  <th className="p-2 text-left">Lënda</th>
+                  <th className="p-2 text-left">Profesori</th>
+                  <th className="p-2 text-left">Semestri</th>
+                  <th className="p-2 text-left">Salla</th>
+                  <th className="p-2 text-left">Veprime</th>
                 </tr>
               </thead>
               <tbody>
@@ -267,27 +267,27 @@ const SchedulesAdminPage: React.FC = () => {
                     <td className="p-2">{sch.semesterName}</td>
                     <td className="p-2">{sch.locationName}</td>
                     <td className="p-2">
-  <div className="flex space-x-2">
-    <button
-      onClick={() => startEdit(sch)}
-      className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
-    >
-      Edit
-    </button>
-    <button
-      onClick={() => deleteSchedule(sch.id)}
-      className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
-    >
-      Delete
-    </button>
-  </div>
-</td>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => startEdit(sch)}
+                          className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+                        >
+                          Edito
+                        </button>
+                        <button
+                          onClick={() => deleteSchedule(sch.id)}
+                          className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                        >
+                          Fshij
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
                 {filteredSchedules.length === 0 && (
                   <tr>
                     <td colSpan={10} className="p-2 text-center text-gray-500">
-                      No schedules found
+                      Asnjë orar nuk u gjet
                     </td>
                   </tr>
                 )}
@@ -297,14 +297,12 @@ const SchedulesAdminPage: React.FC = () => {
         )}
       </div>
 
-      {/* ------------------------------------------ */}
-      {/* EDIT SCHEDULE MODAL (showEditModal === true) */}
-      {/* ------------------------------------------ */}
+      {/* Modal-i për Editim (shfaqet veç kur showEditModal === true) */}
       {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          {/* Modal content */}
+          {/* Përmbajtja e modalit */}
           <div className="bg-white w-full max-w-2xl p-6 rounded shadow relative">
-            {/* Close button (X) */}
+            {/* Butoni i mbylljes (X) */}
             <button
               onClick={closeModal}
               className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
@@ -312,24 +310,24 @@ const SchedulesAdminPage: React.FC = () => {
               ✕
             </button>
 
-            <h2 className="text-lg font-semibold mb-4">Edit Schedule</h2>
+            <h2 className="text-lg font-semibold mb-4">Edito Orarin</h2>
             <form onSubmit={handleSubmit(onSubmit)}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                {/* eventType */}
+                {/* Lloji i eventit */}
                 <div>
-                  <label className="block font-medium mb-1">Event Type</label>
+                  <label className="block font-medium mb-1">Lloji i Ngjarjes</label>
                   <input
                     {...register("eventType")}
-                    placeholder="e.g. lab group1"
+                    placeholder="p.sh. ligjëratë, ushtrime grup1"
                     className="border p-1 rounded w-full"
                   />
                 </div>
 
-                {/* daysOfWeek (single or multiple) */}
+                {/* daysOfWeek (mund të jetë një ose disa) */}
                 <div>
-                  <label className="block font-medium mb-1">Day of Week</label>
+                  <label className="block font-medium mb-1">Dita e Javës</label>
                   <select {...register("daysOfWeek")} className="border p-1 rounded w-full">
-                    <option value="">-- Select Day --</option>
+                    <option value="">-- Zgjidh Ditën --</option>
                     {DAY_OPTIONS.map((day) => (
                       <option key={day} value={day}>
                         {day}
@@ -338,9 +336,9 @@ const SchedulesAdminPage: React.FC = () => {
                   </select>
                 </div>
 
-                {/* startTime */}
+                {/* Ora e fillimit */}
                 <div>
-                  <label className="block font-medium mb-1">Start Time</label>
+                  <label className="block font-medium mb-1">Ora e Fillimit</label>
                   <input
                     type="time"
                     {...register("startTime")}
@@ -348,9 +346,9 @@ const SchedulesAdminPage: React.FC = () => {
                   />
                 </div>
 
-                {/* endTime */}
+                {/* Ora e përfundimit */}
                 <div>
-                  <label className="block font-medium mb-1">End Time</label>
+                  <label className="block font-medium mb-1">Ora e Përfundimit</label>
                   <input
                     type="time"
                     {...register("endTime")}
@@ -358,14 +356,14 @@ const SchedulesAdminPage: React.FC = () => {
                   />
                 </div>
 
-                {/* academicYear -> dropdown */}
+                {/* Viti Akademik */}
                 <div>
-                  <label className="block font-medium mb-1">Academic Year</label>
+                  <label className="block font-medium mb-1">Viti Akademik</label>
                   <select
                     {...register("academicYear")}
                     className="border p-1 rounded w-full"
                   >
-                    <option value="">-- Select Year --</option>
+                    <option value="">-- Zgjidh Vitin --</option>
                     {ACADEMIC_YEARS.map((year) => (
                       <option key={year} value={year}>
                         {year}
@@ -374,25 +372,25 @@ const SchedulesAdminPage: React.FC = () => {
                   </select>
                 </div>
 
-                {/* studyYear -> numeric */}
+                {/* Viti i Studimeve */}
                 <div>
-                  <label className="block font-medium mb-1">Study Year</label>
+                  <label className="block font-medium mb-1">Viti i Studimeve</label>
                   <input
                     type="number"
                     {...register("studyYear")}
-                    placeholder="2"
+                    placeholder="p.sh. 2"
                     className="border p-1 rounded w-full"
                   />
                 </div>
 
-                {/* subjectId -> dropdown */}
+                {/* Lënda */}
                 <div>
-                  <label className="block font-medium mb-1">Subject</label>
+                  <label className="block font-medium mb-1">Lënda</label>
                   <select
                     {...register("subjectId")}
                     className="border p-1 rounded w-full"
                   >
-                    <option value="">-- Select Subject --</option>
+                    <option value="">-- Zgjidh Lëndën --</option>
                     {subjects.map((sub) => (
                       <option key={sub.id} value={sub.id}>
                         {sub.name}
@@ -401,14 +399,14 @@ const SchedulesAdminPage: React.FC = () => {
                   </select>
                 </div>
 
-                {/* instructorId -> dropdown */}
+                {/* Profesori */}
                 <div>
-                  <label className="block font-medium mb-1">Instructor</label>
+                  <label className="block font-medium mb-1">Profesori</label>
                   <select
                     {...register("instructorId")}
                     className="border p-1 rounded w-full"
                   >
-                    <option value="">-- Select Instructor --</option>
+                    <option value="">-- Zgjidh Profesorin --</option>
                     {instructors.map((inst) => (
                       <option key={inst.id} value={inst.id}>
                         {inst.name} ({inst.role})
@@ -417,14 +415,14 @@ const SchedulesAdminPage: React.FC = () => {
                   </select>
                 </div>
 
-                {/* semesterId -> dropdown */}
+                {/* Semestri */}
                 <div>
-                  <label className="block font-medium mb-1">Semester</label>
+                  <label className="block font-medium mb-1">Semestri</label>
                   <select
                     {...register("semesterId")}
                     className="border p-1 rounded w-full"
                   >
-                    <option value="">-- Select Semester --</option>
+                    <option value="">-- Zgjidh Semestrin --</option>
                     {semesters.map((sem) => (
                       <option key={sem.id} value={sem.id}>
                         {sem.name}
@@ -433,14 +431,14 @@ const SchedulesAdminPage: React.FC = () => {
                   </select>
                 </div>
 
-                {/* classLocationId -> dropdown */}
+                {/* Salla */}
                 <div>
-                  <label className="block font-medium mb-1">Location</label>
+                  <label className="block font-medium mb-1">Salla</label>
                   <select
                     {...register("classLocationId")}
                     className="border p-1 rounded w-full"
                   >
-                    <option value="">-- Select Location --</option>
+                    <option value="">-- Zgjidh Sallën --</option>
                     {locations.map((loc) => (
                       <option key={loc.id} value={loc.id}>
                         {loc.roomName}
@@ -455,21 +453,21 @@ const SchedulesAdminPage: React.FC = () => {
                   type="submit"
                   className="bg-blue-600 text-white px-4 py-1.5 rounded hover:bg-blue-700"
                 >
-                  Update
+                  Ruaj
                 </button>
                 <button
                   type="button"
                   onClick={closeModal}
                   className="bg-gray-400 text-white px-4 py-1.5 rounded hover:bg-gray-500"
                 >
-                  Cancel
+                  Anulo
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-      {/* end of modal */}
+      {/* fundi i modalit */}
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { CalendarIcon, Clock } from "lucide-react";
 
@@ -32,17 +32,15 @@ import {
 } from "@/components/ui/select";
 import axiosInstance from "@/utils/axiosInstance";
 
-// -------------------
-// 1) Zod schema
-// -------------------
+// 1) Shema e validimit (Zod)
 const formSchema = z.object({
-  academicYear: z.string().min(1, "Academic year is required"),
-  studyYear: z.string().min(1, "Study year is required"),
-  afati: z.string().min(1, "Exam period is required"),     // we store the 'afatiId' or 'afatiName'
-  subjectId: z.string().min(1, "Subject ID is required"),
-  instructorId: z.string().min(1, "Instructor ID is required"),
-  date: z.date({ required_error: "Please select a date." }),
-  hour: z.string().min(1, "Please select a time."),
+  academicYear: z.string().min(1, "Viti akademik është i detyrueshëm"),
+  studyYear: z.string().min(1, "Viti i studimeve është i detyrueshëm"),
+  afati: z.string().min(1, "Afati (periudha e provimit) është i detyrueshëm"),
+  subjectId: z.string().min(1, "Lënda është e detyrueshme"),
+  instructorId: z.string().min(1, "Profesori është i detyrueshëm"),
+  date: z.date({ required_error: "Ju lutem zgjidhni një datë." }),
+  hour: z.string().min(1, "Ju lutem zgjidhni një orë."),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -63,12 +61,12 @@ interface InstructorData {
 }
 
 const ExamsScheduleForm: React.FC = () => {
-  // States for dropdown options
+  // Ruajmë listat e afati, lëndët, dhe profesorët
   const [afatiList, setAfatiList] = useState<AfatiData[]>([]);
   const [subjects, setSubjects] = useState<SubjectData[]>([]);
   const [instructors, setInstructors] = useState<InstructorData[]>([]);
 
-  // 2) React Hook Form
+  // React Hook Form
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -82,70 +80,57 @@ const ExamsScheduleForm: React.FC = () => {
     },
   });
 
-  // 3) On mount, fetch data for dropdowns
+  // 2) Marrim të dhënat e dropdown-it kur ngarkohet komponenti
   useEffect(() => {
     async function fetchDropdownData() {
       try {
-        // GET /afati -> array of { id, name }
         const afatiRes = await axiosInstance.get<AfatiData[]>("/afati");
         setAfatiList(afatiRes.data);
 
-        // GET /subjects -> array of { id, name, code }
         const subRes = await axiosInstance.get<SubjectData[]>("/subjects");
         setSubjects(subRes.data);
 
-        // GET /instructors -> array of { id, name, role }
         const insRes = await axiosInstance.get<InstructorData[]>("/instructors");
         setInstructors(insRes.data);
       } catch (error) {
-        console.error("Error fetching dropdown data:", error);
+        console.error("Gabim gjatë marrjes së të dhënave:", error);
       }
     }
     fetchDropdownData();
   }, []);
 
-  // -------------------
-  // 4) Actual SUBMIT
-  // -------------------
+  // 3) Submitting → POST /exams
   async function onSubmit(values: FormValues) {
     try {
-      // 4a) Find the Afati ID based on the user's selection
-      //     Right now, the user is storing "afati = afatiName".
-      //     If your backend needs the "afatiId", we find it here:
+      // Gjejmë afatin sipas emrit
       const selectedAfati = afatiList.find((af) => af.name === values.afati);
 
-      // 4b) Build the request body
+      // Ndërto trupin e kërkesës
       const requestBody = {
         eventType: "exam",
         academicYear: values.academicYear,
         studyYear: Number(values.studyYear),
-        // convert the date into "YYYY-MM-DD" string if needed
         date: format(values.date, "yyyy-MM-dd"),
         hour: values.hour,
-
-        // If your backend expects "afatiId", we pass the ID:
         afatiId: selectedAfati ? selectedAfati.id : "",
-
-        // The user already selected these as IDs:
         subjectId: values.subjectId,
         instructorId: values.instructorId,
       };
 
-      // 4c) POST /exams with the request body
       await axiosInstance.post("/exams", requestBody);
 
-      // 4d) Show success toast
+      // Njoftimi i suksesit
       toast({
-        title: "Exam scheduled successfully",
+        title: "Provimi u shtua me sukses!",
       });
 
-      // 4e) Reset the form
+      // Pastro formularin
       form.reset();
     } catch (error) {
-      console.error("Error scheduling exam:", error);
+      console.error("Gabim në shtimin e provimit:", error);
       toast({
-        title: "Error scheduling exam",
-        description: "Please check console or try again.",
+        title: "Gabim gjatë shtimit të provimit",
+        description: "Ju lutem kontrolloni konsolën ose provoni përsëri.",
         variant: "destructive",
       });
     }
@@ -154,11 +139,11 @@ const ExamsScheduleForm: React.FC = () => {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-2xl font-semibold mb-6">Schedule New Exam</h2>
+        <h2 className="text-2xl font-semibold mb-6">Cakto Provim të Ri</h2>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Row 1: academicYear, studyYear, afati */}
+            {/* Rreshti 1: Viti Akademik, Viti Studimeve, Afati */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* academicYear */}
               <FormField
@@ -166,11 +151,11 @@ const ExamsScheduleForm: React.FC = () => {
                 name="academicYear"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Academic Year</FormLabel>
+                    <FormLabel>Viti Akademik</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select academic year" />
+                          <SelectValue placeholder="Zgjidh vitin akademik" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -190,18 +175,18 @@ const ExamsScheduleForm: React.FC = () => {
                 name="studyYear"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Study Year</FormLabel>
+                    <FormLabel>Viti i Studimeve</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Year of study" />
+                          <SelectValue placeholder="Zgjidh vitin e studimeve" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="1">Year 1</SelectItem>
-                        <SelectItem value="2">Year 2</SelectItem>
-                        <SelectItem value="3">Year 3</SelectItem>
-                        <SelectItem value="4">Year 4</SelectItem>
+                        <SelectItem value="1">Viti 1</SelectItem>
+                        <SelectItem value="2">Viti 2</SelectItem>
+                        <SelectItem value="3">Viti 3</SelectItem>
+                        <SelectItem value="4">Viti 4</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -215,11 +200,11 @@ const ExamsScheduleForm: React.FC = () => {
                 name="afati"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Afati (Exam Period)</FormLabel>
+                    <FormLabel>Afati (Periudha e Provimit)</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select exam period" />
+                          <SelectValue placeholder="Zgjidh afatin" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -236,7 +221,7 @@ const ExamsScheduleForm: React.FC = () => {
               />
             </div>
 
-            {/* Row 2: subjectId, instructorId */}
+            {/* Rreshti 2: Lënda, Profesori */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* subjectId */}
               <FormField
@@ -244,17 +229,17 @@ const ExamsScheduleForm: React.FC = () => {
                 name="subjectId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Subject</FormLabel>
+                    <FormLabel>Lënda</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select Subject" />
+                          <SelectValue placeholder="Zgjidh lëndën" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {subjects.map((sub) => (
                           <SelectItem key={sub.id} value={sub.id}>
-                            {sub.name} 
+                            {sub.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -270,11 +255,11 @@ const ExamsScheduleForm: React.FC = () => {
                 name="instructorId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Instructor</FormLabel>
+                    <FormLabel>Profesori</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select Instructor" />
+                          <SelectValue placeholder="Zgjidh profesorin" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -291,7 +276,7 @@ const ExamsScheduleForm: React.FC = () => {
               />
             </div>
 
-            {/* Row 3: date, hour */}
+            {/* Rreshti 3: Data, Ora */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* date */}
               <FormField
@@ -299,7 +284,7 @@ const ExamsScheduleForm: React.FC = () => {
                 name="date"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Date</FormLabel>
+                    <FormLabel>Data e Provimit</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -311,7 +296,7 @@ const ExamsScheduleForm: React.FC = () => {
                         >
                           {field.value
                             ? format(field.value, "PPP")
-                            : "Pick a date"}
+                            : "Zgjidh një datë"}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                       </PopoverTrigger>
@@ -336,7 +321,7 @@ const ExamsScheduleForm: React.FC = () => {
                 name="hour"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Hour</FormLabel>
+                    <FormLabel>Ora e Provimit</FormLabel>
                     <div className="relative">
                       <FormControl>
                         <Input type="time" {...field} className="pl-10" />
@@ -351,7 +336,7 @@ const ExamsScheduleForm: React.FC = () => {
 
             {/* Submit */}
             <Button type="submit" className="w-full md:w-auto">
-              Schedule Exam
+              Cakto Provimin
             </Button>
           </form>
         </Form>

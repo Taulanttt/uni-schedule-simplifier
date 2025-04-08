@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/select";
 import axiosInstance from "@/utils/axiosInstance";
 import { academicYears, yearsOfStudy } from "@/data/scheduleData";
-import { FilterOptionsexam } from "@/types"; // includes afati
+import { FilterOptionsexam } from "@/types";
 
 interface FilterPanelProps {
   filters: FilterOptionsexam;
@@ -28,12 +28,11 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
 }) => {
   const [afatiList, setAfatiList] = useState<AfatiData[]>([]);
 
-  // Fetch /afati on mount
   useEffect(() => {
     async function fetchAfati() {
       try {
         const res = await axiosInstance.get<AfatiData[]>("/afati");
-        setAfatiList(res.data); // e.g. [ {id:"...", name:"June"}, ... ]
+        setAfatiList(res.data);
       } catch (error) {
         console.error("Error fetching afati:", error);
       }
@@ -41,7 +40,6 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
     fetchAfati();
   }, []);
 
-  // Function to update filters
   const updateFilters = (key: keyof FilterOptionsexam, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
@@ -49,7 +47,7 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
   if (compact) {
     return (
       <div className="flex gap-2 items-center">
-        {/* academicYear */}
+        {/* Academic Year */}
         <Select
           value={filters.academicYear}
           onValueChange={(value) => updateFilters("academicYear", value)}
@@ -58,7 +56,6 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
             <SelectValue placeholder="Year" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="All Years">All Years</SelectItem>
             {academicYears.map((year) => (
               <SelectItem key={year} value={year}>
                 {year}
@@ -67,7 +64,7 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
           </SelectContent>
         </Select>
 
-        {/* afati */}
+        {/* Afati */}
         <Select
           value={filters.afati}
           onValueChange={(value) => updateFilters("afati", value)}
@@ -76,7 +73,6 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
             <SelectValue placeholder="Afati" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="All Afati">All Afati</SelectItem>
             {afatiList.map((af) => (
               <SelectItem key={af.id} value={af.name}>
                 {af.name}
@@ -85,7 +81,7 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
           </SelectContent>
         </Select>
 
-        {/* yearOfStudy */}
+        {/* Year of Study */}
         <Select
           value={filters.yearOfStudy}
           onValueChange={(value) => updateFilters("yearOfStudy", value)}
@@ -94,7 +90,6 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
             <SelectValue placeholder="Study Year" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="All Years">All Years</SelectItem>
             {yearsOfStudy.map((year) => (
               <SelectItem key={year} value={year}>
                 {year}
@@ -106,12 +101,12 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
     );
   }
 
-  // Full panel
+  // Full Layout
   return (
     <div className="bg-white p-4 rounded-lg shadow mb-4">
       <h2 className="text-lg font-semibold mb-3">Filters</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* academicYear */}
+        {/* Academic Year */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Academic Year</label>
           <Select
@@ -122,7 +117,6 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
               <SelectValue placeholder="Select Academic Year" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="All Years">All Years</SelectItem>
               {academicYears.map((year) => (
                 <SelectItem key={year} value={year}>
                   {year}
@@ -132,7 +126,7 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
           </Select>
         </div>
 
-        {/* afati */}
+        {/* Afati */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Afati (Exam Period)</label>
           <Select
@@ -143,7 +137,6 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
               <SelectValue placeholder="Select Afati" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="All Afati">All Afati</SelectItem>
               {afatiList.map((af) => (
                 <SelectItem key={af.id} value={af.name}>
                   {af.name}
@@ -153,7 +146,7 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
           </Select>
         </div>
 
-        {/* yearOfStudy */}
+        {/* Year of Study */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Year of Study</label>
           <Select
@@ -164,7 +157,6 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
               <SelectValue placeholder="Select Year of Study" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="All Years">All Years</SelectItem>
               {yearsOfStudy.map((year) => (
                 <SelectItem key={year} value={year}>
                   {year}

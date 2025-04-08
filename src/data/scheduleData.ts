@@ -151,7 +151,7 @@ export const scheduleData: ScheduleEvent[] = [
 
 export const academicYears = ["2023/24", "2024/25", "2025/26"];
 export const semesters = ["All Semesters", "Fall", "Spring", "Summer"];
-export const yearsOfStudy = [ "Year 1", "Year 2", "Year 3", "Year 4"];
+export const yearsOfStudy = [ "Viti 1", "Viti 2", "Viti 3", "Viti 4"];
 
 /**
  * For now, getFilteredSchedule just returns the full dataset.

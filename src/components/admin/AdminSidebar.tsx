@@ -1,3 +1,4 @@
+// AdminSidebar.tsx
 import React from "react";
 import {
   BellRing,
@@ -41,13 +42,25 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
     }
   };
 
+  const labels = {
+    schedule: "Orari",
+    exams: "Provimet",
+    notifications: "Njoftimet",
+    crud: "Menaxhimi",
+    schedulesAdmin: "Menaxhimi i Orarit",
+    examsAdmin: "Menaxhimi i Provimeve",
+  };
+
   if (isMobile) {
     return (
       <Sheet open={isOpen} onOpenChange={toggleSidebar}>
-        <SheetContent side="left" className="w-[250px] p-0 bg-gray-800 text-white">
+        <SheetContent
+          side="left"
+          className="w-[250px] p-0 bg-gray-800 text-white"
+        >
           <div className="flex flex-col h-full">
             <div className="flex items-center justify-between p-5 border-b border-gray-700">
-              <h2 className="font-bold text-xl">Admin Dashboard</h2>
+              <h2 className="font-bold text-xl">Paneli i Adminit</h2>
             </div>
             <nav className="flex-1 p-4">
               <ul className="space-y-2">
@@ -55,72 +68,84 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                   <Button
                     variant="ghost"
                     className={`w-full justify-start ${
-                      currentPage === "schedule" ? "bg-gray-700" : "hover:bg-gray-700"
+                      currentPage === "schedule"
+                        ? "bg-gray-700"
+                        : "hover:bg-gray-700"
                     }`}
                     onClick={() => handleNavigation("schedule")}
                   >
                     <Calendar className="h-5 w-5 mr-2" />
-                    <span>Schedule</span>
+                    <span>{labels.schedule}</span>
                   </Button>
                 </li>
                 <li>
                   <Button
                     variant="ghost"
                     className={`w-full justify-start ${
-                      currentPage === "exams" ? "bg-gray-700" : "hover:bg-gray-700"
+                      currentPage === "exams"
+                        ? "bg-gray-700"
+                        : "hover:bg-gray-700"
                     }`}
                     onClick={() => handleNavigation("exams")}
                   >
                     <BookOpen className="h-5 w-5 mr-2" />
-                    <span>Exams</span>
+                    <span>{labels.exams}</span>
                   </Button>
                 </li>
                 <li>
                   <Button
                     variant="ghost"
                     className={`w-full justify-start ${
-                      currentPage === "notifications" ? "bg-gray-700" : "hover:bg-gray-700"
+                      currentPage === "notifications"
+                        ? "bg-gray-700"
+                        : "hover:bg-gray-700"
                     }`}
                     onClick={() => handleNavigation("notifications")}
                   >
                     <BellRing className="h-5 w-5 mr-2" />
-                    <span>Notifications</span>
+                    <span>{labels.notifications}</span>
                   </Button>
                 </li>
                 <li>
                   <Button
                     variant="ghost"
                     className={`w-full justify-start ${
-                      currentPage === "crud" ? "bg-gray-700" : "hover:bg-gray-700"
+                      currentPage === "crud"
+                        ? "bg-gray-700"
+                        : "hover:bg-gray-700"
                     }`}
                     onClick={() => handleNavigation("crud")}
                   >
                     <Database className="h-5 w-5 mr-2" />
-                    <span>CRUD</span>
+                    <span>{labels.crud}</span>
                   </Button>
                 </li>
                 <li>
                   <Button
                     variant="ghost"
                     className={`w-full justify-start ${
-                      currentPage === "schedulesAdmin" ? "bg-gray-700" : "hover:bg-gray-700"
+                      currentPage === "schedulesAdmin"
+                        ? "bg-gray-700"
+                        : "hover:bg-gray-700"
                     }`}
                     onClick={() => handleNavigation("schedulesAdmin")}
                   >
                     <ListOrdered className="h-5 w-5 mr-2" />
-                    <span>Schedules Admin</span>
+                    <span>{labels.schedulesAdmin}</span>
                   </Button>
                 </li>
                 <li>
                   <Button
                     variant="ghost"
                     className={`w-full justify-start ${
-                      currentPage === "examsAdmin" ? "bg-gray-700" : "hover:bg-gray-700"
+                      currentPage === "examsAdmin"
+                        ? "bg-gray-700"
+                        : "hover:bg-gray-700"
                     }`}
                     onClick={() => handleNavigation("examsAdmin")}
                   >
                     <ClipboardList className="h-5 w-5 mr-2" />
-                    <span>Exams Admin</span>
+                    <span>{labels.examsAdmin}</span>
                   </Button>
                 </li>
               </ul>
@@ -131,7 +156,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
     );
   }
 
-  // Desktop layout
+  // Desktop
   return (
     <div
       className={`${
@@ -140,83 +165,38 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
     >
       <div className="h-full flex flex-col">
         <div className="flex items-center justify-between p-5">
-          <h2 className={`font-bold text-xl ${!isOpen && "hidden"}`}>Admin</h2>
+          <h2 className={`font-bold text-xl ${!isOpen && "hidden"}`}>
+            Admin
+          </h2>
         </div>
 
         <nav className="mt-8 px-4 flex-1">
           <ul className="space-y-2">
-            <li>
-              <Button
-                variant="ghost"
-                className={`w-full justify-start ${
-                  currentPage === "schedule" ? "bg-gray-700" : "hover:bg-gray-700"
-                } ${!isOpen && "lg:justify-center"}`}
-                onClick={() => handleNavigation("schedule")}
-              >
-                <Calendar className="h-5 w-5 mr-2" />
-                <span className={`${!isOpen ? "hidden" : ""}`}>Schedule</span>
-              </Button>
-            </li>
-            <li>
-              <Button
-                variant="ghost"
-                className={`w-full justify-start ${
-                  currentPage === "exams" ? "bg-gray-700" : "hover:bg-gray-700"
-                } ${!isOpen && "lg:justify-center"}`}
-                onClick={() => handleNavigation("exams")}
-              >
-                <BookOpen className="h-5 w-5 mr-2" />
-                <span className={`${!isOpen ? "hidden" : ""}`}>Exams</span>
-              </Button>
-            </li>
-            <li>
-              <Button
-                variant="ghost"
-                className={`w-full justify-start ${
-                  currentPage === "notifications" ? "bg-gray-700" : "hover:bg-gray-700"
-                } ${!isOpen && "lg:justify-center"}`}
-                onClick={() => handleNavigation("notifications")}
-              >
-                <BellRing className="h-5 w-5 mr-2" />
-                <span className={`${!isOpen ? "hidden" : ""}`}>Notifications</span>
-              </Button>
-            </li>
-            <li>
-              <Button
-                variant="ghost"
-                className={`w-full justify-start ${
-                  currentPage === "crud" ? "bg-gray-700" : "hover:bg-gray-700"
-                } ${!isOpen && "lg:justify-center"}`}
-                onClick={() => handleNavigation("crud")}
-              >
-                <Database className="h-5 w-5 mr-2" />
-                <span className={`${!isOpen ? "hidden" : ""}`}>CRUD</span>
-              </Button>
-            </li>
-            <li>
-              <Button
-                variant="ghost"
-                className={`w-full justify-start ${
-                  currentPage === "schedulesAdmin" ? "bg-gray-700" : "hover:bg-gray-700"
-                } ${!isOpen && "lg:justify-center"}`}
-                onClick={() => handleNavigation("schedulesAdmin")}
-              >
-                <ListOrdered className="h-5 w-5 mr-2" />
-                <span className={`${!isOpen ? "hidden" : ""}`}>Schedules Admin</span>
-              </Button>
-            </li>
-            <li>
-              <Button
-                variant="ghost"
-                className={`w-full justify-start ${
-                  currentPage === "examsAdmin" ? "bg-gray-700" : "hover:bg-gray-700"
-                } ${!isOpen && "lg:justify-center"}`}
-                onClick={() => handleNavigation("examsAdmin")}
-              >
-                <ClipboardList className="h-5 w-5 mr-2" />
-                <span className={`${!isOpen ? "hidden" : ""}`}>Exams Admin</span>
-              </Button>
-            </li>
+            {(
+              [
+                ["schedule", <Calendar className="h-5 w-5 mr-2" />],
+                ["exams", <BookOpen className="h-5 w-5 mr-2" />],
+                ["notifications", <BellRing className="h-5 w-5 mr-2" />],
+                ["crud", <Database className="h-5 w-5 mr-2" />],
+                ["schedulesAdmin", <ListOrdered className="h-5 w-5 mr-2" />],
+                ["examsAdmin", <ClipboardList className="h-5 w-5 mr-2" />],
+              ] as [AdminPage, JSX.Element][]
+            ).map(([page, icon]) => (
+              <li key={page}>
+                <Button
+                  variant="ghost"
+                  className={`w-full justify-start ${
+                    currentPage === page ? "bg-gray-700" : "hover:bg-gray-700"
+                  } ${!isOpen && "lg:justify-center"}`}
+                  onClick={() => handleNavigation(page)}
+                >
+                  {icon}
+                  <span className={`${!isOpen ? "hidden" : ""}`}>
+                    {labels[page]}
+                  </span>
+                </Button>
+              </li>
+            ))}
           </ul>
         </nav>
       </div>

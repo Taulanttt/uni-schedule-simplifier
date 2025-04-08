@@ -40,12 +40,12 @@ export function AppSidebar({
   // Navigation items
   const items = [
     {
-      title: "Lectures",
+      title: "Ligjeratat dhe Ushtrimet",
       path: "/",
       icon: Book,
     },
     {
-      title: "Exams",
+      title: "Provimet",
       path: "/exams",
       icon: CalendarDays,
     },
@@ -66,7 +66,7 @@ export function AppSidebar({
         <SheetContent side="left" className="w-[250px] p-0 bg-gray-800 text-white">
           <div className="flex flex-col h-full">
             <div className="flex items-center justify-between p-5 border-b border-gray-700">
-              <h2 className="font-bold text-xl">UniSchedule</h2>
+              <h2 className="font-bold text-xl">Orari i Universitetit</h2>
             </div>
             <nav className="flex-1 p-4">
               <ul className="space-y-2">
@@ -104,7 +104,7 @@ export function AppSidebar({
       <div className="h-full flex flex-col">
         <div className="flex items-center justify-between p-5">
           <h2 className={`font-bold text-xl ${!effectiveIsOpen && "hidden"}`}>
-            UniSchedule
+          Orari i Universitetit
           </h2>
         </div>
 

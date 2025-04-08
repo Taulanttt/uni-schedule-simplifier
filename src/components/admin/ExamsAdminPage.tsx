@@ -3,21 +3,21 @@ import axiosInstance from "@/utils/axiosInstance";
 import { useForm } from "react-hook-form";
 import FilterPanelExams from "@/components/FilterPanelExams";
 
-// The exam shape, with afatiId + optional Afati object
+// Përfaqësimi i një provimi me fushat përkatëse
 interface ExamItem {
   id: string;
-  eventType: string;         // "exam"
-  academicYear: string;      // e.g. "2024/25"
-  studyYear: number;         // e.g. 2
-  date: string;              // e.g. "2025-02-15"
-  hour: string;              // e.g. "10:00:00"
+  eventType: string;     // "exam"
+  academicYear: string;  // p.sh. "2024/25"
+  studyYear: number;     // p.sh. 2
+  date: string;          // p.sh. "2025-02-15"
+  hour: string;          // p.sh. "10:00:00"
 
-  // Here we store the foreign key ID
-  afatiId: string;           
+  // Foreign keys
+  afatiId: string;
   subjectId: string;
   instructorId: string;
 
-  // Associations from backend:
+  // Objektet e lidhura
   Subject?: {
     id: string;
     name: string;
@@ -28,11 +28,10 @@ interface ExamItem {
   };
   Afati?: {
     id: string;
-    name: string;  // e.g. "February"
+    name: string;  // p.sh. "Shkurt"
   };
 }
 
-// For subject/instructor/afati dropdown
 interface SubjectData {
   id: string;
   name: string;
@@ -43,53 +42,51 @@ interface InstructorData {
   name: string;
   role: string;
 }
-
-// For afati dropdown
 interface AfatiData {
   id: string;
   name: string;
 }
 
-// The filter interface for exam
+// Struktura e filtrit
 import { FilterOptionsexam } from "@/types";
 
 const ExamsAdminPage: React.FC = () => {
   const [exams, setExams] = useState<ExamItem[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // For editing
+  // Ruajmë ID-në e provimit që editohet aktualisht, si dhe gjendjen e modalit
   const [editId, setEditId] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  // For subject/instructor/afati dropdowns
+  // Të dhënat e dropdown-eve
   const [subjects, setSubjects] = useState<SubjectData[]>([]);
   const [instructors, setInstructors] = useState<InstructorData[]>([]);
   const [afatis, setAfatis] = useState<AfatiData[]>([]);
 
-  // Hook Form for editing an exam
+  // React Hook Form për modifikim
   const { register, handleSubmit, reset, setValue } = useForm<any>();
 
-  // Our exam filters state
+  // Gjendja e filtrit
   const [filters, setFilters] = useState<FilterOptionsexam>({
     academicYear: "All Years",
     afati: "All Afati",
     yearOfStudy: "All Years",
   });
 
-  // 1) Fetch exams
+  // 1) Marrim listën e provimeve
   async function fetchExams() {
     setLoading(true);
     try {
       const res = await axiosInstance.get<ExamItem[]>("/exams");
       setExams(res.data);
     } catch (error) {
-      console.error("Error fetching exams:", error);
+      console.error("Gabim gjatë marrjes së provimeve:", error);
     } finally {
       setLoading(false);
     }
   }
 
-  // 2) Fetch subjects & instructors & afati
+  // 2) Marrim lëndët, profesorët, afatet
   async function fetchDropdownData() {
     try {
       const [subRes, instRes, afatiRes] = await Promise.all([
@@ -101,7 +98,7 @@ const ExamsAdminPage: React.FC = () => {
       setInstructors(instRes.data);
       setAfatis(afatiRes.data);
     } catch (error) {
-      console.error("Error fetching dropdown data:", error);
+      console.error("Gabim gjatë marrjes së dropdown të dhënave:", error);
     }
   }
 
@@ -110,9 +107,9 @@ const ExamsAdminPage: React.FC = () => {
     fetchDropdownData();
   }, []);
 
-  // 3) Filter logic for exams
+  // 3) Logjika e filtrit
   const filteredExams = exams.filter((exam) => {
-    // By academicYear
+    // Filtri sipas vitit akademik
     if (
       filters.academicYear !== "All Years" &&
       exam.academicYear !== filters.academicYear
@@ -120,14 +117,14 @@ const ExamsAdminPage: React.FC = () => {
       return false;
     }
 
-    // By afati name
+    // Filtri sipas afatit
     if (filters.afati !== "All Afati") {
       if (exam.Afati?.name !== filters.afati) {
         return false;
       }
     }
 
-    // By yearOfStudy
+    // Filtri sipas vitit të studimeve
     if (filters.yearOfStudy !== "All Years") {
       const numeric = parseInt(filters.yearOfStudy.replace(/\D/g, ""), 10);
       if (exam.studyYear !== numeric) {
@@ -137,11 +134,11 @@ const ExamsAdminPage: React.FC = () => {
     return true;
   });
 
-  // 4) Start editing => fill form + show modal
+  // 4) Hap modalin për editim
   const startEdit = (exam: ExamItem) => {
     setEditId(exam.id);
 
-    // We'll set the form values to the actual data
+    // Vlerat e formularit i plotësojmë me të dhënat e ekzistueshme
     setValue("afatiId", exam.afatiId);
     setValue("academicYear", exam.academicYear);
     setValue("studyYear", String(exam.studyYear));
@@ -153,7 +150,7 @@ const ExamsAdminPage: React.FC = () => {
     setShowEditModal(true);
   };
 
-  // Close modal
+  // Mbyll modalin
   const closeModal = () => {
     setEditId(null);
     reset({});
@@ -180,47 +177,47 @@ const ExamsAdminPage: React.FC = () => {
       fetchExams();
       closeModal();
     } catch (error) {
-      console.error("Update error:", error);
+      console.error("Gabim gjatë përditësimit:", error);
     }
   };
 
-  // 6) Delete => /exams/:id
+  // 6) Fshij provimin
   const deleteExam = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this exam?")) return;
+    if (!window.confirm("A jeni i sigurt që dëshironi ta fshini këtë provim?")) return;
     try {
       await axiosInstance.delete(`/exams/${id}`);
       fetchExams();
     } catch (error) {
-      console.error("Delete error:", error);
+      console.error("Gabim gjatë fshirjes:", error);
     }
   };
 
   return (
     <div className="max-w-4xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Exams Admin</h1>
+      <h1 className="text-2xl font-bold mb-4">Admin i Provimeve</h1>
 
-      {/* Filter Panel */}
+      {/* Paneli i filtrit */}
       <div className="mb-6">
         <FilterPanelExams filters={filters} setFilters={setFilters} />
       </div>
 
-      {/* Table of Exams */}
+      {/* Tabela e provimeve */}
       <div className="bg-white p-4 rounded shadow">
-        <h2 className="text-lg font-semibold mb-3">All Exams</h2>
+        <h2 className="text-lg font-semibold mb-3">Lista e Provimeve</h2>
         {loading ? (
-          <p>Loading exams...</p>
+          <p>Po ngarkohet lista e provimeve...</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full border text-sm">
               <thead>
                 <tr className="bg-gray-100 border-b">
                   <th className="p-2 text-left">Afati</th>
-                  <th className="p-2 text-left">Date / Hour</th>
-                  <th className="p-2 text-left">AcademicYear</th>
-                  <th className="p-2 text-left">StudyYear</th>
-                  <th className="p-2 text-left">Subject</th>
-                  <th className="p-2 text-left">Instructor</th>
-                  <th className="p-2 text-left">Actions</th>
+                  <th className="p-2 text-left">Data / Ora</th>
+                  <th className="p-2 text-left">Viti Akademik</th>
+                  <th className="p-2 text-left">Viti Studimeve</th>
+                  <th className="p-2 text-left">Lënda</th>
+                  <th className="p-2 text-left">Profesori</th>
+                  <th className="p-2 text-left">Veprime</th>
                 </tr>
               </thead>
               <tbody>
@@ -235,27 +232,27 @@ const ExamsAdminPage: React.FC = () => {
                     <td className="p-2">{exam.Subject?.name}</td>
                     <td className="p-2">{exam.Instructor?.name}</td>
                     <td className="p-2">
-  <div className="flex space-x-2">
-    <button
-      onClick={() => startEdit(exam)}
-      className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
-    >
-      Edit
-    </button>
-    <button
-      onClick={() => deleteExam(exam.id)}
-      className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
-    >
-      Delete
-    </button>
-  </div>
-</td>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => startEdit(exam)}
+                          className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+                        >
+                          Edito
+                        </button>
+                        <button
+                          onClick={() => deleteExam(exam.id)}
+                          className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                        >
+                          Fshij
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
                 {filteredExams.length === 0 && (
                   <tr>
                     <td colSpan={7} className="p-2 text-center text-gray-500">
-                      No exams found
+                      Asnjë provim nuk u gjet
                     </td>
                   </tr>
                 )}
@@ -265,18 +262,10 @@ const ExamsAdminPage: React.FC = () => {
         )}
       </div>
 
-      {/* ---------------------------------------------------------------------- */}
-      {/* MODAL for "Edit Exam" (only visible if showEditModal is true) */}
-      {/* ---------------------------------------------------------------------- */}
+      {/* Modal-i për Editim */}
       {showEditModal && (
-        <div
-          className="
-            fixed inset-0 z-50
-            flex items-center justify-center
-            bg-black bg-opacity-50
-          "
-        >
-          {/* Modal content */}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          {/* Përmbajtja e modalit */}
           <div className="bg-white w-full max-w-2xl p-6 rounded shadow relative">
             <button
               onClick={closeModal}
@@ -284,18 +273,18 @@ const ExamsAdminPage: React.FC = () => {
             >
               ✕
             </button>
-            <h2 className="text-lg font-semibold mb-3">Edit Exam</h2>
+            <h2 className="text-lg font-semibold mb-3">Përditëso Provimin</h2>
 
             <form onSubmit={handleSubmit(onSubmit)}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                {/* afatiId => pick from the list of afatis */}
+                {/* Afati */}
                 <div>
                   <label className="block font-medium mb-1">Afati</label>
                   <select
                     {...register("afatiId")}
                     className="border p-1 rounded w-full"
                   >
-                    <option value="">-- Select Afati --</option>
+                    <option value="">-- Zgjidh Afatin --</option>
                     {afatis.map((af) => (
                       <option key={af.id} value={af.id}>
                         {af.name}
@@ -304,34 +293,34 @@ const ExamsAdminPage: React.FC = () => {
                   </select>
                 </div>
 
-                {/* academicYear */}
+                {/* Viti Akademik */}
                 <div>
-                  <label className="block font-medium mb-1">Academic Year</label>
+                  <label className="block font-medium mb-1">Viti Akademik</label>
                   <select
                     {...register("academicYear")}
                     className="border p-1 rounded w-full"
                   >
-                    <option value="">-- Select Year --</option>
+                    <option value="">-- Zgjidh Vitin --</option>
                     <option value="2023/24">2023/24</option>
                     <option value="2024/25">2024/25</option>
                     <option value="2025/26">2025/26</option>
                   </select>
                 </div>
 
-                {/* studyYear */}
+                {/* Viti i studimeve */}
                 <div>
-                  <label className="block font-medium mb-1">Study Year</label>
+                  <label className="block font-medium mb-1">Viti Studimeve</label>
                   <input
                     type="number"
                     {...register("studyYear")}
-                    placeholder="2"
+                    placeholder="p.sh. 2"
                     className="border p-1 rounded w-full"
                   />
                 </div>
 
-                {/* date */}
+                {/* Data */}
                 <div>
-                  <label className="block font-medium mb-1">Date</label>
+                  <label className="block font-medium mb-1">Data e Provimit</label>
                   <input
                     type="date"
                     {...register("date")}
@@ -339,9 +328,9 @@ const ExamsAdminPage: React.FC = () => {
                   />
                 </div>
 
-                {/* hour */}
+                {/* Ora */}
                 <div>
-                  <label className="block font-medium mb-1">Hour</label>
+                  <label className="block font-medium mb-1">Ora e Provimit</label>
                   <input
                     type="time"
                     {...register("hour")}
@@ -349,14 +338,14 @@ const ExamsAdminPage: React.FC = () => {
                   />
                 </div>
 
-                {/* subjectId */}
+                {/* Lënda */}
                 <div>
-                  <label className="block font-medium mb-1">Subject</label>
+                  <label className="block font-medium mb-1">Lënda</label>
                   <select
                     {...register("subjectId")}
                     className="border p-1 rounded w-full"
                   >
-                    <option value="">-- Select Subject --</option>
+                    <option value="">-- Zgjidh Lëndën --</option>
                     {subjects.map((sub) => (
                       <option key={sub.id} value={sub.id}>
                         {sub.name}
@@ -365,14 +354,14 @@ const ExamsAdminPage: React.FC = () => {
                   </select>
                 </div>
 
-                {/* instructorId */}
+                {/* Profesori */}
                 <div>
-                  <label className="block font-medium mb-1">Instructor</label>
+                  <label className="block font-medium mb-1">Profesori</label>
                   <select
                     {...register("instructorId")}
                     className="border p-1 rounded w-full"
                   >
-                    <option value="">-- Select Instructor --</option>
+                    <option value="">-- Zgjidh Profesorin --</option>
                     {instructors.map((inst) => (
                       <option key={inst.id} value={inst.id}>
                         {inst.name} ({inst.role})
@@ -387,21 +376,20 @@ const ExamsAdminPage: React.FC = () => {
                   type="submit"
                   className="bg-blue-600 text-white px-4 py-1.5 rounded hover:bg-blue-700"
                 >
-                  Update
+                  Ruaj
                 </button>
                 <button
                   type="button"
                   onClick={closeModal}
                   className="bg-gray-400 text-white px-4 py-1.5 rounded hover:bg-gray-500"
                 >
-                  Cancel
+                  Anulo
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-      {/* ---------------------------------------------------------------------- */}
     </div>
   );
 };

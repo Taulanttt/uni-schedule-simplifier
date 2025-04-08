@@ -88,8 +88,8 @@ const Exams: React.FC = () => {
   // 4) Filter state
   const [filters, setFilters] = useState<FilterOptionsexam>({
     academicYear: "2024/25",
-    afati: "Janar",   // Example default
-    yearOfStudy: "Year 1",
+    afati: "Shkurt",   // Example default
+    yearOfStudy: "Viti 1",
   });
 
   // 5) The array of exams from your API
