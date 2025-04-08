@@ -54,8 +54,15 @@ interface ClassLocationData {
 const ACADEMIC_YEARS = ["2023/24", "2024/25", "2025/26"];
 
 // The 7 days for multi-select
-const DAY_OPTIONS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-
+const DAY_OPTIONS = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
 
 const SchedulesAdminPage: React.FC = () => {
   // State for all schedules
@@ -69,8 +76,9 @@ const SchedulesAdminPage: React.FC = () => {
     yearOfStudy: "All Years",
   });
 
-  // For editing a schedule
+  // For editing a schedule (id + modal toggle)
   const [editId, setEditId] = useState<string | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   // React Hook Form
   const { register, handleSubmit, reset, setValue } = useForm<any>();
@@ -142,7 +150,7 @@ const SchedulesAdminPage: React.FC = () => {
     return true;
   });
 
-  // 2) Start editing
+  // 2) Start editing => fill form & show modal
   const startEdit = (sch: ScheduleItem) => {
     setEditId(sch.id);
 
@@ -156,17 +164,17 @@ const SchedulesAdminPage: React.FC = () => {
     setValue("instructorId", sch.instructorId);
     setValue("semesterId", sch.semesterId);
     setValue("classLocationId", sch.classLocationId);
-
-    // For multiple select: each item in sch.daysOfWeek
-    // We'll set it so the form has those as an array of strings
-    // React Hook Form automatically handles <select multiple> if we pass an array
     setValue("daysOfWeek", sch.daysOfWeek);
+
+    // Show modal
+    setShowEditModal(true);
   };
 
-  // 3) Cancel edit
-  const cancelEdit = () => {
+  // 3) Cancel edit => close modal
+  const closeModal = () => {
     setEditId(null);
     reset({});
+    setShowEditModal(false);
   };
 
   // 4) On submit => PUT
@@ -177,7 +185,6 @@ const SchedulesAdminPage: React.FC = () => {
       let daysArr = data.daysOfWeek;
       if (!daysArr) daysArr = [];
       if (typeof daysArr === "string") {
-        // only one option selected
         daysArr = [daysArr];
       }
 
@@ -197,7 +204,7 @@ const SchedulesAdminPage: React.FC = () => {
       });
 
       fetchSchedules();
-      cancelEdit();
+      closeModal();
     } catch (error) {
       console.error("Update error:", error);
     }
@@ -259,20 +266,22 @@ const SchedulesAdminPage: React.FC = () => {
                     <td className="p-2">{sch.instructorName}</td>
                     <td className="p-2">{sch.semesterName}</td>
                     <td className="p-2">{sch.locationName}</td>
-                    <td className="p-2 space-x-2">
-                      <button
-                        onClick={() => startEdit(sch)}
-                        className="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => deleteSchedule(sch.id)}
-                        className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
-                      >
-                        Delete
-                      </button>
-                    </td>
+                    <td className="p-2">
+  <div className="flex space-x-2">
+    <button
+      onClick={() => startEdit(sch)}
+      className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+    >
+      Edit
+    </button>
+    <button
+      onClick={() => deleteSchedule(sch.id)}
+      className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+    >
+      Delete
+    </button>
+  </div>
+</td>
                   </tr>
                 ))}
                 {filteredSchedules.length === 0 && (
@@ -288,169 +297,179 @@ const SchedulesAdminPage: React.FC = () => {
         )}
       </div>
 
-      {/* Edit form for all fields with dropdown for days */}
-      {editId && (
-        <div className="mt-6 bg-white p-4 rounded shadow">
-          <h2 className="text-lg font-semibold mb-3">Edit Schedule</h2>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              {/* eventType */}
-              <div>
-                <label className="block font-medium mb-1">Event Type</label>
-                <input
-                  {...register("eventType")}
-                  placeholder="e.g. lab group1"
-                  className="border p-1 rounded w-full"
-                />
+      {/* ------------------------------------------ */}
+      {/* EDIT SCHEDULE MODAL (showEditModal === true) */}
+      {/* ------------------------------------------ */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          {/* Modal content */}
+          <div className="bg-white w-full max-w-2xl p-6 rounded shadow relative">
+            {/* Close button (X) */}
+            <button
+              onClick={closeModal}
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+            >
+              ✕
+            </button>
+
+            <h2 className="text-lg font-semibold mb-4">Edit Schedule</h2>
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                {/* eventType */}
+                <div>
+                  <label className="block font-medium mb-1">Event Type</label>
+                  <input
+                    {...register("eventType")}
+                    placeholder="e.g. lab group1"
+                    className="border p-1 rounded w-full"
+                  />
+                </div>
+
+                {/* daysOfWeek (single or multiple) */}
+                <div>
+                  <label className="block font-medium mb-1">Day of Week</label>
+                  <select {...register("daysOfWeek")} className="border p-1 rounded w-full">
+                    <option value="">-- Select Day --</option>
+                    {DAY_OPTIONS.map((day) => (
+                      <option key={day} value={day}>
+                        {day}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* startTime */}
+                <div>
+                  <label className="block font-medium mb-1">Start Time</label>
+                  <input
+                    type="time"
+                    {...register("startTime")}
+                    className="border p-1 rounded w-full"
+                  />
+                </div>
+
+                {/* endTime */}
+                <div>
+                  <label className="block font-medium mb-1">End Time</label>
+                  <input
+                    type="time"
+                    {...register("endTime")}
+                    className="border p-1 rounded w-full"
+                  />
+                </div>
+
+                {/* academicYear -> dropdown */}
+                <div>
+                  <label className="block font-medium mb-1">Academic Year</label>
+                  <select
+                    {...register("academicYear")}
+                    className="border p-1 rounded w-full"
+                  >
+                    <option value="">-- Select Year --</option>
+                    {ACADEMIC_YEARS.map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* studyYear -> numeric */}
+                <div>
+                  <label className="block font-medium mb-1">Study Year</label>
+                  <input
+                    type="number"
+                    {...register("studyYear")}
+                    placeholder="2"
+                    className="border p-1 rounded w-full"
+                  />
+                </div>
+
+                {/* subjectId -> dropdown */}
+                <div>
+                  <label className="block font-medium mb-1">Subject</label>
+                  <select
+                    {...register("subjectId")}
+                    className="border p-1 rounded w-full"
+                  >
+                    <option value="">-- Select Subject --</option>
+                    {subjects.map((sub) => (
+                      <option key={sub.id} value={sub.id}>
+                        {sub.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* instructorId -> dropdown */}
+                <div>
+                  <label className="block font-medium mb-1">Instructor</label>
+                  <select
+                    {...register("instructorId")}
+                    className="border p-1 rounded w-full"
+                  >
+                    <option value="">-- Select Instructor --</option>
+                    {instructors.map((inst) => (
+                      <option key={inst.id} value={inst.id}>
+                        {inst.name} ({inst.role})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* semesterId -> dropdown */}
+                <div>
+                  <label className="block font-medium mb-1">Semester</label>
+                  <select
+                    {...register("semesterId")}
+                    className="border p-1 rounded w-full"
+                  >
+                    <option value="">-- Select Semester --</option>
+                    {semesters.map((sem) => (
+                      <option key={sem.id} value={sem.id}>
+                        {sem.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* classLocationId -> dropdown */}
+                <div>
+                  <label className="block font-medium mb-1">Location</label>
+                  <select
+                    {...register("classLocationId")}
+                    className="border p-1 rounded w-full"
+                  >
+                    <option value="">-- Select Location --</option>
+                    {locations.map((loc) => (
+                      <option key={loc.id} value={loc.id}>
+                        {loc.roomName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
-              {/* daysOfWeek (single dropdown) */}
-<div>
-  <label className="block font-medium mb-1">Day of Week</label>
-  <select
-    {...register("daysOfWeek")}
-    className="border p-1 rounded w-full"
-  >
-    <option value="">-- Select Day --</option>
-    {DAY_OPTIONS.map((day) => (
-      <option key={day} value={day}>
-        {day}
-      </option>
-    ))}
-  </select>
-</div>
-
-
-              {/* startTime */}
-              <div>
-                <label className="block font-medium mb-1">Start Time</label>
-                <input
-                  type="time"
-                  {...register("startTime")}
-                  className="border p-1 rounded w-full"
-                />
-              </div>
-
-              {/* endTime */}
-              <div>
-                <label className="block font-medium mb-1">End Time</label>
-                <input
-                  type="time"
-                  {...register("endTime")}
-                  className="border p-1 rounded w-full"
-                />
-              </div>
-
-              {/* academicYear -> dropdown */}
-              <div>
-                <label className="block font-medium mb-1">Academic Year</label>
-                <select
-                  {...register("academicYear")}
-                  className="border p-1 rounded w-full"
+              <div className="space-x-2">
+                <button
+                  type="submit"
+                  className="bg-blue-600 text-white px-4 py-1.5 rounded hover:bg-blue-700"
                 >
-                  <option value="">-- Select Year --</option>
-                  {ACADEMIC_YEARS.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* studyYear -> numeric */}
-              <div>
-                <label className="block font-medium mb-1">Study Year</label>
-                <input
-                  type="number"
-                  {...register("studyYear")}
-                  placeholder="2"
-                  className="border p-1 rounded w-full"
-                />
-              </div>
-
-              {/* subjectId -> dropdown */}
-              <div>
-                <label className="block font-medium mb-1">Subject</label>
-                <select {...register("subjectId")} className="border p-1 rounded w-full">
-                  <option value="">-- Select Subject --</option>
-                  {subjects.map((sub) => (
-                    <option key={sub.id} value={sub.id}>
-                      {sub.name} 
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* instructorId -> dropdown */}
-              <div>
-                <label className="block font-medium mb-1">Instructor</label>
-                <select
-                  {...register("instructorId")}
-                  className="border p-1 rounded w-full"
+                  Update
+                </button>
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="bg-gray-400 text-white px-4 py-1.5 rounded hover:bg-gray-500"
                 >
-                  <option value="">-- Select Instructor --</option>
-                  {instructors.map((inst) => (
-                    <option key={inst.id} value={inst.id}>
-                      {inst.name} ({inst.role})
-                    </option>
-                  ))}
-                </select>
+                  Cancel
+                </button>
               </div>
-
-              {/* semesterId -> dropdown */}
-              <div>
-                <label className="block font-medium mb-1">Semester</label>
-                <select
-                  {...register("semesterId")}
-                  className="border p-1 rounded w-full"
-                >
-                  <option value="">-- Select Semester --</option>
-                  {semesters.map((sem) => (
-                    <option key={sem.id} value={sem.id}>
-                      {sem.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* classLocationId -> dropdown */}
-              <div>
-                <label className="block font-medium mb-1">Location</label>
-                <select
-                  {...register("classLocationId")}
-                  className="border p-1 rounded w-full"
-                >
-                  <option value="">-- Select Location --</option>
-                  {locations.map((loc) => (
-                    <option key={loc.id} value={loc.id}>
-                      {loc.roomName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="space-x-2">
-              <button
-                type="submit"
-                className="bg-blue-600 text-white px-4 py-1.5 rounded hover:bg-blue-700"
-              >
-                Update
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setEditId(null);
-                  reset({});
-                }}
-                className="bg-gray-400 text-white px-4 py-1.5 rounded hover:bg-gray-500"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       )}
+      {/* end of modal */}
     </div>
   );
 };

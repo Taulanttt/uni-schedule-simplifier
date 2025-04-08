@@ -13,7 +13,7 @@ interface ExamItem {
   hour: string;              // e.g. "10:00:00"
 
   // Here we store the foreign key ID
-  afatiId: string;           // e.g. "afb6-..."
+  afatiId: string;           
   subjectId: string;
   instructorId: string;
 
@@ -32,7 +32,7 @@ interface ExamItem {
   };
 }
 
-// For subject & instructor dropdown
+// For subject/instructor/afati dropdown
 interface SubjectData {
   id: string;
   name: string;
@@ -56,7 +56,10 @@ import { FilterOptionsexam } from "@/types";
 const ExamsAdminPage: React.FC = () => {
   const [exams, setExams] = useState<ExamItem[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // For editing
   const [editId, setEditId] = useState<string | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   // For subject/instructor/afati dropdowns
   const [subjects, setSubjects] = useState<SubjectData[]>([]);
@@ -118,9 +121,7 @@ const ExamsAdminPage: React.FC = () => {
     }
 
     // By afati name
-    // The exam has exam.Afati?.name, and user picked filters.afati
     if (filters.afati !== "All Afati") {
-      // Only show if exam.Afati?.name === filters.afati
       if (exam.Afati?.name !== filters.afati) {
         return false;
       }
@@ -133,11 +134,10 @@ const ExamsAdminPage: React.FC = () => {
         return false;
       }
     }
-
     return true;
   });
 
-  // Start editing
+  // 4) Start editing => fill form + show modal
   const startEdit = (exam: ExamItem) => {
     setEditId(exam.id);
 
@@ -149,15 +149,18 @@ const ExamsAdminPage: React.FC = () => {
     setValue("hour", exam.hour);
     setValue("subjectId", exam.subjectId);
     setValue("instructorId", exam.instructorId);
+
+    setShowEditModal(true);
   };
 
-  // Cancel edit
-  const cancelEdit = () => {
+  // Close modal
+  const closeModal = () => {
     setEditId(null);
     reset({});
+    setShowEditModal(false);
   };
 
-  // 4) Submit => PUT /exams/:id
+  // 5) Submit => PUT /exams/:id
   const onSubmit = async (data: any) => {
     if (!editId) return;
     try {
@@ -165,7 +168,6 @@ const ExamsAdminPage: React.FC = () => {
 
       await axiosInstance.put(`/exams/${editId}`, {
         eventType: "exam",
-        // We store the foreign key as "afatiId"
         afatiId: data.afatiId,
         academicYear: data.academicYear,
         studyYear: numericYear,
@@ -176,13 +178,13 @@ const ExamsAdminPage: React.FC = () => {
       });
 
       fetchExams();
-      cancelEdit();
+      closeModal();
     } catch (error) {
       console.error("Update error:", error);
     }
   };
 
-  // 5) Delete => /exams/:id
+  // 6) Delete => /exams/:id
   const deleteExam = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this exam?")) return;
     try {
@@ -224,7 +226,6 @@ const ExamsAdminPage: React.FC = () => {
               <tbody>
                 {filteredExams.map((exam) => (
                   <tr key={exam.id} className="border-b">
-                    {/* We display exam.Afati?.name */}
                     <td className="p-2">{exam.Afati?.name}</td>
                     <td className="p-2">
                       {exam.date} / {exam.hour}
@@ -233,20 +234,22 @@ const ExamsAdminPage: React.FC = () => {
                     <td className="p-2">{exam.studyYear}</td>
                     <td className="p-2">{exam.Subject?.name}</td>
                     <td className="p-2">{exam.Instructor?.name}</td>
-                    <td className="p-2 space-x-2">
-                      <button
-                        onClick={() => startEdit(exam)}
-                        className="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => deleteExam(exam.id)}
-                        className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
-                      >
-                        Delete
-                      </button>
-                    </td>
+                    <td className="p-2">
+  <div className="flex space-x-2">
+    <button
+      onClick={() => startEdit(exam)}
+      className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+    >
+      Edit
+    </button>
+    <button
+      onClick={() => deleteExam(exam.id)}
+      className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+    >
+      Delete
+    </button>
+  </div>
+</td>
                   </tr>
                 ))}
                 {filteredExams.length === 0 && (
@@ -262,127 +265,143 @@ const ExamsAdminPage: React.FC = () => {
         )}
       </div>
 
-      {/* Edit form */}
-      {editId && (
-        <div className="mt-6 bg-white p-4 rounded shadow">
-          <h2 className="text-lg font-semibold mb-3">Edit Exam</h2>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              {/* afatiId => pick from the list of afatis */}
-              <div>
-                <label className="block font-medium mb-1">Afati</label>
-                <select
-                  {...register("afatiId")}
-                  className="border p-1 rounded w-full"
+      {/* ---------------------------------------------------------------------- */}
+      {/* MODAL for "Edit Exam" (only visible if showEditModal is true) */}
+      {/* ---------------------------------------------------------------------- */}
+      {showEditModal && (
+        <div
+          className="
+            fixed inset-0 z-50
+            flex items-center justify-center
+            bg-black bg-opacity-50
+          "
+        >
+          {/* Modal content */}
+          <div className="bg-white w-full max-w-2xl p-6 rounded shadow relative">
+            <button
+              onClick={closeModal}
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-800"
+            >
+              ✕
+            </button>
+            <h2 className="text-lg font-semibold mb-3">Edit Exam</h2>
+
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                {/* afatiId => pick from the list of afatis */}
+                <div>
+                  <label className="block font-medium mb-1">Afati</label>
+                  <select
+                    {...register("afatiId")}
+                    className="border p-1 rounded w-full"
+                  >
+                    <option value="">-- Select Afati --</option>
+                    {afatis.map((af) => (
+                      <option key={af.id} value={af.id}>
+                        {af.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* academicYear */}
+                <div>
+                  <label className="block font-medium mb-1">Academic Year</label>
+                  <select
+                    {...register("academicYear")}
+                    className="border p-1 rounded w-full"
+                  >
+                    <option value="">-- Select Year --</option>
+                    <option value="2023/24">2023/24</option>
+                    <option value="2024/25">2024/25</option>
+                    <option value="2025/26">2025/26</option>
+                  </select>
+                </div>
+
+                {/* studyYear */}
+                <div>
+                  <label className="block font-medium mb-1">Study Year</label>
+                  <input
+                    type="number"
+                    {...register("studyYear")}
+                    placeholder="2"
+                    className="border p-1 rounded w-full"
+                  />
+                </div>
+
+                {/* date */}
+                <div>
+                  <label className="block font-medium mb-1">Date</label>
+                  <input
+                    type="date"
+                    {...register("date")}
+                    className="border p-1 rounded w-full"
+                  />
+                </div>
+
+                {/* hour */}
+                <div>
+                  <label className="block font-medium mb-1">Hour</label>
+                  <input
+                    type="time"
+                    {...register("hour")}
+                    className="border p-1 rounded w-full"
+                  />
+                </div>
+
+                {/* subjectId */}
+                <div>
+                  <label className="block font-medium mb-1">Subject</label>
+                  <select
+                    {...register("subjectId")}
+                    className="border p-1 rounded w-full"
+                  >
+                    <option value="">-- Select Subject --</option>
+                    {subjects.map((sub) => (
+                      <option key={sub.id} value={sub.id}>
+                        {sub.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* instructorId */}
+                <div>
+                  <label className="block font-medium mb-1">Instructor</label>
+                  <select
+                    {...register("instructorId")}
+                    className="border p-1 rounded w-full"
+                  >
+                    <option value="">-- Select Instructor --</option>
+                    {instructors.map((inst) => (
+                      <option key={inst.id} value={inst.id}>
+                        {inst.name} ({inst.role})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-x-2">
+                <button
+                  type="submit"
+                  className="bg-blue-600 text-white px-4 py-1.5 rounded hover:bg-blue-700"
                 >
-                  <option value="">-- Select Afati --</option>
-                  {afatis.map((af) => (
-                    <option key={af.id} value={af.id}>
-                      {af.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* academicYear */}
-              <div>
-                <label className="block font-medium mb-1">Academic Year</label>
-                <select
-                  {...register("academicYear")}
-                  className="border p-1 rounded w-full"
+                  Update
+                </button>
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="bg-gray-400 text-white px-4 py-1.5 rounded hover:bg-gray-500"
                 >
-                  <option value="">-- Select Year --</option>
-                  <option value="2023/24">2023/24</option>
-                  <option value="2024/25">2024/25</option>
-                  <option value="2025/26">2025/26</option>
-                </select>
+                  Cancel
+                </button>
               </div>
-
-              {/* studyYear */}
-              <div>
-                <label className="block font-medium mb-1">Study Year</label>
-                <input
-                  type="number"
-                  {...register("studyYear")}
-                  placeholder="2"
-                  className="border p-1 rounded w-full"
-                />
-              </div>
-
-              {/* date */}
-              <div>
-                <label className="block font-medium mb-1">Date</label>
-                <input
-                  type="date"
-                  {...register("date")}
-                  className="border p-1 rounded w-full"
-                />
-              </div>
-
-              {/* hour */}
-              <div>
-                <label className="block font-medium mb-1">Hour</label>
-                <input
-                  type="time"
-                  {...register("hour")}
-                  className="border p-1 rounded w-full"
-                />
-              </div>
-
-              {/* subjectId */}
-              <div>
-                <label className="block font-medium mb-1">Subject</label>
-                <select
-                  {...register("subjectId")}
-                  className="border p-1 rounded w-full"
-                >
-                  <option value="">-- Select Subject --</option>
-                  {subjects.map((sub) => (
-                    <option key={sub.id} value={sub.id}>
-                      {sub.name} 
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* instructorId */}
-              <div>
-                <label className="block font-medium mb-1">Instructor</label>
-                <select
-                  {...register("instructorId")}
-                  className="border p-1 rounded w-full"
-                >
-                  <option value="">-- Select Instructor --</option>
-                  {instructors.map((inst) => (
-                    <option key={inst.id} value={inst.id}>
-                      {inst.name} ({inst.role})
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="space-x-2">
-              <button
-                type="submit"
-                className="bg-blue-600 text-white px-4 py-1.5 rounded hover:bg-blue-700"
-              >
-                Update
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setEditId(null);
-                  reset({});
-                }}
-                className="bg-gray-400 text-white px-4 py-1.5 rounded hover:bg-gray-500"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       )}
+      {/* ---------------------------------------------------------------------- */}
     </div>
   );
 };

@@ -7,6 +7,23 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { format, addWeeks, subWeeks } from "date-fns";
 import axiosInstance from "@/utils/axiosInstance";
 
+// 1) A small map from the Afati names to month indexes (0-based).
+//    Adjust these strings to match exactly the Afati names in your system.
+const afatiMonthMap: Record<string, number> = {
+  Janar: 0,
+  Shkurt: 1,
+  Mars: 2,
+  Prill: 3,
+  Maj: 4,
+  Qershor: 5,
+  Korrik: 6,
+  Gusht: 7,
+  Shtator: 8,
+  Tetor: 9,
+  Nentor: 10,
+  Dhjetor: 11,
+};
+
 export interface ExamItem {
   id: string;
   eventType: string;    // e.g. "Provime"
@@ -20,7 +37,7 @@ export interface ExamItem {
 
   Afati?: {
     id: string;
-    name: string; // e.g. "February", "June"
+    name: string; // e.g. "February", "June" or "Shkurt", "Qershor"
   };
   Subject?: {
     id: string;
@@ -32,14 +49,14 @@ export interface ExamItem {
   };
 }
 
-// Filter object from FilterPanelExams
+// 2) Filter object
 interface FilterOptionsexam {
   academicYear: string;
   afati: string;
   yearOfStudy: string;
 }
 
-// Filter logic
+// 3) Filter logic
 function getFilteredExams(
   data: ExamItem[],
   academicYear: string,
@@ -47,26 +64,20 @@ function getFilteredExams(
   yearOfStudy: string
 ): ExamItem[] {
   return data.filter((exam) => {
-    // By academicYear
     if (academicYear !== "All Years" && exam.academicYear !== academicYear) {
       return false;
     }
-
-    // By Afati name
     if (afati !== "All Afati") {
       if (exam.Afati?.name !== afati) {
         return false;
       }
     }
-
-    // By studyYear
     if (yearOfStudy !== "All Years") {
       const numericYear = parseInt(yearOfStudy.replace(/\D/g, ""), 10) || 0;
       if (exam.studyYear !== numericYear) {
         return false;
       }
     }
-
     return true;
   });
 }
@@ -74,20 +85,20 @@ function getFilteredExams(
 const Exams: React.FC = () => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
 
-  // Filter state
+  // 4) Filter state
   const [filters, setFilters] = useState<FilterOptionsexam>({
     academicYear: "2024/25",
-    afati: "Janar",
+    afati: "Janar",   // Example default
     yearOfStudy: "Year 1",
   });
 
-  // The array of exams from your API
+  // 5) The array of exams from your API
   const [exams, setExams] = useState<ExamItem[]>([]);
 
-  // Detect mobile
+  // 6) Detect mobile
   const isMobile = useIsMobile();
 
-  // Fetch from backend on mount
+  // 7) Fetch from backend on mount
   useEffect(() => {
     async function fetchExams() {
       try {
@@ -100,7 +111,20 @@ const Exams: React.FC = () => {
     fetchExams();
   }, []);
 
-  // Filter data
+  // 8) Whenever the user changes filters.afati,
+  //    see if it matches a known month name in `afatiMonthMap`.
+  useEffect(() => {
+    const monthIndex = afatiMonthMap[filters.afati];
+    if (monthIndex !== undefined) {
+      // We'll keep the same year as currentDate
+      const currentYear = currentDate.getFullYear();
+      // Or parse from "2024/25" if you want to take the first half of that
+      // But for now, let's just keep the same year:
+      setCurrentDate(new Date(currentYear, monthIndex, 1));
+    }
+  }, [filters.afati]);
+
+  // 9) Filter data
   const filteredEvents = getFilteredExams(
     exams,
     filters.academicYear,
@@ -108,7 +132,7 @@ const Exams: React.FC = () => {
     filters.yearOfStudy
   );
 
-  // Move by one week
+  // 10) Move by one week
   const goToPreviousWeek = () => setCurrentDate(subWeeks(currentDate, 1));
   const goToNextWeek = () => setCurrentDate(addWeeks(currentDate, 1));
 
@@ -135,9 +159,7 @@ const Exams: React.FC = () => {
               >
                 &lt;
               </button>
-
               <div className="mx-4">{format(currentDate, "MMMM yyyy")}</div>
-
               <button
                 className="px-2 py-1 text-gray-600 hover:bg-gray-100 rounded"
                 onClick={goToNextWeek}
