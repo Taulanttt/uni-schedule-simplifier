@@ -39,7 +39,7 @@ const ScheduleEventComponentExams: React.FC<ScheduleEventProps> = ({ event }) =>
         <div className="truncate">{event.Instructor.name}</div>
       )}
       {/* Type */}
-      <div className="truncate">{event.eventType}</div>
+      {/* <div className="truncate">{event.eventType}</div> */}
       {/* Hour */}
       <div>{event.hour?.slice(0, 5)}</div>
     </div>

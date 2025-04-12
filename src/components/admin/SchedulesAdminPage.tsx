@@ -54,7 +54,7 @@ interface ClassLocationData {
 // Vitet akademike e mundshme
 const ACADEMIC_YEARS = ["2023/24", "2024/25", "2025/26"];
 
-// Ditët e javës (mund t'i përktheni po të doni)
+// Ditët e javës
 const DAY_OPTIONS = [
   "Monday",
   "Tuesday",
@@ -126,7 +126,7 @@ const SchedulesAdminPage: React.FC = () => {
     fetchDropdownData();
   }, []);
 
-  // Filterojmë oraret client-side
+  // 3) Filtrim client-side sipas filtres
   const filteredSchedules = schedules.filter((sch) => {
     if (
       filters.academicYear !== "All Years" &&
@@ -134,14 +134,12 @@ const SchedulesAdminPage: React.FC = () => {
     ) {
       return false;
     }
-
     if (
       filters.semester !== "All Semesters" &&
       sch.semesterName !== filters.semester
     ) {
       return false;
     }
-
     if (filters.yearOfStudy !== "All Years") {
       const numericYear = parseInt(filters.yearOfStudy.replace(/\D/g, ""), 10);
       if (sch.studyYear !== numericYear) {
@@ -151,7 +149,7 @@ const SchedulesAdminPage: React.FC = () => {
     return true;
   });
 
-  // 3) Fillojmë editimin => hapim modalin
+  // 4) Fillojmë editimin => hapim modalin
   const startEdit = (sch: ScheduleItem) => {
     setEditId(sch.id);
 
@@ -170,18 +168,18 @@ const SchedulesAdminPage: React.FC = () => {
     setShowEditModal(true);
   };
 
-  // 4) Mbyllja e modalit
+  // Mbyllja e modalit
   const closeModal = () => {
     setEditId(null);
     reset({});
     setShowEditModal(false);
   };
 
-  // 5) Ruaj me PUT
+  // 5) Ruaj me PUT /schedules/:id
   const onSubmit = async (data: any) => {
     if (!editId) return;
     try {
-      // Mund të zgjidhen disa ditë, ose vetëm një
+      // daysOfWeek mund të jetë vetëm string ose array
       let daysArr = data.daysOfWeek;
       if (!daysArr) daysArr = [];
       if (typeof daysArr === "string") {
@@ -203,6 +201,7 @@ const SchedulesAdminPage: React.FC = () => {
         classLocationId: data.classLocationId,
       });
 
+      // Pasi përditësojmë me sukses, e rifreskojmë listën
       fetchSchedules();
       closeModal();
     } catch (error) {
@@ -212,7 +211,8 @@ const SchedulesAdminPage: React.FC = () => {
 
   // 6) Fshirja
   const deleteSchedule = async (id: string) => {
-    if (!window.confirm("A jeni i sigurt që dëshironi ta fshini këtë orar?")) return;
+    if (!window.confirm("A jeni i sigurt që dëshironi ta fshini këtë orar?"))
+      return;
     try {
       await axiosInstance.delete(`/schedules/${id}`);
       fetchSchedules();
@@ -225,7 +225,7 @@ const SchedulesAdminPage: React.FC = () => {
     <div className="max-w-6xl mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Admin i Orareve</h1>
 
-      {/* Paneli i filtrit */}
+      {/* Filter Panel */}
       <div className="mb-6">
         <FilterPanel filters={filters} setFilters={setFilters} />
       </div>
@@ -323,10 +323,13 @@ const SchedulesAdminPage: React.FC = () => {
                   />
                 </div>
 
-                {/* daysOfWeek (mund të jetë një ose disa) */}
+                {/* Dita e Javës (mund të jetë një ose disa) */}
                 <div>
                   <label className="block font-medium mb-1">Dita e Javës</label>
-                  <select {...register("daysOfWeek")} className="border p-1 rounded w-full">
+                  <select
+                    {...register("daysOfWeek")}
+                    className="border p-1 rounded w-full"
+                  >
                     <option value="">-- Zgjidh Ditën --</option>
                     {DAY_OPTIONS.map((day) => (
                       <option key={day} value={day}>

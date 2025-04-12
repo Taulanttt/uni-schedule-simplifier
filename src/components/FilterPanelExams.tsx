@@ -81,7 +81,7 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
           </SelectContent>
         </Select>
 
-        {/* Year of Study */}
+        {/* Viti i Studimeve */}
         <Select
           value={filters.yearOfStudy}
           onValueChange={(value) => updateFilters("yearOfStudy", value)}
@@ -146,7 +146,7 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
           </Select>
         </div>
 
-        {/* Year of Study */}
+        {/* Viti i Studimeve */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Viti Studimeve</label>
           <Select

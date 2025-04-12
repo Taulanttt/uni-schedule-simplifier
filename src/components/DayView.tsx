@@ -1,9 +1,10 @@
 // components/DayView.tsx
 
 import React from "react";
-import { format } from "date-fns";
+import { format, addDays, subDays } from "date-fns";
 import { ScheduleItem } from "@/types";
 import ScheduleEventComponent from "./ScheduleEvent";
+
 
 interface DayViewProps {
   events: ScheduleItem[];
@@ -20,10 +21,13 @@ function parseTimeToMinutes(timeStr: string): number {
   return hour * 60 + minute;
 }
 
-const DayView: React.FC<DayViewProps> = ({ events, currentDate }) => {
+const DayView: React.FC<DayViewProps> = ({
+  events,
+  currentDate,
+  setCurrentDate,
+}) => {
+  // Filter events that match this weekday
   const currentDayStr = format(currentDate, "EEEE"); // e.g. "Monday"
-  
-  // Filter events matching this weekday
   let dayEvents = events.filter((event) =>
     event.daysOfWeek?.includes(currentDayStr)
   );
@@ -33,13 +37,42 @@ const DayView: React.FC<DayViewProps> = ({ events, currentDate }) => {
     (a, b) => parseTimeToMinutes(a.startTime) - parseTimeToMinutes(b.startTime)
   );
 
+  // Handlers for going to previous/next day
+  const goToPreviousDay = () => {
+    setCurrentDate((prevDate) => subDays(prevDate, 1));
+  };
+
+  const goToNextDay = () => {
+    setCurrentDate((prevDate) => addDays(prevDate, 1));
+  };
+
   return (
-    <div className="border rounded-lg">
-      <div className="bg-gray-100 p-3 flex justify-center items-center rounded-t-lg">
-        <div className="text-xl font-bold">{currentDayStr}</div>
+    <div className="space-y-4">
+      {/* Header with previous/next buttons and current day in the center */}
+      <div className="flex items-center justify-between mb-4">
+        <button
+          onClick={goToPreviousDay}
+          className="border rounded p-2" // Example styling if not using <Button> component
+        >
+          {/* If using lucide-react: <ChevronLeft className="h-4 w-4" /> */}
+          &lt;
+        </button>
+
+        <div className="text-lg md:text-xl font-semibold text-center flex-1">
+          {format(currentDate, "EEEE")}
+        </div>
+
+        <button
+          onClick={goToNextDay}
+          className="border rounded p-2" // Example styling if not using <Button> component
+        >
+          {/* If using lucide-react: <ChevronRight className="h-4 w-4" /> */}
+          &gt;
+        </button>
       </div>
 
-      <div className="p-4 min-h-[300px]">
+      {/* List of scheduled events for this day */}
+      <div className="p-4 min-h-[300px] border rounded-lg">
         {dayEvents.length > 0 ? (
           dayEvents.map((event) => (
             <ScheduleEventComponent key={event.id} event={event} />

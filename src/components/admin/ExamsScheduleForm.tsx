@@ -3,46 +3,28 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { CalendarIcon, Clock } from "lucide-react";
+import { Clock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { toast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import axiosInstance from "@/utils/axiosInstance";
+import { toast, useToast } from "@/hooks/use-toast";
 
-// 1) Shema e validimit (Zod)
+// 1) Shema e validimit (Zod) me z.coerce.date()
 const formSchema = z.object({
   academicYear: z.string().min(1, "Viti akademik është i detyrueshëm"),
   studyYear: z.string().min(1, "Viti i studimeve është i detyrueshëm"),
   afati: z.string().min(1, "Afati (periudha e provimit) është i detyrueshëm"),
   subjectId: z.string().min(1, "Lënda është e detyrueshme"),
   instructorId: z.string().min(1, "Profesori është i detyrueshëm"),
-  date: z.date({ required_error: "Ju lutem zgjidhni një datë." }),
+
+  // përdorim coerce.date për të konvertuar "YYYY-MM-DD" nga <input type="date" />
+  date: z.coerce.date({ required_error: "Ju lutem zgjidhni një datë." }),
+
   hour: z.string().min(1, "Ju lutem zgjidhni një orë."),
 });
-
 type FormValues = z.infer<typeof formSchema>;
 
 interface AfatiData {
@@ -61,12 +43,14 @@ interface InstructorData {
 }
 
 const ExamsScheduleForm: React.FC = () => {
-  // Ruajmë listat e afati, lëndët, dhe profesorët
+  const { toast } = useToast();
+
+  // Listat e afateve, lëndëve dhe profesorëve
   const [afatiList, setAfatiList] = useState<AfatiData[]>([]);
   const [subjects, setSubjects] = useState<SubjectData[]>([]);
   const [instructors, setInstructors] = useState<InstructorData[]>([]);
 
-  // React Hook Form
+  // 2) Hook Form (React Hook Form)
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -75,12 +59,12 @@ const ExamsScheduleForm: React.FC = () => {
       afati: "",
       subjectId: "",
       instructorId: "",
-      date: undefined,
+      date: undefined, // z.coerce.date do ta kthejë në objekt Date
       hour: "",
     },
   });
 
-  // 2) Marrim të dhënat e dropdown-it kur ngarkohet komponenti
+  // 3) Marrim të dhëna për dropdown-et nga backend
   useEffect(() => {
     async function fetchDropdownData() {
       try {
@@ -99,10 +83,10 @@ const ExamsScheduleForm: React.FC = () => {
     fetchDropdownData();
   }, []);
 
-  // 3) Submitting → POST /exams
+  // 4) Kur submit-im formularin → POST /exams
   async function onSubmit(values: FormValues) {
     try {
-      // Gjejmë afatin sipas emrit
+      // Gjejmë afatin sipas emrit (opsionale, nëse backend pret "afatiId")
       const selectedAfati = afatiList.find((af) => af.name === values.afati);
 
       // Ndërto trupin e kërkesës
@@ -110,8 +94,10 @@ const ExamsScheduleForm: React.FC = () => {
         eventType: "exam",
         academicYear: values.academicYear,
         studyYear: Number(values.studyYear),
+        // e kthejmë Date obj. në string "yyyy-MM-dd"
         date: format(values.date, "yyyy-MM-dd"),
         hour: values.hour,
+        // nëse do "afatiId", mund ta caktoni
         afatiId: selectedAfati ? selectedAfati.id : "",
         subjectId: values.subjectId,
         instructorId: values.instructorId,
@@ -119,15 +105,15 @@ const ExamsScheduleForm: React.FC = () => {
 
       await axiosInstance.post("/exams", requestBody);
 
-      // Njoftimi i suksesit
+      // Mesazh suksesi
       toast({
-        title: "Provimi u shtua me sukses!",
+        title: "Provimi u shtua me sukses!"
       });
 
-      // Pastro formularin
+      // Pastrojmë formularin
       form.reset();
     } catch (error) {
-      console.error("Gabim në shtimin e provimit:", error);
+      console.error("Gabim gjatë shtimit të provimit:", error);
       toast({
         title: "Gabim gjatë shtimit të provimit",
         description: "Ju lutem kontrolloni konsolën ose provoni përsëri.",
@@ -143,7 +129,7 @@ const ExamsScheduleForm: React.FC = () => {
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Rreshti 1: Viti Akademik, Viti Studimeve, Afati */}
+            {/* Rreshti 1: (Viti Akademik, Viti Studimeve, Afati) */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* academicYear */}
               <FormField
@@ -186,7 +172,6 @@ const ExamsScheduleForm: React.FC = () => {
                         <SelectItem value="1">Viti 1</SelectItem>
                         <SelectItem value="2">Viti 2</SelectItem>
                         <SelectItem value="3">Viti 3</SelectItem>
-                        <SelectItem value="4">Viti 4</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -221,7 +206,7 @@ const ExamsScheduleForm: React.FC = () => {
               />
             </div>
 
-            {/* Rreshti 2: Lënda, Profesori */}
+            {/* Rreshti 2: (Lënda, Profesori) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* subjectId */}
               <FormField
@@ -276,40 +261,24 @@ const ExamsScheduleForm: React.FC = () => {
               />
             </div>
 
-            {/* Rreshti 3: Data, Ora */}
+            {/* Rreshti 3: (Data, Ora) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* date */}
+              {/* date (tani input type="date") */}
               <FormField
                 control={form.control}
                 name="date"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col">
+                  <FormItem>
                     <FormLabel>Data e Provimit</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value
-                            ? format(field.value, "PPP")
-                            : "Zgjidh një datë"}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          initialFocus
-                          className="pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    <FormControl>
+                      <Input
+                        type="date"
+                        // React Hook Form 'field.onChange' pret vlerë string,
+                        // por ne kemi z.coerce.date. Kjo funksionon mirë.
+                        onChange={(e) => field.onChange(e.target.value)}
+                        value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -334,7 +303,7 @@ const ExamsScheduleForm: React.FC = () => {
               />
             </div>
 
-            {/* Submit */}
+            {/* Butoni Submit */}
             <Button type="submit" className="w-full md:w-auto">
               Cakto Provimin
             </Button>
