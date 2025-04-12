@@ -53,7 +53,7 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
           onValueChange={(value) => updateFilters("academicYear", value)}
         >
           <SelectTrigger className="w-[100px] h-8">
-            <SelectValue placeholder="Year" />
+            <SelectValue placeholder="Viti" />
           </SelectTrigger>
           <SelectContent>
             {academicYears.map((year) => (
@@ -87,7 +87,7 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
           onValueChange={(value) => updateFilters("yearOfStudy", value)}
         >
           <SelectTrigger className="w-[100px] h-8">
-            <SelectValue placeholder="Study Year" />
+            <SelectValue placeholder="Viti Studimeve" />
           </SelectTrigger>
           <SelectContent>
             {yearsOfStudy.map((year) => (
@@ -104,17 +104,17 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
   // Full Layout
   return (
     <div className="bg-white p-4 rounded-lg shadow mb-4">
-      <h2 className="text-lg font-semibold mb-3">Filters</h2>
+      <h2 className="text-lg font-semibold mb-3">Filtro Provimet</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Academic Year */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">Academic Year</label>
+          <label className="text-sm font-medium">Viti Akademik</label>
           <Select
             value={filters.academicYear}
             onValueChange={(value) => updateFilters("academicYear", value)}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select Academic Year" />
+              <SelectValue placeholder="Zgjidh Vitin Akademik" />
             </SelectTrigger>
             <SelectContent>
               {academicYears.map((year) => (
@@ -128,13 +128,13 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
 
         {/* Afati */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">Afati (Exam Period)</label>
+          <label className="text-sm font-medium">Afati (Periudha e Provimit)</label>
           <Select
             value={filters.afati}
             onValueChange={(value) => updateFilters("afati", value)}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select Afati" />
+              <SelectValue placeholder="Zgjidh Afatin" />
             </SelectTrigger>
             <SelectContent>
               {afatiList.map((af) => (
@@ -148,13 +148,13 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
 
         {/* Year of Study */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">Year of Study</label>
+          <label className="text-sm font-medium">Viti Studimeve</label>
           <Select
             value={filters.yearOfStudy}
             onValueChange={(value) => updateFilters("yearOfStudy", value)}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select Year of Study" />
+              <SelectValue placeholder="Zgjidh Vitin e Studimeve" />
             </SelectTrigger>
             <SelectContent>
               {yearsOfStudy.map((year) => (

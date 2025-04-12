@@ -11,32 +11,32 @@ const Index: React.FC = () => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [view, setView] = useState<"day" | "week">("week");
 
-  // Filter state
+  // Gjendja e filtrit
   const [filters, setFilters] = useState<FilterOptions>({
     academicYear: "2024/25",
     semester: "Verore",
     yearOfStudy: "Viti 1",
   });
 
-  // The array of schedules from the API
+  // Lista e orareve nga API
   const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
 
-  // Fetch schedules on mount
+  // Marrim oraret kur komponenti ngarkohet
   useEffect(() => {
     async function fetchSchedules() {
       try {
         const res = await axiosInstance.get<ScheduleItem[]>("/schedules");
         setSchedules(res.data);
       } catch (err) {
-        console.error("Error fetching schedules:", err);
+        console.error("Gabim gjatë marrjes së orareve:", err);
       }
     }
     fetchSchedules();
   }, []);
 
-  // Filter schedules based on user selections
+  // Filtrimi i orareve
   const filteredSchedules = schedules.filter((item) => {
-    // Filter by academicYear if not "All Semesters"/"All Years"
+    // Sipas vitit akademik (nëse nuk është “All Semesters”/“All Years”)
     if (
       filters.academicYear !== "All Semesters" &&
       item.academicYear !== filters.academicYear
@@ -44,7 +44,7 @@ const Index: React.FC = () => {
       return false;
     }
 
-    // Filter by semester
+    // Sipas semestrit
     if (
       filters.semester !== "All Semesters" &&
       item.semesterName !== filters.semester
@@ -52,7 +52,7 @@ const Index: React.FC = () => {
       return false;
     }
 
-    // Filter by yearOfStudy
+    // Sipas vitit të studimeve
     if (filters.yearOfStudy !== "All Years") {
       const numericYear = parseInt(filters.yearOfStudy.replace(/\D/g, ""), 10);
       if (item.studyYear !== numericYear) {
@@ -65,7 +65,7 @@ const Index: React.FC = () => {
 
   return (
     <div className="flex flex-col">
-      {/* Top: FilterPanel + day/week toggle */}
+      {/* Koka: Paneli i filtrit + zgjedhja (Day / Week) */}
       <div className="flex flex-col md:flex-row items-center justify-between mb-4 gap-4">
         <FilterPanel filters={filters} setFilters={setFilters} compact />
         <div className="flex space-x-2">
@@ -73,18 +73,18 @@ const Index: React.FC = () => {
             variant={view === "day" ? "default" : "outline"}
             onClick={() => setView("day")}
           >
-            Day
+            Dita
           </Button>
           <Button
             variant={view === "week" ? "default" : "outline"}
             onClick={() => setView("week")}
           >
-            Week
+            Java
           </Button>
         </div>
       </div>
 
-      {/* Main schedule area */}
+      {/* Zona kryesore e orarit */}
       <div className="bg-white rounded-lg shadow p-4 flex-1 overflow-auto">
         {view === "day" && (
           <DayView
@@ -104,7 +104,7 @@ const Index: React.FC = () => {
         )}
       </div>
 
-      {/* Legend */}
+      {/* Legjenda në fund */}
       <LegendComponent />
     </div>
   );

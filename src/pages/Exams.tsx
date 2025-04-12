@@ -7,8 +7,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { format, addWeeks, subWeeks } from "date-fns";
 import axiosInstance from "@/utils/axiosInstance";
 
-// 1) A small map from the Afati names to month indexes (0-based).
-//    Adjust these strings to match exactly the Afati names in your system.
+/*
+  1) Definojmë një hartë të emrave të muajve (afateve) me indekset (0-based).
+     p.sh. Shtator => 8, Tetor => 9, etj.
+*/
 const afatiMonthMap: Record<string, number> = {
   Janar: 0,
   Shkurt: 1,
@@ -24,20 +26,30 @@ const afatiMonthMap: Record<string, number> = {
   Dhjetor: 11,
 };
 
+// 2) Funksion për të ndarë vitin akademik "2023/24" në [startYear, endYear]
+function parseAcademicYear(ay: string): [number, number] {
+  const [startStr, endStr] = ay.split("/");
+  const startYear = parseInt(startStr, 10);
+  const endYear = parseInt(endStr, 10) + 2000;
+  return [startYear, endYear];
+}
+
+// 3) Struktura e një provimi
 export interface ExamItem {
   id: string;
-  eventType: string;    // e.g. "Provime"
-  academicYear: string; // "2024/25"
-  studyYear: number;    // 2
-  date: string;         // "2025-02-15"
-  hour: string;         // "10:00:00"
-  afatiId: string;      // foreign key
+  eventType: string;    
+  academicYear: string; 
+  studyYear: number;    
+  date: string;         
+  hour: string;         
+  afatiId: string;      
+
   subjectId: string;
   instructorId: string;
 
   Afati?: {
     id: string;
-    name: string; // e.g. "February", "June" or "Shkurt", "Qershor"
+    name: string; 
   };
   Subject?: {
     id: string;
@@ -49,14 +61,14 @@ export interface ExamItem {
   };
 }
 
-// 2) Filter object
+// 4) Lloji i filtrit
 interface FilterOptionsexam {
   academicYear: string;
   afati: string;
   yearOfStudy: string;
 }
 
-// 3) Filter logic
+// 5) Filtrim i provimeve
 function getFilteredExams(
   data: ExamItem[],
   academicYear: string,
@@ -85,46 +97,53 @@ function getFilteredExams(
 const Exams: React.FC = () => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
 
-  // 4) Filter state
+  // 6) Gjendja e filtrit
   const [filters, setFilters] = useState<FilterOptionsexam>({
     academicYear: "2024/25",
-    afati: "Shkurt",   // Example default
+    afati: "Shkurt",  
     yearOfStudy: "Viti 1",
   });
 
-  // 5) The array of exams from your API
+  // Lista e provimeve nga API
   const [exams, setExams] = useState<ExamItem[]>([]);
 
-  // 6) Detect mobile
+  // A jemi në mobile?
   const isMobile = useIsMobile();
 
-  // 7) Fetch from backend on mount
+  // 7) Marrim provimet nga backend
   useEffect(() => {
     async function fetchExams() {
       try {
         const res = await axiosInstance.get<ExamItem[]>("/exams");
         setExams(res.data);
       } catch (error) {
-        console.error("Error fetching exam schedules:", error);
+        console.error("Gabim gjatë marrjes së provimeve:", error);
       }
     }
     fetchExams();
   }, []);
 
-  // 8) Whenever the user changes filters.afati,
-  //    see if it matches a known month name in `afatiMonthMap`.
+  /*
+    8) Kur ndryshon afati ose vitit akademik:
+       - p.sh. "2023/24" => [2023, 2024]
+       - p.sh. "Shkurt" => monthIndex=1
+       - Nëse monthIndex>=8 => perdor startYear, ndryshe endYear
+  */
   useEffect(() => {
     const monthIndex = afatiMonthMap[filters.afati];
-    if (monthIndex !== undefined) {
-      // We'll keep the same year as currentDate
-      const currentYear = currentDate.getFullYear();
-      // Or parse from "2024/25" if you want to take the first half of that
-      // But for now, let's just keep the same year:
-      setCurrentDate(new Date(currentYear, monthIndex, 1));
-    }
-  }, [filters.afati]);
+    if (monthIndex !== undefined && filters.academicYear !== "All Years") {
+      const [startYear, endYear] = parseAcademicYear(filters.academicYear);
 
-  // 9) Filter data
+      let chosenYear = startYear;
+      if (monthIndex < 8) {
+        chosenYear = endYear;
+      }
+
+      setCurrentDate(new Date(chosenYear, monthIndex, 1));
+    }
+  }, [filters.afati, filters.academicYear]);
+
+  // 9) Filtrimi i provimeve
   const filteredEvents = getFilteredExams(
     exams,
     filters.academicYear,
@@ -132,13 +151,13 @@ const Exams: React.FC = () => {
     filters.yearOfStudy
   );
 
-  // 10) Move by one week
+  // 10) Navigim javor (në mobil)
   const goToPreviousWeek = () => setCurrentDate(subWeeks(currentDate, 1));
   const goToNextWeek = () => setCurrentDate(addWeeks(currentDate, 1));
 
   return (
     <div className="flex flex-col">
-      {/* Filters at the top */}
+      {/* Paneli i filtrit */}
       <div
         className={`flex flex-col ${
           isMobile ? "mb-2" : "md:flex-row"
@@ -147,11 +166,11 @@ const Exams: React.FC = () => {
         <FilterPanelExams filters={filters} setFilters={setFilters} compact />
       </div>
 
-      {/* Main exam area */}
+      {/* Këndi kryesor */}
       <div className="bg-white rounded-lg shadow p-2 md:p-4">
         {isMobile ? (
           <>
-            {/* Weekly arrows + label */}
+            {/* Shigjetat javore + label */}
             <div className="flex items-center justify-center text-lg font-semibold mb-2">
               <button
                 className="px-2 py-1 text-gray-600 hover:bg-gray-100 rounded"
@@ -168,11 +187,11 @@ const Exams: React.FC = () => {
               </button>
             </div>
 
-            {/* Mobile: WeekView */}
+            {/* Pamja javore në celular */}
             <WeekView events={filteredEvents} currentDate={currentDate} />
           </>
         ) : (
-          // Desktop: MonthView
+          // Pamja mujore në desktop
           <MonthView
             events={filteredEvents}
             currentDate={currentDate}
@@ -181,7 +200,7 @@ const Exams: React.FC = () => {
         )}
       </div>
 
-      {/* Legend on desktop only */}
+      {/* Legjenda vetëm në desktop */}
       {!isMobile && <LegendComponent />}
     </div>
   );
