@@ -6,35 +6,50 @@ import { format } from "date-fns";
 import { Clock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import axiosInstance from "@/utils/axiosInstance";
-import { toast, useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 
-// 1) Shema e validimit (Zod) me z.coerce.date()
+// 1) Validimi me "academicYearId" dhe "afatiId"
 const formSchema = z.object({
-  academicYear: z.string().min(1, "Viti akademik është i detyrueshëm"),
+  academicYearId: z.string().min(1, "Viti akademik është i detyrueshëm"),
   studyYear: z.string().min(1, "Viti i studimeve është i detyrueshëm"),
-  afati: z.string().min(1, "Afati (periudha e provimit) është i detyrueshëm"),
+  afatiId: z.string().min(1, "Afati është i detyrueshëm"),
   subjectId: z.string().min(1, "Lënda është e detyrueshme"),
   instructorId: z.string().min(1, "Profesori është i detyrueshëm"),
-
-  // përdorim coerce.date për të konvertuar "YYYY-MM-DD" nga <input type="date" />
   date: z.coerce.date({ required_error: "Ju lutem zgjidhni një datë." }),
-
   hour: z.string().min(1, "Ju lutem zgjidhni një orë."),
 });
 type FormValues = z.infer<typeof formSchema>;
 
+// 2) Modelet
+interface AcademicYearItem {
+  id: string; // UUID
+  name: string;
+  isActive: boolean;
+}
 interface AfatiData {
-  id: string;
+  id: string; // UUID
   name: string;
 }
 interface SubjectData {
   id: string;
   name: string;
-  code: string;
 }
 interface InstructorData {
   id: string;
@@ -43,273 +58,273 @@ interface InstructorData {
 }
 
 const ExamsScheduleForm: React.FC = () => {
-  const { toast } = useToast();
-
-  // Listat e afateve, lëndëve dhe profesorëve
+  // 3) Ruajmë listat (vitet akademike, afatet, etj.)
+  const [academicYears, setAcademicYears] = useState<AcademicYearItem[]>([]);
   const [afatiList, setAfatiList] = useState<AfatiData[]>([]);
   const [subjects, setSubjects] = useState<SubjectData[]>([]);
   const [instructors, setInstructors] = useState<InstructorData[]>([]);
 
-  // 2) Hook Form (React Hook Form)
+  // 4) Hook form
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      academicYear: "",
+      academicYearId: "",
       studyYear: "",
-      afati: "",
+      afatiId: "",
       subjectId: "",
       instructorId: "",
-      date: undefined, // z.coerce.date do ta kthejë në objekt Date
+      date: new Date(),
       hour: "",
     },
   });
 
-  // 3) Marrim të dhëna për dropdown-et nga backend
+  // 5) Marrim "academic-year" -> filtruar me isActive
+  useEffect(() => {
+    async function fetchAcademicYears() {
+      try {
+        const res = await axiosInstance.get<AcademicYearItem[]>("/academic-year");
+        const activeOnly = res.data.filter((ay) => ay.isActive);
+        setAcademicYears(activeOnly);
+      } catch (err) {
+        console.error("Gabim tek academic-year:", err);
+      }
+    }
+    fetchAcademicYears();
+  }, []);
+
+  // 6) Marrim "afati, subjects, instructors"
   useEffect(() => {
     async function fetchDropdownData() {
       try {
-        const afatiRes = await axiosInstance.get<AfatiData[]>("/afati");
-        setAfatiList(afatiRes.data);
+        // Afati
+        const afRes = await axiosInstance.get<AfatiData[]>("/afati");
+        setAfatiList(afRes.data);
 
+        // Lëndët
         const subRes = await axiosInstance.get<SubjectData[]>("/subjects");
         setSubjects(subRes.data);
 
+        // Profesorët
         const insRes = await axiosInstance.get<InstructorData[]>("/instructors");
         setInstructors(insRes.data);
       } catch (error) {
-        console.error("Gabim gjatë marrjes së të dhënave:", error);
+        console.error("Gabim tek fetchDropdownData:", error);
       }
     }
     fetchDropdownData();
   }, []);
 
-  // 4) Kur submit-im formularin → POST /exams
-  async function onSubmit(values: FormValues) {
+  // 7) Submit -> POST /exams
+  const onSubmit = async (data: FormValues) => {
     try {
-      // Gjejmë afatin sipas emrit (opsionale, nëse backend pret "afatiId")
-      const selectedAfati = afatiList.find((af) => af.name === values.afati);
-
-      // Ndërto trupin e kërkesës
-      const requestBody = {
+      // Ndërto request
+      const reqBody = {
         eventType: "exam",
-        academicYear: values.academicYear,
-        studyYear: Number(values.studyYear),
-        // e kthejmë Date obj. në string "yyyy-MM-dd"
-        date: format(values.date, "yyyy-MM-dd"),
-        hour: values.hour,
-        // nëse do "afatiId", mund ta caktoni
-        afatiId: selectedAfati ? selectedAfati.id : "",
-        subjectId: values.subjectId,
-        instructorId: values.instructorId,
+        academicYearId: data.academicYearId, // uuid
+        studyYear: Number(data.studyYear),
+        date: format(data.date, "yyyy-MM-dd"), // "YYYY-MM-DD"
+        hour: data.hour,
+        afatiId: data.afatiId,         // uuid
+        subjectId: data.subjectId,     // uuid
+        instructorId: data.instructorId, // uuid
       };
 
-      await axiosInstance.post("/exams", requestBody);
-
-      // Mesazh suksesi
-      toast({
-        title: "Provimi u shtua me sukses!"
-      });
-
-      // Pastrojmë formularin
+      await axiosInstance.post("/exams", reqBody);
+      toast({ title: "Provimi u shtua me sukses!" });
       form.reset();
-    } catch (error) {
-      console.error("Gabim gjatë shtimit të provimit:", error);
+    } catch (err) {
+      console.error("Gabim gjatë shtimit të provimit:", err);
       toast({
         title: "Gabim gjatë shtimit të provimit",
         description: "Ju lutem kontrolloni konsolën ose provoni përsëri.",
         variant: "destructive",
       });
     }
-  }
+  };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-2xl font-semibold mb-6">Cakto Provim të Ri</h2>
+    <div className="max-w-xl mx-auto bg-white p-6 rounded-md shadow">
+      <h2 className="text-xl font-bold mb-4">Cakto Provim të Ri</h2>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Rreshti 1: (Viti Akademik, Viti Studimeve, Afati) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* academicYear */}
-              <FormField
-                control={form.control}
-                name="academicYear"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Viti Akademik</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Zgjidh vitin akademik" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="2023/24">2023/24</SelectItem>
-                        <SelectItem value="2024/25">2024/25</SelectItem>
-                        <SelectItem value="2025/26">2025/26</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* studyYear */}
-              <FormField
-                control={form.control}
-                name="studyYear"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Viti i Studimeve</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Zgjidh vitin e studimeve" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="1">Viti 1</SelectItem>
-                        <SelectItem value="2">Viti 2</SelectItem>
-                        <SelectItem value="3">Viti 3</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* afati */}
-              <FormField
-                control={form.control}
-                name="afati"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Afati (Periudha e Provimit)</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Zgjidh afatin" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {afatiList.map((af) => (
-                          <SelectItem key={af.id} value={af.name}>
-                            {af.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Rreshti 2: (Lënda, Profesori) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* subjectId */}
-              <FormField
-                control={form.control}
-                name="subjectId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Lënda</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Zgjidh lëndën" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {subjects.map((sub) => (
-                          <SelectItem key={sub.id} value={sub.id}>
-                            {sub.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* instructorId */}
-              <FormField
-                control={form.control}
-                name="instructorId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Profesori</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Zgjidh profesorin" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {instructors.map((inst) => (
-                          <SelectItem key={inst.id} value={inst.id}>
-                            {inst.name} ({inst.role})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Rreshti 3: (Data, Ora) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* date (tani input type="date") */}
-              <FormField
-                control={form.control}
-                name="date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Data e Provimit</FormLabel>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {/* Rreshti 1: academicYearId, studyYear, afatiId */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* academicYearId */}
+            <FormField
+              control={form.control}
+              name="academicYearId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Viti Akademik</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <Input
-                        type="date"
-                        // React Hook Form 'field.onChange' pret vlerë string,
-                        // por ne kemi z.coerce.date. Kjo funksionon mirë.
-                        onChange={(e) => field.onChange(e.target.value)}
-                        value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
-                      />
+                      <SelectTrigger>
+                        <SelectValue placeholder="Zgjidh Vitin Akademik" />
+                      </SelectTrigger>
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                    <SelectContent>
+                      {academicYears.map((ay) => (
+                        <SelectItem key={ay.id} value={ay.id}>
+                          {ay.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              {/* hour */}
-              <FormField
-                control={form.control}
-                name="hour"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ora e Provimit</FormLabel>
-                    <div className="relative">
-                      <FormControl>
-                        <Input type="time" {...field} className="pl-10" />
-                      </FormControl>
-                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            {/* studyYear */}
+            <FormField
+              control={form.control}
+              name="studyYear"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Viti Studimeve</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Zgjidh Vitin e Studimeve" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="1">Viti 1</SelectItem>
+                      <SelectItem value="2">Viti 2</SelectItem>
+                      <SelectItem value="3">Viti 3</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-            {/* Butoni Submit */}
-            <Button type="submit" className="w-full md:w-auto">
-              Cakto Provimin
-            </Button>
-          </form>
-        </Form>
-      </div>
+            {/* afatiId */}
+            <FormField
+              control={form.control}
+              name="afatiId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Afati</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Zgjidh Afatin" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {afatiList.map((a) => (
+                        <SelectItem key={a.id} value={a.id}>
+                          {a.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Rreshti 2: subjectId, instructorId */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="subjectId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Lënda</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Zgjidh Lëndën" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {subjects.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="instructorId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Profesori</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Zgjidh Profesorin" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {instructors.map((inst) => (
+                        <SelectItem key={inst.id} value={inst.id}>
+                          {inst.name} ({inst.role})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Rreshti 3: date, hour */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* date */}
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Data e Provimit</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="date"
+                      onChange={(e) => field.onChange(e.target.value)}
+                      value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* hour */}
+            <FormField
+              control={form.control}
+              name="hour"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Ora e Provimit</FormLabel>
+                  <div className="relative">
+                    <FormControl>
+                      <Input type="time" {...field} className="pl-10" />
+                    </FormControl>
+                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <Button type="submit" className="mt-4">
+            Shto Provimin
+          </Button>
+        </form>
+      </Form>
     </div>
   );
 };

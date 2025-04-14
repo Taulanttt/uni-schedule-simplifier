@@ -3,35 +3,34 @@ import axiosInstance from "@/utils/axiosInstance";
 import { useForm } from "react-hook-form";
 import FilterPanel from "@/components/FilterPanel";
 
-// Struktura e filtrit
 interface FilterOptions {
-  academicYear: string;
-  semester: string;
-  yearOfStudy: string;
+  academicYear: string;  // Will store either "All Years" or an AcademicYearItem.id
+  semester: string;      // Will store either "All Semesters" or a semester name
+  yearOfStudy: string;   // Will store either "All Years" or a numeric string
 }
 
-// Formati i një orari (Schedule)
+// Struktura e orarit (tani me academicYearId)
 interface ScheduleItem {
   id: string;
   eventType: string;
   startTime: string;
   endTime: string;
   daysOfWeek: string[];
-  academicYear: string;
+  // Now we store only the ID from the server; AcademicYear is optional or null
+  academicYearId: string | null;
   studyYear: number;
   subjectName: string;
   instructorName: string;
   semesterName: string;
   locationName: string;
-
-  // Foreign keys
+  // Fusha Foreign Key
   subjectId: string;
   instructorId: string;
   semesterId: string;
   classLocationId: string;
 }
 
-// Për dropdown
+// Të dhëna për dropdown
 interface SubjectData {
   id: string;
   name: string;
@@ -51,10 +50,14 @@ interface ClassLocationData {
   roomName: string;
 }
 
-// Vitet akademike e mundshme
-const ACADEMIC_YEARS = ["2023/24", "2024/25", "2025/26"];
+// Viti Akademik nga backend
+interface AcademicYearItem {
+  id: string;
+  name: string;    // p.sh. "2025/26"
+  isActive: boolean;
+}
 
-// Ditët e javës
+// Ditët e javës (për <select> në modal)
 const DAY_OPTIONS = [
   "Monday",
   "Tuesday",
@@ -70,18 +73,18 @@ const SchedulesAdminPage: React.FC = () => {
   const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Filtrat e orareve
+  // Filtrat
   const [filters, setFilters] = useState<FilterOptions>({
     academicYear: "All Years",
     semester: "All Semesters",
     yearOfStudy: "All Years",
   });
 
-  // Gjendja e modalit + ID e orarit që editohet
+  // Modal state
   const [editId, setEditId] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  // Hook Form
+  // Hook form
   const { register, handleSubmit, reset, setValue } = useForm<any>();
 
   // Të dhëna për dropdown
@@ -89,11 +92,13 @@ const SchedulesAdminPage: React.FC = () => {
   const [instructors, setInstructors] = useState<InstructorData[]>([]);
   const [semesters, setSemesters] = useState<SemesterData[]>([]);
   const [locations, setLocations] = useState<ClassLocationData[]>([]);
+  const [academicYears, setAcademicYears] = useState<AcademicYearItem[]>([]);
 
   // 1) Marrim oraret
   async function fetchSchedules() {
     setLoading(true);
     try {
+      // Server should return academicYearId (and possibly academicYear = null)
       const res = await axiosInstance.get<ScheduleItem[]>("/schedules");
       setSchedules(res.data);
     } catch (error) {
@@ -103,7 +108,7 @@ const SchedulesAdminPage: React.FC = () => {
     }
   }
 
-  // 2) Marrim të dhënat për subject, instructor, semester, location
+  // 2) Marrim subject, instructor, semester, location
   async function fetchDropdownData() {
     try {
       const [subRes, insRes, semRes, locRes] = await Promise.all([
@@ -121,35 +126,54 @@ const SchedulesAdminPage: React.FC = () => {
     }
   }
 
+  // 3) Marrim vitet akademike aktive
+  async function fetchAcademicYears() {
+    try {
+      const res = await axiosInstance.get<AcademicYearItem[]>("/academic-year");
+      // filtrojmë vetëm isActive == true
+      const activeAY = res.data.filter((ay) => ay.isActive);
+      setAcademicYears(activeAY);
+    } catch (error) {
+      console.error("Gabim gjatë marrjes së viteve akademike:", error);
+    }
+  }
+
   useEffect(() => {
     fetchSchedules();
     fetchDropdownData();
+    fetchAcademicYears();
   }, []);
 
-  // 3) Filtrim client-side sipas filtres
+  // 4) Filtrim client-side
   const filteredSchedules = schedules.filter((sch) => {
+    // Filtri: academicYear => compare sch.academicYearId with filters.academicYear
     if (
       filters.academicYear !== "All Years" &&
-      sch.academicYear !== filters.academicYear
+      sch.academicYearId !== filters.academicYear
     ) {
       return false;
     }
+
+    // Filtri: semestri (compare sch.semesterName with filters.semester)
     if (
       filters.semester !== "All Semesters" &&
       sch.semesterName !== filters.semester
     ) {
       return false;
     }
+
+    // Filtri: viti i studimeve
     if (filters.yearOfStudy !== "All Years") {
       const numericYear = parseInt(filters.yearOfStudy.replace(/\D/g, ""), 10);
       if (sch.studyYear !== numericYear) {
         return false;
       }
     }
+
     return true;
   });
 
-  // 4) Fillojmë editimin => hapim modalin
+  // 5) Fillojmë editimin => hapim modalin
   const startEdit = (sch: ScheduleItem) => {
     setEditId(sch.id);
 
@@ -157,12 +181,13 @@ const SchedulesAdminPage: React.FC = () => {
     setValue("eventType", sch.eventType);
     setValue("startTime", sch.startTime);
     setValue("endTime", sch.endTime);
-    setValue("academicYear", sch.academicYear);
+    setValue("academicYearId", sch.academicYearId || ""); // set the ID
     setValue("studyYear", String(sch.studyYear));
     setValue("subjectId", sch.subjectId);
     setValue("instructorId", sch.instructorId);
     setValue("semesterId", sch.semesterId);
     setValue("classLocationId", sch.classLocationId);
+    // daysOfWeek might be multiple
     setValue("daysOfWeek", sch.daysOfWeek);
 
     setShowEditModal(true);
@@ -175,13 +200,13 @@ const SchedulesAdminPage: React.FC = () => {
     setShowEditModal(false);
   };
 
-  // 5) Ruaj me PUT /schedules/:id
+  // 6) Ruaj me PUT
   const onSubmit = async (data: any) => {
     if (!editId) return;
     try {
-      // daysOfWeek mund të jetë vetëm string ose array
       let daysArr = data.daysOfWeek;
       if (!daysArr) daysArr = [];
+      // Në rast se user-i ka zgjedhur një vlerë të vetme
       if (typeof daysArr === "string") {
         daysArr = [daysArr];
       }
@@ -193,7 +218,7 @@ const SchedulesAdminPage: React.FC = () => {
         startTime: data.startTime,
         endTime: data.endTime,
         daysOfWeek: daysArr,
-        academicYear: data.academicYear,
+        academicYearId: data.academicYearId, // ID e vitit akademik
         studyYear: numericYear,
         subjectId: data.subjectId,
         instructorId: data.instructorId,
@@ -201,7 +226,6 @@ const SchedulesAdminPage: React.FC = () => {
         classLocationId: data.classLocationId,
       });
 
-      // Pasi përditësojmë me sukses, e rifreskojmë listën
       fetchSchedules();
       closeModal();
     } catch (error) {
@@ -209,10 +233,11 @@ const SchedulesAdminPage: React.FC = () => {
     }
   };
 
-  // 6) Fshirja
+  // 7) Fshirja
   const deleteSchedule = async (id: string) => {
-    if (!window.confirm("A jeni i sigurt që dëshironi ta fshini këtë orar?"))
+    if (!window.confirm("A jeni i sigurt që dëshironi ta fshini këtë orar?")) {
       return;
+    }
     try {
       await axiosInstance.delete(`/schedules/${id}`);
       fetchSchedules();
@@ -253,37 +278,49 @@ const SchedulesAdminPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredSchedules.map((sch) => (
-                  <tr key={sch.id} className="border-b">
-                    <td className="p-2">{sch.eventType}</td>
-                    <td className="p-2">
-                      {sch.startTime} - {sch.endTime}
-                    </td>
-                    <td className="p-2">{sch.daysOfWeek.join(", ")}</td>
-                    <td className="p-2">{sch.academicYear}</td>
-                    <td className="p-2">{sch.studyYear}</td>
-                    <td className="p-2">{sch.subjectName}</td>
-                    <td className="p-2">{sch.instructorName}</td>
-                    <td className="p-2">{sch.semesterName}</td>
-                    <td className="p-2">{sch.locationName}</td>
-                    <td className="p-2">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => startEdit(sch)}
-                          className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
-                        >
-                          Edito
-                        </button>
-                        <button
-                          onClick={() => deleteSchedule(sch.id)}
-                          className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
-                        >
-                          Fshij
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {filteredSchedules.map((sch) => {
+                  // Lookup the academic year by its ID in our academicYears array
+                  const yearObj = academicYears.find(
+                    (ay) => ay.id === sch.academicYearId
+                  );
+
+                  return (
+                    <tr key={sch.id} className="border-b">
+                      <td className="p-2">{sch.eventType}</td>
+                      <td className="p-2">
+                        {sch.startTime} - {sch.endTime}
+                      </td>
+                      <td className="p-2">
+                        {sch.daysOfWeek.join(", ")}
+                      </td>
+                      {/* Show the academic year name by looking it up; default to "—" if not found */}
+                      <td className="p-2">
+                        {yearObj?.name || "—"}
+                      </td>
+                      <td className="p-2">{sch.studyYear}</td>
+                      <td className="p-2">{sch.subjectName}</td>
+                      <td className="p-2">{sch.instructorName}</td>
+                      <td className="p-2">{sch.semesterName}</td>
+                      <td className="p-2">{sch.locationName}</td>
+                      <td className="p-2">
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => startEdit(sch)}
+                            className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+                          >
+                            Edito
+                          </button>
+                          <button
+                            onClick={() => deleteSchedule(sch.id)}
+                            className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                          >
+                            Fshij
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
                 {filteredSchedules.length === 0 && (
                   <tr>
                     <td colSpan={10} className="p-2 text-center text-gray-500">
@@ -300,7 +337,6 @@ const SchedulesAdminPage: React.FC = () => {
       {/* Modal-i për Editim (shfaqet veç kur showEditModal === true) */}
       {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          {/* Përmbajtja e modalit */}
           <div className="bg-white w-full max-w-2xl p-6 rounded shadow relative">
             {/* Butoni i mbylljes (X) */}
             <button
@@ -318,12 +354,12 @@ const SchedulesAdminPage: React.FC = () => {
                   <label className="block font-medium mb-1">Lloji i Ngjarjes</label>
                   <input
                     {...register("eventType")}
-                    placeholder="p.sh. ligjëratë, ushtrime grup1"
+                    placeholder="p.sh. Ligjerata ose Ushtrime"
                     className="border p-1 rounded w-full"
                   />
                 </div>
 
-                {/* Dita e Javës (mund të jetë një ose disa) */}
+                {/* Dita e Javës (shumësia e ditëve, ose një e vetme) */}
                 <div>
                   <label className="block font-medium mb-1">Dita e Javës</label>
                   <select
@@ -359,17 +395,17 @@ const SchedulesAdminPage: React.FC = () => {
                   />
                 </div>
 
-                {/* Viti Akademik */}
+                {/* Viti Akademik (ID, jo string) */}
                 <div>
                   <label className="block font-medium mb-1">Viti Akademik</label>
                   <select
-                    {...register("academicYear")}
+                    {...register("academicYearId")}
                     className="border p-1 rounded w-full"
                   >
                     <option value="">-- Zgjidh Vitin --</option>
-                    {ACADEMIC_YEARS.map((year) => (
-                      <option key={year} value={year}>
-                        {year}
+                    {academicYears.map((ay) => (
+                      <option key={ay.id} value={ay.id}>
+                        {ay.name}
                       </option>
                     ))}
                   </select>

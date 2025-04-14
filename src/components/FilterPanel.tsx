@@ -8,13 +8,21 @@ import {
 } from "@/components/ui/select";
 import axiosInstance from "@/utils/axiosInstance";
 import { FilterOptions } from "@/types";
-import { academicYears, yearsOfStudy } from "@/data/scheduleData";
+import { yearsOfStudy } from "@/data/scheduleData"; // për "Year of Study" mbetet
 
 interface SemesterData {
   id: string;
   name: string;
 }
 
+// Struktura e academic year
+interface AcademicYearData {
+  id: string;
+  name: string;
+  isActive: boolean;
+}
+
+// Props për FilterPanel
 interface FilterPanelProps {
   filters: FilterOptions;
   setFilters: React.Dispatch<React.SetStateAction<FilterOptions>>;
@@ -27,7 +35,9 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   compact = false,
 }) => {
   const [semesters, setSemesters] = useState<SemesterData[]>([]);
+  const [academicYears, setAcademicYears] = useState<AcademicYearData[]>([]);
 
+  // Marrim semestrat
   useEffect(() => {
     async function fetchSemesters() {
       try {
@@ -40,6 +50,20 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     fetchSemesters();
   }, []);
 
+  // Marrim listën e viteve akademike dhe filtrojmë vetëm ata "isActive: true"
+  useEffect(() => {
+    async function fetchAcademicYears() {
+      try {
+        const res = await axiosInstance.get<AcademicYearData[]>("/academic-year");
+        const activeYears = res.data.filter((ay) => ay.isActive === true);
+        setAcademicYears(activeYears);
+      } catch (error) {
+        console.error("Error fetching academic years:", error);
+      }
+    }
+    fetchAcademicYears();
+  }, []);
+
   const updateFilters = (key: keyof FilterOptions, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
@@ -48,6 +72,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   if (compact) {
     return (
       <div className="flex gap-2 items-center">
+        {/* Academic Year */}
         <Select
           value={filters.academicYear}
           onValueChange={(val) => updateFilters("academicYear", val)}
@@ -57,13 +82,14 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           </SelectTrigger>
           <SelectContent>
             {academicYears.map((year) => (
-              <SelectItem key={year} value={year}>
-                {year}
+              <SelectItem key={year.id} value={year.name}>
+                {year.name}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
 
+        {/* Semester */}
         <Select
           value={filters.semester}
           onValueChange={(val) => updateFilters("semester", val)}
@@ -80,6 +106,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           </SelectContent>
         </Select>
 
+        {/* Year of Study */}
         <Select
           value={filters.yearOfStudy}
           onValueChange={(val) => updateFilters("yearOfStudy", val)}
@@ -102,10 +129,11 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   // --- Full Layout ---
   return (
     <div className="bg-white p-4 rounded-lg shadow mb-4">
-      <h2 className="text-lg font-semibold mb-3">Filters</h2>
+      <h2 className="text-lg font-semibold mb-3">Filterat</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Academic Year */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">Academic Year</label>
+          <label className="text-sm font-medium">Viti Akademik</label>
           <Select
             value={filters.academicYear}
             onValueChange={(val) => updateFilters("academicYear", val)}
@@ -115,16 +143,17 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
             </SelectTrigger>
             <SelectContent>
               {academicYears.map((year) => (
-                <SelectItem key={year} value={year}>
-                  {year}
+                <SelectItem key={year.id} value={year.name}>
+                  {year.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
+        {/* Semester */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">Semester</label>
+          <label className="text-sm font-medium">Semestrat</label>
           <Select
             value={filters.semester}
             onValueChange={(val) => updateFilters("semester", val)}
@@ -142,8 +171,9 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           </Select>
         </div>
 
+        {/* Year of Study */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">Year of Study</label>
+          <label className="text-sm font-medium">Viti i Studimeve</label>
           <Select
             value={filters.yearOfStudy}
             onValueChange={(val) => updateFilters("yearOfStudy", val)}

@@ -4,7 +4,6 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -14,44 +13,35 @@ import {
 } from "@/components/ui/select";
 import {
   Form,
-  FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
+  FormControl,
 } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { ChevronsUpDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import axiosInstance from "@/utils/axiosInstance";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
-import { ChevronsUpDown } from "lucide-react";
+import { Label } from "@radix-ui/react-label";
 
-/* 
-  1) Shema e validimit (Zod) - mesazhet mbeten në shqip
-*/
+// 1) Zod schema
 const formSchema = z.object({
-  academicYear: z.string().min(1, { message: "Viti akademik është i detyrueshëm" }),
-  studyYear: z.string().min(1, { message: "Viti i studimit është i detyrueshëm" }),
-  semesterId: z.string().min(1, { message: "Semestri është i detyrueshëm" }),
-  subjectId: z.string().min(1, { message: "Lënda është e detyrueshme" }),
-  instructorId: z.string().min(1, { message: "Profesori është i detyrueshëm" }),
-  eventType: z.string().min(1, { message: "Lloji i orarit është i detyrueshëm" }),
-  classroom: z.string().min(1, { message: "Salla është e detyrueshme" }),
-  startTime: z.string().min(1, { message: "Ora e fillimit është e detyrueshme" }),
-  endTime: z.string().min(1, { message: "Ora e përfundimit është e detyrueshme" }),
-  daysOfWeek: z.array(z.string()).min(1, {
-    message: "Duhet të zgjidhni të paktën një ditë",
-  }),
+  academicYearId: z.string().min(1, "Viti akademik është i detyrueshëm"),
+  studyYear: z.string().min(1, "Viti i studimit është i detyrueshëm"),
+  semesterId: z.string().min(1, "Semestri është i detyrueshëm"),
+  subjectId: z.string().min(1, "Lënda është e detyrueshme"),
+  instructorId: z.string().min(1, "Profesori është i detyrueshëm"),
+  eventType: z.string().min(1, "Lloji i orarit është i detyrueshëm"),
+  classLocationId: z.string().min(1, "Salla është e detyrueshme"),
+  startTime: z.string().min(1, "Ora e fillimit është e detyrueshme"),
+  endTime: z.string().min(1, "Ora e përfundimit është e detyrueshme"),
+  daysOfWeek: z.array(z.string()).min(1, "Duhet të zgjidhni të paktën një ditë"),
 });
 type FormValues = z.infer<typeof formSchema>;
 
-/* 
-  2) Të dhënat për dropdown
-*/
+// Modelet për dropdown
 interface SubjectData {
   id: string;
   name: string;
@@ -68,11 +58,13 @@ interface LocationData {
   id: string;
   roomName: string;
 }
+interface AcademicYearItem {
+  id: string;       // vlerë e tipit UUID
+  name: string;     // "2024/25"
+  isActive: boolean;
+}
 
-/* 
-  3) Hartë për kthimin e ditëve nga shqip në anglisht
-  p.sh. "E Hënë" -> "Monday"
-*/
+// Ndihmë: Dita shqip -> anglisht
 const dayMapToEnglish: Record<string, string> = {
   "E Hënë": "Monday",
   "E Martë": "Tuesday",
@@ -86,38 +78,39 @@ const dayMapToEnglish: Record<string, string> = {
 const ScheduleManagementForm: React.FC = () => {
   const { toast } = useToast();
 
-  // Gjendja për dropdown-e
+  // 2) States për dropdown
   const [subjects, setSubjects] = useState<SubjectData[]>([]);
   const [instructors, setInstructors] = useState<InstructorData[]>([]);
   const [semesters, setSemesters] = useState<SemesterData[]>([]);
   const [locations, setLocations] = useState<LocationData[]>([]);
+  const [academicYears, setAcademicYears] = useState<AcademicYearItem[]>([]);
 
-  // 4) React Hook Form
+  // 3) React Hook Form
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      academicYear: "",
+      academicYearId: "",
       studyYear: "",
       semesterId: "",
       subjectId: "",
       instructorId: "",
       eventType: "",
-      classroom: "",
+      classLocationId: "",
       startTime: "",
       endTime: "",
       daysOfWeek: [],
     },
   });
 
-  // 5) Marrim të dhënat për dropdown nga backend
+  // 4) Marrim opsionet e dropdown (subjects, instructors, semesters, locations)
   useEffect(() => {
     async function fetchData() {
       try {
         const [subRes, insRes, semRes, locRes] = await Promise.all([
-          axiosInstance.get("/subjects"),
-          axiosInstance.get("/instructors"),
-          axiosInstance.get("/semesters"),
-          axiosInstance.get("/class-locations"),
+          axiosInstance.get<SubjectData[]>("/subjects"),
+          axiosInstance.get<InstructorData[]>("/instructors"),
+          axiosInstance.get<SemesterData[]>("/semesters"),
+          axiosInstance.get<LocationData[]>("/class-locations"),
         ]);
         setSubjects(subRes.data);
         setInstructors(insRes.data);
@@ -130,22 +123,34 @@ const ScheduleManagementForm: React.FC = () => {
     fetchData();
   }, []);
 
-  // 6) Kur dergohet formulari
+  // 5) Marrim vitet akademike (vetëm isActive)
+  useEffect(() => {
+    async function fetchActiveAcademicYears() {
+      try {
+        const res = await axiosInstance.get<AcademicYearItem[]>("/academic-year");
+        const activeOnly = res.data.filter((ay) => ay.isActive);
+        setAcademicYears(activeOnly);
+      } catch (err) {
+        console.error("Gabim gjatë marrjes së viteve akademike:", err);
+      }
+    }
+    fetchActiveAcademicYears();
+  }, []);
+
+  // 6) onSubmit => dërgo POST /schedules
   const onSubmit = async (data: FormValues) => {
     try {
-      // a) Konverto ditët nga shqip në anglisht
-      const englishDays = data.daysOfWeek.map(
-        (day) => dayMapToEnglish[day] || day
-      );
+      // konverto daysOfWeek nga shqip -> anglisht
+      const englishDays = data.daysOfWeek.map((day) => dayMapToEnglish[day] || day);
 
-      // b) Ndërto payload, duke ruajtur vlerat e tjera siç janë
+      // Ndërto payload
       const payload = {
         ...data,
         studyYear: Number(data.studyYear),
-        daysOfWeek: englishDays, // vendosim vlerat anglisht për backend
+        daysOfWeek: englishDays,
       };
 
-      // c) Post te backend
+      // Thirr backend
       await axiosInstance.post("/schedules", payload);
 
       toast({
@@ -173,10 +178,11 @@ const ScheduleManagementForm: React.FC = () => {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          {/* Rreshti 1: Viti akademik, Viti studimit, Semestri */}
+          {/* Rreshti 1: academicYearId, studyYear, semesterId */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* academicYearId */}
             <FormField
-              name="academicYear"
+              name="academicYearId"
               control={form.control}
               render={({ field }) => (
                 <FormItem>
@@ -184,13 +190,15 @@ const ScheduleManagementForm: React.FC = () => {
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Zgjidh vitin" />
+                        <SelectValue placeholder="Zgjidh vitin akademik" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="2023/24">2023/24</SelectItem>
-                      <SelectItem value="2024/25">2024/25</SelectItem>
-                      <SelectItem value="2025/26">2025/26</SelectItem>
+                      {academicYears.map((ay) => (
+                        <SelectItem key={ay.id} value={ay.id}>
+                          {ay.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -198,6 +206,7 @@ const ScheduleManagementForm: React.FC = () => {
               )}
             />
 
+            {/* studyYear */}
             <FormField
               name="studyYear"
               control={form.control}
@@ -221,6 +230,7 @@ const ScheduleManagementForm: React.FC = () => {
               )}
             />
 
+            {/* semesterId */}
             <FormField
               name="semesterId"
               control={form.control}
@@ -247,7 +257,7 @@ const ScheduleManagementForm: React.FC = () => {
             />
           </div>
 
-          {/* Rreshti 2: Lënda, Profesori */}
+          {/* Rreshti 2: subjectId, instructorId */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
               name="subjectId"
@@ -262,9 +272,9 @@ const ScheduleManagementForm: React.FC = () => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {subjects.map((s) => (
-                        <SelectItem key={s.id} value={s.id}>
-                          {s.name}
+                      {subjects.map((sub) => (
+                        <SelectItem key={sub.id} value={sub.id}>
+                          {sub.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -300,7 +310,7 @@ const ScheduleManagementForm: React.FC = () => {
             />
           </div>
 
-          {/* Rreshti 3: Lloji i orës, Salla */}
+          {/* Rreshti 3: eventType, classLocationId */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
               name="eventType"
@@ -315,8 +325,9 @@ const ScheduleManagementForm: React.FC = () => {
                 </FormItem>
               )}
             />
+
             <FormField
-              name="classroom"
+              name="classLocationId"
               control={form.control}
               render={({ field }) => (
                 <FormItem>
@@ -341,7 +352,7 @@ const ScheduleManagementForm: React.FC = () => {
             />
           </div>
 
-          {/* Rreshti 4: Orët dhe Ditët */}
+          {/* Rreshti 4: Orët (startTime, endTime) + daysOfWeek */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
@@ -357,6 +368,7 @@ const ScheduleManagementForm: React.FC = () => {
                   </FormItem>
                 )}
               />
+
               <FormField
                 name="endTime"
                 control={form.control}

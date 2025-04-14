@@ -2,15 +2,16 @@ import React, { useEffect, useState } from "react";
 import axiosInstance from "@/utils/axiosInstance";
 import { useForm } from "react-hook-form";
 
-// Llojet e burimeve
+// 1) Zgjedhim llojet e mundshme të burimeve
 type ResourceType =
   | "semesters"
   | "instructors"
   | "subjects"
   | "class-locations"
-  | "afati";
+  | "afati"
+  | "academic-year";  // SHTUAR
 
-// Format bazë
+// 2) Definojmë strukturat bazë
 interface Semester {
   id: string;
   name: string;
@@ -33,21 +34,34 @@ interface Afati {
   name: string;
 }
 
-// Unioni i artikujve
-type ResourceItem = Semester | Instructor | Subject | ClassLocation | Afati;
+// SHTOJMË modelin e vitit akademik
+interface AcademicYear {
+  id: string;
+  name: string;
+  isActive: boolean;
+}
+
+// 3) Unifikojmë të gjitha modelet si ResourceItem
+type ResourceItem =
+  | Semester
+  | Instructor
+  | Subject
+  | ClassLocation
+  | Afati
+  | AcademicYear;
 
 const AdminCrudPage: React.FC = () => {
   const [resource, setResource] = useState<ResourceType>("semesters");
   const [items, setItems] = useState<ResourceItem[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Form për Krijim / Përditësim
+  // React Hook Form për Krijim / Update
   const { register, handleSubmit, reset, setValue } = useForm<any>();
 
-  // ID e artikullit që po editojmë
+  // Ruajmë ID-në e artikullit në modë "edit"
   const [editId, setEditId] = useState<string | null>(null);
 
-  // 1) Marrim artikujt e burimit
+  // 1) Marrim të dhënat nga backend sipas llojit të "resource"
   async function fetchItems() {
     setLoading(true);
     try {
@@ -60,7 +74,7 @@ const AdminCrudPage: React.FC = () => {
     }
   }
 
-  // 2) Kur ndryshon burimi => rifresko
+  // 2) Kur ndryshon resource, rifreskojmë listën dhe pastrojmë formën
   useEffect(() => {
     fetchItems();
     setEditId(null);
@@ -68,7 +82,7 @@ const AdminCrudPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resource]);
 
-  // 3) Ruaj (Create ose Update)
+  // 3) onSubmit => nëse ka editId bëjmë PUT, përndryshe POST
   const onSubmit = async (data: any) => {
     try {
       if (editId) {
@@ -86,11 +100,11 @@ const AdminCrudPage: React.FC = () => {
     }
   };
 
-  // 4) Fillo Edit
+  // 4) fillojmë editimin
   const startEdit = (item: ResourceItem) => {
     setEditId((item as any).id);
 
-    // Mbush formën me fushat ekzistuese
+    // Mbushim formën sipas resource
     switch (resource) {
       case "semesters":
         setValue("name", (item as Semester).name);
@@ -108,12 +122,16 @@ const AdminCrudPage: React.FC = () => {
       case "afati":
         setValue("name", (item as Afati).name);
         break;
+      case "academic-year":
+        setValue("name", (item as AcademicYear).name);
+        setValue("isActive", (item as AcademicYear).isActive);
+        break;
     }
   };
 
-  // 5) Fshij
+  // 5) Fshirja
   const deleteItem = async (id: string) => {
-    if (!window.confirm("A jeni i sigurt që doni ta fshini këtë artikull?")) return;
+    if (!window.confirm("A jeni i sigurt që dëshironi ta fshini këtë artikull?")) return;
     try {
       await axiosInstance.delete(`/${resource}/${id}`);
       fetchItems();
@@ -122,7 +140,7 @@ const AdminCrudPage: React.FC = () => {
     }
   };
 
-  // 6) Fushat e formës sipas burimit
+  // 6) Render fushat e formës sipas llojit
   function renderFormFields() {
     switch (resource) {
       case "semesters":
@@ -185,10 +203,28 @@ const AdminCrudPage: React.FC = () => {
             />
           </>
         );
+      case "academic-year":
+        return (
+          <>
+            <label className="block font-medium mt-2">Emri i Vitit Akademik</label>
+            <input
+              {...register("name")}
+              placeholder="p.sh. 2024/25"
+              className="border px-3 py-1 rounded w-full"
+            />
+            <label className="block font-medium mt-2">Aktiv?</label>
+            <input
+              type="checkbox"
+              {...register("isActive")}
+              className="mr-2"
+            />
+            <span className="text-sm">Po (Nëse e lini të klikuar do të jetë aktiv)</span>
+          </>
+        );
     }
   }
 
-  // 7) Kokat e tabelës
+  // 7) Tabela: kokat
   function renderTableHeaders() {
     switch (resource) {
       case "semesters":
@@ -206,10 +242,17 @@ const AdminCrudPage: React.FC = () => {
         return <th className="p-2 text-left">Salla</th>;
       case "afati":
         return <th className="p-2 text-left">Emri</th>;
+      case "academic-year":
+        return (
+          <>
+            <th className="p-2 text-left">Emri</th>
+            <th className="p-2 text-left">Aktiv?</th>
+          </>
+        );
     }
   }
 
-  // Shfaq rreshtat e tabelës
+  // 8) Tabela: rreshtat
   function renderTableRow(item: ResourceItem) {
     switch (resource) {
       case "semesters": {
@@ -237,6 +280,15 @@ const AdminCrudPage: React.FC = () => {
         const a = item as Afati;
         return <td className="p-2">{a.name}</td>;
       }
+      case "academic-year": {
+        const ay = item as AcademicYear;
+        return (
+          <>
+            <td className="p-2">{ay.name}</td>
+            <td className="p-2">{ay.isActive ? "Po" : "Jo"}</td>
+          </>
+        );
+      }
     }
   }
 
@@ -258,6 +310,7 @@ const AdminCrudPage: React.FC = () => {
           <option value="subjects">Lëndët</option>
           <option value="class-locations">Sallat</option>
           <option value="afati">Afatet</option>
+          <option value="academic-year">Vitet Akademike</option>
         </select>
       </div>
 
@@ -293,7 +346,7 @@ const AdminCrudPage: React.FC = () => {
         </form>
       </div>
 
-      {/* Tabela e artikujve ekzistues */}
+      {/* Tabela e artikujve */}
       <div className="bg-white p-4 rounded shadow">
         <h2 className="text-lg font-semibold mb-3">Artikujt Ekzistues</h2>
 
@@ -330,13 +383,15 @@ const AdminCrudPage: React.FC = () => {
                 ))}
                 {items.length === 0 && (
                   <tr>
+                    {/* Numri i kolonave ndryshon sipas resource */}
                     <td
                       colSpan={
                         resource === "instructors"
                           ? 3
+                          : resource === "afati" ||
+                            resource === "academic-year"
+                          ? 3
                           : resource === "subjects"
-                          ? 2
-                          : resource === "afati"
                           ? 2
                           : 2
                       }

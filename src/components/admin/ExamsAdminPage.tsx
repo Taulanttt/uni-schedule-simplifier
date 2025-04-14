@@ -2,36 +2,9 @@ import React, { useEffect, useState } from "react";
 import axiosInstance from "@/utils/axiosInstance";
 import { useForm } from "react-hook-form";
 import FilterPanelExams from "@/components/FilterPanelExams";
+import { FilterOptionsexam } from "@/types";
 
-// Përfaqësimi i një provimi me fushat përkatëse
-interface ExamItem {
-  id: string;
-  eventType: string;     // "exam"
-  academicYear: string;  // p.sh. "2024/25"
-  studyYear: number;     // p.sh. 2
-  date: string;          // p.sh. "2025-02-15"
-  hour: string;          // p.sh. "10:00:00"
-
-  // Foreign keys
-  afatiId: string;
-  subjectId: string;
-  instructorId: string;
-
-  // Objektet e lidhura
-  Subject?: {
-    id: string;
-    name: string;
-  };
-  Instructor?: {
-    id: string;
-    name: string;
-  };
-  Afati?: {
-    id: string;
-    name: string;  // p.sh. "Shkurt"
-  };
-}
-
+/** Modelet për dropdown **/
 interface SubjectData {
   id: string;
   name: string;
@@ -46,15 +19,49 @@ interface AfatiData {
   id: string;
   name: string;
 }
+/** Model i vitit akademik nga serveri **/
+interface AcademicYearItem {
+  id: string;
+  name: string; // p.sh. "2024/25"
+  isActive: boolean;
+}
 
-// Struktura e filtrit
-import { FilterOptionsexam } from "@/types";
+/** Përfaqësimi i një provimi (tani me academicYearId) **/
+interface ExamItem {
+  id: string;
+  eventType: string;
+  academicYearId: string | null; // ID e vitit akademik
+  studyYear: number;
+  date: string;
+  hour: string;
+  afatiId: string;
+  subjectId: string;
+  instructorId: string;
+
+  // Relacionet opsionale që vijnë nga serveri
+  Subject?: {
+    id: string;
+    name: string;
+  };
+  Instructor?: {
+    id: string;
+    name: string;
+  };
+  Afati?: {
+    id: string;
+    name: string;
+  };
+  AcademicYear?: {
+    id: string;
+    name: string;
+  };
+}
 
 const ExamsAdminPage: React.FC = () => {
   const [exams, setExams] = useState<ExamItem[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Ruajmë ID-në e provimit që editohet aktualisht, si dhe gjendjen e modalit
+  // ID e provimit në edit + modal
   const [editId, setEditId] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
@@ -62,11 +69,12 @@ const ExamsAdminPage: React.FC = () => {
   const [subjects, setSubjects] = useState<SubjectData[]>([]);
   const [instructors, setInstructors] = useState<InstructorData[]>([]);
   const [afatis, setAfatis] = useState<AfatiData[]>([]);
+  const [academicYears, setAcademicYears] = useState<AcademicYearItem[]>([]);
 
-  // React Hook Form për modifikim
+  // React Hook Form
   const { register, handleSubmit, reset, setValue } = useForm<any>();
 
-  // Gjendja e filtrit
+  // Filtrat (ruaj si string ID ose "All Years")
   const [filters, setFilters] = useState<FilterOptionsexam>({
     academicYear: "All Years",
     afati: "All Afati",
@@ -77,6 +85,7 @@ const ExamsAdminPage: React.FC = () => {
   async function fetchExams() {
     setLoading(true);
     try {
+      // Merr të dhënat e provimeve; pritet që serveri t'i kthejë edhe: exam.AcademicYear, exam.Afati, etj.
       const res = await axiosInstance.get<ExamItem[]>("/exams");
       setExams(res.data);
     } catch (error) {
@@ -86,7 +95,7 @@ const ExamsAdminPage: React.FC = () => {
     }
   }
 
-  // 2) Marrim lëndët, profesorët, afatet
+  // 2) Marrim lëndët, profesorët, afati
   async function fetchDropdownData() {
     try {
       const [subRes, instRes, afatiRes] = await Promise.all([
@@ -102,29 +111,39 @@ const ExamsAdminPage: React.FC = () => {
     }
   }
 
+  // 3) Marrim vitet akademike aktive
+  async function fetchAcademicYears() {
+    try {
+      const res = await axiosInstance.get<AcademicYearItem[]>("/academic-year");
+      const activeList = res.data.filter((ay) => ay.isActive);
+      setAcademicYears(activeList);
+    } catch (error) {
+      console.error("Gabim gjatë marrjes së viteve akademike:", error);
+    }
+  }
+
   useEffect(() => {
     fetchExams();
     fetchDropdownData();
+    fetchAcademicYears();
   }, []);
 
-  // 3) Logjika e filtrit
+  // 4) Filtrim i provimeve
   const filteredExams = exams.filter((exam) => {
-    // Filtri sipas vitit akademik
+    // Filtri: academicYear => krahasojmë me exam.academicYearId
     if (
       filters.academicYear !== "All Years" &&
-      exam.academicYear !== filters.academicYear
+      exam.academicYearId !== filters.academicYear
     ) {
       return false;
     }
-
-    // Filtri sipas afatit
+    // Filtri: Afati
     if (filters.afati !== "All Afati") {
       if (exam.Afati?.name !== filters.afati) {
         return false;
       }
     }
-
-    // Filtri sipas vitit të studimeve
+    // Filtri: viti i studimeve
     if (filters.yearOfStudy !== "All Years") {
       const numeric = parseInt(filters.yearOfStudy.replace(/\D/g, ""), 10);
       if (exam.studyYear !== numeric) {
@@ -134,13 +153,13 @@ const ExamsAdminPage: React.FC = () => {
     return true;
   });
 
-  // 4) Hap modalin për editim
+  // 5) Fillojmë editimin => hapim modalin
   const startEdit = (exam: ExamItem) => {
     setEditId(exam.id);
 
-    // Vlerat e formularit i plotësojmë me të dhënat e ekzistueshme
+    // Vendosim vlerat në formular
     setValue("afatiId", exam.afatiId);
-    setValue("academicYear", exam.academicYear);
+    setValue("academicYearId", exam.academicYearId || "");
     setValue("studyYear", String(exam.studyYear));
     setValue("date", exam.date);
     setValue("hour", exam.hour);
@@ -157,16 +176,15 @@ const ExamsAdminPage: React.FC = () => {
     setShowEditModal(false);
   };
 
-  // 5) Submit => PUT /exams/:id
+  // 6) PUT /exams/:id
   const onSubmit = async (data: any) => {
     if (!editId) return;
     try {
       const numericYear = parseInt(data.studyYear, 10) || 1;
-
       await axiosInstance.put(`/exams/${editId}`, {
-        eventType: "exam",
+        eventType: "Provime", // ose "exam" sipas API-së suaj
         afatiId: data.afatiId,
-        academicYear: data.academicYear,
+        academicYearId: data.academicYearId, // tani ID e vitit akademik
         studyYear: numericYear,
         date: data.date,
         hour: data.hour,
@@ -181,9 +199,11 @@ const ExamsAdminPage: React.FC = () => {
     }
   };
 
-  // 6) Fshij provimin
+  // 7) Fshirja e provimit
   const deleteExam = async (id: string) => {
-    if (!window.confirm("A jeni i sigurt që dëshironi ta fshini këtë provim?")) return;
+    if (!window.confirm("A jeni i sigurt që dëshironi ta fshini këtë provim?")) {
+      return;
+    }
     try {
       await axiosInstance.delete(`/exams/${id}`);
       fetchExams();
@@ -227,7 +247,8 @@ const ExamsAdminPage: React.FC = () => {
                     <td className="p-2">
                       {exam.date} / {exam.hour}
                     </td>
-                    <td className="p-2">{exam.academicYear}</td>
+                    {/* Shfaqim emrin e vitit akademik nga exam.AcademicYear?.name */}
+                    <td className="p-2">{exam.AcademicYear?.name}</td>
                     <td className="p-2">{exam.studyYear}</td>
                     <td className="p-2">{exam.Subject?.name}</td>
                     <td className="p-2">{exam.Instructor?.name}</td>
@@ -265,7 +286,6 @@ const ExamsAdminPage: React.FC = () => {
       {/* Modal-i për Editim */}
       {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          {/* Përmbajtja e modalit */}
           <div className="bg-white w-full max-w-2xl p-6 rounded shadow relative">
             <button
               onClick={closeModal}
@@ -293,23 +313,27 @@ const ExamsAdminPage: React.FC = () => {
                   </select>
                 </div>
 
-                {/* Viti Akademik */}
+                {/* Viti Akademik (tani ID, jo string) */}
                 <div>
                   <label className="block font-medium mb-1">Viti Akademik</label>
                   <select
-                    {...register("academicYear")}
+                    {...register("academicYearId")}
                     className="border p-1 rounded w-full"
                   >
                     <option value="">-- Zgjidh Vitin --</option>
-                    <option value="2023/24">2023/24</option>
-                    <option value="2024/25">2024/25</option>
-                    <option value="2025/26">2025/26</option>
+                    {academicYears.map((ay) => (
+                      <option key={ay.id} value={ay.id}>
+                        {ay.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
                 {/* Viti i studimeve */}
                 <div>
-                  <label className="block font-medium mb-1">Viti Studimeve</label>
+                  <label className="block font-medium mb-1">
+                    Viti Studimeve
+                  </label>
                   <input
                     type="number"
                     {...register("studyYear")}
@@ -320,7 +344,9 @@ const ExamsAdminPage: React.FC = () => {
 
                 {/* Data */}
                 <div>
-                  <label className="block font-medium mb-1">Data e Provimit</label>
+                  <label className="block font-medium mb-1">
+                    Data e Provimit
+                  </label>
                   <input
                     type="date"
                     {...register("date")}
@@ -330,7 +356,9 @@ const ExamsAdminPage: React.FC = () => {
 
                 {/* Ora */}
                 <div>
-                  <label className="block font-medium mb-1">Ora e Provimit</label>
+                  <label className="block font-medium mb-1">
+                    Ora e Provimit
+                  </label>
                   <input
                     type="time"
                     {...register("hour")}
