@@ -10,18 +10,20 @@ import axiosInstance from "@/utils/axiosInstance";
 import { yearsOfStudy } from "@/data/scheduleData";
 import { FilterOptionsexam } from "@/types";
 
+// Struktura e props për komponentin
 interface FilterPanelProps {
   filters: FilterOptionsexam;
   setFilters: React.Dispatch<React.SetStateAction<FilterOptionsexam>>;
   compact?: boolean;
 }
 
+// Struktura e Afatit
 interface AfatiData {
   id: string;
   name: string;
 }
 
-// Struktura e academic year
+// Struktura e Vitit Akademik
 interface AcademicYearData {
   id: string;
   name: string;
@@ -36,29 +38,29 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
   const [afatiList, setAfatiList] = useState<AfatiData[]>([]);
   const [academicYears, setAcademicYears] = useState<AcademicYearData[]>([]);
 
-  // Marrim afatet
+  // Marrim listën e afateve nga API
   useEffect(() => {
     async function fetchAfati() {
       try {
         const res = await axiosInstance.get<AfatiData[]>("/afati");
         setAfatiList(res.data);
       } catch (error) {
-        console.error("Error fetching afati:", error);
+        console.error("Gabim gjatë marrjes së afateve:", error);
       }
     }
     fetchAfati();
   }, []);
 
-  // Marrim listën e viteve akademike (vetëm ata aktive)
+  // Marrim listën e viteve akademike (vetëm ata që janë aktivë)
   useEffect(() => {
     async function fetchAcademicYears() {
       try {
         const res = await axiosInstance.get<AcademicYearData[]>("/academic-year");
-        // filtrojmë vetëm ata aktivë
+        // Filtrojmë vetëm ata aktivë
         const active = res.data.filter((ay) => ay.isActive);
         setAcademicYears(active);
       } catch (error) {
-        console.error("Error fetching academic years:", error);
+        console.error("Gabim gjatë marrjes së viteve akademike:", error);
       }
     }
     fetchAcademicYears();
@@ -70,15 +72,15 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
   };
 
   /*
-    Në këtë variant, NUK kemi më “All Years” apo “All Afati”.
-    Përdoruesi duhet të zgjedhë një vlerë ekzistuese nga opsionet.
-  */
+   * Në këtë variant, nuk kemi “Të gjitha Vitet” apo “Të gjithë Afatët”.
+   * Përdoruesi duhet të zgjedhë një vlerë ekzistuese.
+   */
 
-  // *** Compact Layout ***
+  // 1) Layout i thjeshtë (compact)
   if (compact) {
     return (
       <div className="flex gap-2 items-center">
-        {/* academicYear */}
+        {/* Viti Akademik */}
         <Select
           value={filters.academicYear}
           onValueChange={(value) => updateFilters("academicYear", value)}
@@ -95,7 +97,7 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
           </SelectContent>
         </Select>
 
-        {/* afati */}
+        {/* Afati */}
         <Select
           value={filters.afati}
           onValueChange={(value) => updateFilters("afati", value)}
@@ -132,12 +134,12 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
     );
   }
 
-  // *** Full Layout ***
+  // 2) Layout i plotë (me etiketa dhe hapësira)
   return (
     <div className="bg-white p-4 rounded-lg shadow mb-4">
       <h2 className="text-lg font-semibold mb-3">Filtro Provimet</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* academicYear */}
+        {/* Viti Akademik */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Viti Akademik</label>
           <Select
@@ -157,7 +159,7 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
           </Select>
         </div>
 
-        {/* afati */}
+        {/* Afati */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Afati (Periudha e Provimit)</label>
           <Select
@@ -177,9 +179,9 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
           </Select>
         </div>
 
-        {/* Viti Studimeve */}
+        {/* Viti i Studimeve */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">Viti Studimeve</label>
+          <label className="text-sm font-medium">Viti i Studimeve</label>
           <Select
             value={filters.yearOfStudy}
             onValueChange={(value) => updateFilters("yearOfStudy", value)}

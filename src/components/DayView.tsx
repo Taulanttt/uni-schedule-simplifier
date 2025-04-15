@@ -1,10 +1,18 @@
-// components/DayView.tsx
-
 import React from "react";
 import { format, addDays, subDays } from "date-fns";
 import { ScheduleItem } from "@/types";
 import ScheduleEventComponent from "./ScheduleEvent";
 
+// Harta e ditëve anglisht → shqip
+const dayMap: Record<string, string> = {
+  Monday: "E hënë",
+  Tuesday: "E martë",
+  Wednesday: "E mërkurë",
+  Thursday: "E enjte",
+  Friday: "E premte",
+  Saturday: "E shtunë",
+  Sunday: "E diel",
+};
 
 interface DayViewProps {
   events: ScheduleItem[];
@@ -14,7 +22,7 @@ interface DayViewProps {
   setView: React.Dispatch<React.SetStateAction<"day" | "week">>;
 }
 
-// Helper to parse "HH:MM:SS" into a comparable integer
+// Kthen "HH:MM:SS" në minuta për t'i renditur sipas fillimit
 function parseTimeToMinutes(timeStr: string): number {
   if (!timeStr) return 0;
   const [hour, minute] = timeStr.split(":").map(Number);
@@ -26,52 +34,50 @@ const DayView: React.FC<DayViewProps> = ({
   currentDate,
   setCurrentDate,
 }) => {
-  // Filter events that match this weekday
-  const currentDayStr = format(currentDate, "EEEE"); // e.g. "Monday"
+  // Marrim ditën në anglisht p.sh. "Monday", "Tuesday"
+  const currentDayEnglish = format(currentDate, "EEEE"); 
+  // Konvertojmë në shqip për shfaqje
+  const currentDayAlbanian = dayMap[currentDayEnglish] || currentDayEnglish;
+
+  // Filtrimi i ngjarjeve → sipas "daysOfWeek" (vlerat nga backend, p.sh. "Monday")
+  // Nëse event.daysOfWeek përmban "Monday" dhe currentDayEnglish === "Monday" do të pëputhet
   let dayEvents = events.filter((event) =>
-    event.daysOfWeek?.includes(currentDayStr)
+    event.daysOfWeek?.includes(currentDayEnglish)
   );
 
-  // Sort by startTime ascending
+  // Rendisim sipas orës së fillimit
   dayEvents = dayEvents.sort(
     (a, b) => parseTimeToMinutes(a.startTime) - parseTimeToMinutes(b.startTime)
   );
 
-  // Handlers for going to previous/next day
+  // Shko në ditën e mëparshme
   const goToPreviousDay = () => {
     setCurrentDate((prevDate) => subDays(prevDate, 1));
   };
 
+  // Shko në ditën e ardhshme
   const goToNextDay = () => {
     setCurrentDate((prevDate) => addDays(prevDate, 1));
   };
 
   return (
     <div className="space-y-4">
-      {/* Header with previous/next buttons and current day in the center */}
+      {/* Koka me butonat < dhe >, dhe emrin e ditës në qendër */}
       <div className="flex items-center justify-between mb-4">
-        <button
-          onClick={goToPreviousDay}
-          className="border rounded p-2" // Example styling if not using <Button> component
-        >
-          {/* If using lucide-react: <ChevronLeft className="h-4 w-4" /> */}
+        <button onClick={goToPreviousDay} className="border rounded p-2">
           &lt;
         </button>
 
         <div className="text-lg md:text-xl font-semibold text-center flex-1">
-          {format(currentDate, "EEEE")}
+          {currentDayAlbanian /* p.sh. "E hënë" */}
         </div>
 
-        <button
-          onClick={goToNextDay}
-          className="border rounded p-2" // Example styling if not using <Button> component
-        >
-          {/* If using lucide-react: <ChevronRight className="h-4 w-4" /> */}
+        <button onClick={goToNextDay} className="border rounded p-2">
           &gt;
         </button>
       </div>
 
-      {/* List of scheduled events for this day */}
+      {/* Lista e ngjarjeve për këtë ditë */}
       <div className="p-4 min-h-[300px] border rounded-lg">
         {dayEvents.length > 0 ? (
           dayEvents.map((event) => (
@@ -79,7 +85,7 @@ const DayView: React.FC<DayViewProps> = ({
           ))
         ) : (
           <div className="text-center text-gray-400 mt-10">
-            No events scheduled
+            Asnjë ngjarje e planifikuar
           </div>
         )}
       </div>

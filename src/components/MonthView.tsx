@@ -12,13 +12,39 @@ import {
   subMonths,
   parseISO,
 } from "date-fns";
-import { ExamItem } from "@/pages/Exams"; // or import from @/types
+import { ExamItem } from "@/pages/Exams"; // ose nga "@/types"
 import ScheduleEventComponentExams from "./ScheduleEventComponentExams";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+/*
+ * Funksion që kthen "September 2025" → "Shtator 2025"
+ */
+function getMuajiNeShqip(date: Date): string {
+  const monthMap: Record<string, string> = {
+    January: "Janar",
+    February: "Shkurt",
+    March: "Mars",
+    April: "Prill",
+    May: "Maj",
+    June: "Qershor",
+    July: "Korrik",
+    August: "Gusht",
+    September: "Shtator",
+    October: "Tetor",
+    November: "Nëntor",
+    December: "Dhjetor",
+  };
+
+  const englishMonth = format(date, "MMMM");
+  const year = format(date, "yyyy");
+  const albanianMonth = monthMap[englishMonth] || englishMonth;
+  return `${albanianMonth} ${year}`;
+}
+
+// Props për MonthView
 interface MonthViewProps {
   events: ExamItem[];
   currentDate: Date;
@@ -32,36 +58,38 @@ const MonthView: React.FC<MonthViewProps> = ({
 }) => {
   const isMobile = useIsMobile();
 
-  // Month boundaries
+  // Kufijtë e muajit
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(monthStart);
   const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
   const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
-  const today = new Date();
+  const sot = new Date();
 
-  // Navigation
-  const goToPreviousMonth = () => setCurrentDate(subMonths(currentDate, 1));
-  const goToNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
+  // Navigimi mujor
+  const shkoMuajinPara = () => setCurrentDate(subMonths(currentDate, 1));
+  const shkoMuajinPas = () => setCurrentDate(addMonths(currentDate, 1));
 
-  // Header with Month-Year + Nav
+  // Koka e kalendarit: Butonat e majtas/djathtas + Muaji + Viti (në shqip)
   const header = (
     <div className="flex items-center justify-between mb-4">
-      <Button variant="outline" size="icon" onClick={goToPreviousMonth}>
+      <Button variant="outline" size="icon" onClick={shkoMuajinPara}>
         <ChevronLeft className="h-4 w-4" />
       </Button>
+
       <div className="text-lg md:text-xl font-semibold text-center flex-1">
-        {format(currentDate, "MMMM yyyy")}
+        {getMuajiNeShqip(currentDate)}
       </div>
-      <Button variant="outline" size="icon" onClick={goToNextMonth}>
+
+      <Button variant="outline" size="icon" onClick={shkoMuajinPas}>
         <ChevronRight className="h-4 w-4" />
       </Button>
     </div>
   );
 
-  // Day-of-week headers
+  // Ditët e javës
   const daysOfWeek = isMobile
-    ? ["M", "T", "W", "T", "F", "S", "S"]
-    : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    ? ["H", "M", "M", "E", "P", "Sh", "D"]
+    : ["Hën", "Mar", "Mër", "Enj", "Pre", "Sht", "Die"];
 
   const dayHeaders = daysOfWeek.map((day, index) => (
     <div
@@ -72,37 +100,36 @@ const MonthView: React.FC<MonthViewProps> = ({
     </div>
   ));
 
-  // Build calendar rows
-  let day = startDate;
-  const rows: JSX.Element[] = [];
-  let days: JSX.Element[] = [];
+  // Ndërtojmë kalendarin rresht pas rreshti
+  let dita = startDate;
+  const vargRreshtash: JSX.Element[] = [];
+  let vargDitësh: JSX.Element[] = [];
 
-  while (day <= endDate) {
+  while (dita <= endDate) {
     for (let i = 0; i < 7; i++) {
-      const cloneDay = new Date(day);
+      const ditaKopje = new Date(dita);
 
-      // Match events by exact date
+      // Filtrimi i provimeve për këtë datë
       const dayEvents = events.filter((event) =>
-        isSameDay(day, parseISO(event.date))
+        isSameDay(dita, parseISO(event.date))
       );
 
-      days.push(
+      vargDitësh.push(
         <div
-          key={cloneDay.toString()}
+          key={ditaKopje.toString()}
           className={cn(
             "border p-1 md:p-2 min-h-[60px] md:min-h-[100px] transition-colors rounded-md",
-            !isSameMonth(day, monthStart)
+            !isSameMonth(dita, monthStart)
               ? "bg-gray-100 text-gray-400"
               : "bg-white",
-            isSameDay(day, today) ? "bg-blue-50 border-blue-300" : "",
+            isSameDay(dita, sot) ? "bg-blue-50 border-blue-300" : "",
             "hover:bg-muted/10"
           )}
         >
           <div className="text-right mb-1 font-medium text-xs md:text-sm">
-            {format(day, "d")}
+            {format(dita, "d")}
           </div>
 
-          {/* --- Remove max-h and overflow to remove scrollbar --- */}
           <div className="space-y-1">
             {dayEvents.length > 0 ? (
               dayEvents.map((event) => (
@@ -110,22 +137,22 @@ const MonthView: React.FC<MonthViewProps> = ({
               ))
             ) : (
               <div className="text-xs text-muted-foreground text-center">
-                No exams
+                S’ka provime
               </div>
             )}
           </div>
         </div>
       );
 
-      day = addDays(day, 1);
+      dita = addDays(dita, 1);
     }
 
-    rows.push(
-      <div key={day.toString()} className="grid grid-cols-7 gap-2 md:gap-4">
-        {days}
+    vargRreshtash.push(
+      <div key={dita.toString()} className="grid grid-cols-7 gap-2 md:gap-4">
+        {vargDitësh}
       </div>
     );
-    days = [];
+    vargDitësh = [];
   }
 
   return (
@@ -137,7 +164,7 @@ const MonthView: React.FC<MonthViewProps> = ({
           {dayHeaders}
         </div>
 
-        <div className="space-y-2">{rows}</div>
+        <div className="space-y-2">{vargRreshtash}</div>
       </div>
     </div>
   );

@@ -8,14 +8,15 @@ import {
 } from "@/components/ui/select";
 import axiosInstance from "@/utils/axiosInstance";
 import { FilterOptions } from "@/types";
-import { yearsOfStudy } from "@/data/scheduleData"; // për "Year of Study" mbetet
+import { yearsOfStudy } from "@/data/scheduleData"; // mbetet i njëjtë
 
+// Struktura e Semestrit (mbeten anglisht për të mos prishur importet e projektit)
 interface SemesterData {
   id: string;
   name: string;
 }
 
-// Struktura e academic year
+// Struktura e Vitit Akademik
 interface AcademicYearData {
   id: string;
   name: string;
@@ -37,20 +38,20 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   const [semesters, setSemesters] = useState<SemesterData[]>([]);
   const [academicYears, setAcademicYears] = useState<AcademicYearData[]>([]);
 
-  // Marrim semestrat
+  // Marrim listën e semestrave nga API
   useEffect(() => {
     async function fetchSemesters() {
       try {
         const res = await axiosInstance.get<SemesterData[]>("/semesters");
         setSemesters(res.data);
       } catch (error) {
-        console.error("Error fetching semesters:", error);
+        console.error("Gabim gjatë marrjes së semestrave:", error);
       }
     }
     fetchSemesters();
   }, []);
 
-  // Marrim listën e viteve akademike dhe filtrojmë vetëm ata "isActive: true"
+  // Marrim listën e viteve akademike dhe filtrojmë ata me `isActive = true`
   useEffect(() => {
     async function fetchAcademicYears() {
       try {
@@ -58,7 +59,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         const activeYears = res.data.filter((ay) => ay.isActive === true);
         setAcademicYears(activeYears);
       } catch (error) {
-        console.error("Error fetching academic years:", error);
+        console.error("Gabim gjatë marrjes së viteve akademike:", error);
       }
     }
     fetchAcademicYears();
@@ -68,17 +69,19 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
-  // --- Compact Layout ---
+  /*
+   * 1) Nëse "compact" = true, shfaq verzionin e shkurtuar të filtrave
+   */
   if (compact) {
     return (
       <div className="flex gap-2 items-center">
-        {/* Academic Year */}
+        {/* Viti Akademik */}
         <Select
           value={filters.academicYear}
           onValueChange={(val) => updateFilters("academicYear", val)}
         >
           <SelectTrigger className="w-[100px] h-8">
-            <SelectValue placeholder="Year" />
+            <SelectValue placeholder="Viti" />
           </SelectTrigger>
           <SelectContent>
             {academicYears.map((year) => (
@@ -89,13 +92,13 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           </SelectContent>
         </Select>
 
-        {/* Semester */}
+        {/* Semestri */}
         <Select
           value={filters.semester}
           onValueChange={(val) => updateFilters("semester", val)}
         >
           <SelectTrigger className="w-[120px] h-8">
-            <SelectValue placeholder="Semester" />
+            <SelectValue placeholder="Semestri" />
           </SelectTrigger>
           <SelectContent>
             {semesters.map((s) => (
@@ -106,13 +109,13 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           </SelectContent>
         </Select>
 
-        {/* Year of Study */}
+        {/* Viti i Studimeve */}
         <Select
           value={filters.yearOfStudy}
           onValueChange={(val) => updateFilters("yearOfStudy", val)}
         >
           <SelectTrigger className="w-[100px] h-8">
-            <SelectValue placeholder="Study Year" />
+            <SelectValue placeholder="Viti Studimi" />
           </SelectTrigger>
           <SelectContent>
             {yearsOfStudy.map((year) => (
@@ -126,12 +129,14 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     );
   }
 
-  // --- Full Layout ---
+  /*
+   * 2) Nëse "compact" = false, shfaq verzionin e plotë me label-a e hapësira
+   */
   return (
     <div className="bg-white p-4 rounded-lg shadow mb-4">
-      <h2 className="text-lg font-semibold mb-3">Filterat</h2>
+      <h2 className="text-lg font-semibold mb-3">Filtër</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Academic Year */}
+        {/* Viti Akademik */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Viti Akademik</label>
           <Select
@@ -139,7 +144,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
             onValueChange={(val) => updateFilters("academicYear", val)}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select Academic Year" />
+              <SelectValue placeholder="Zgjidh Vitin Akademik" />
             </SelectTrigger>
             <SelectContent>
               {academicYears.map((year) => (
@@ -151,15 +156,15 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           </Select>
         </div>
 
-        {/* Semester */}
+        {/* Semestri */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">Semestrat</label>
+          <label className="text-sm font-medium">Semestri</label>
           <Select
             value={filters.semester}
             onValueChange={(val) => updateFilters("semester", val)}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select Semester" />
+              <SelectValue placeholder="Zgjidh Semestrin" />
             </SelectTrigger>
             <SelectContent>
               {semesters.map((s) => (
@@ -171,7 +176,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           </Select>
         </div>
 
-        {/* Year of Study */}
+        {/* Viti i Studimeve */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Viti i Studimeve</label>
           <Select
@@ -179,7 +184,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
             onValueChange={(val) => updateFilters("yearOfStudy", val)}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select Year of Study" />
+              <SelectValue placeholder="Zgjidh Vitin e Studimeve" />
             </SelectTrigger>
             <SelectContent>
               {yearsOfStudy.map((year) => (

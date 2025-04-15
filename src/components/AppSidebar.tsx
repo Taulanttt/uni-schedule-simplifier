@@ -1,5 +1,3 @@
-// AppSidebar.tsx
-
 import { Book, CalendarDays, Menu } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -21,26 +19,26 @@ export function AppSidebar({
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
 
-  const toggleSidebarInternal = () => {
+  const ndërroSidebarin = () => {
     setIsOpen(!isOpen);
   };
 
-  const effectiveIsOpen = propsIsOpen !== undefined ? propsIsOpen : isOpen;
-  const effectiveToggleSidebar = propsToggleSidebar || toggleSidebarInternal;
+  const sidebarHapur = propsIsOpen !== undefined ? propsIsOpen : isOpen;
+  const toggleSidebar = propsToggleSidebar || ndërroSidebarin;
 
-  // Close sidebar on route change for mobile
+  // Mbylle sidebarin kur ndryshon faqja në pajisjet mobile
   useEffect(() => {
-    if (isMobile && effectiveIsOpen) {
-      effectiveToggleSidebar();
+    if (isMobile && sidebarHapur) {
+      toggleSidebar();
     }
   }, [location.pathname, isMobile]);
 
-  const isActive = (path: string) => location.pathname === path;
+  const ështëAktive = (path: string) => location.pathname === path;
 
-  // Navigation items
-  const items = [
+  // Artikujt për navigim
+  const artikujt = [
     {
-      title: "Ligjeratat dhe Ushtrimet",
+      title: "Ligjëratat dhe ushtrimet",
       path: "/",
       icon: Book,
     },
@@ -51,18 +49,17 @@ export function AppSidebar({
     },
   ];
 
-  const handleNavigation = (path: string) => {
+  const shkoTe = (path: string) => {
     navigate(path);
-    // Also close the sidebar on mobile devices
     if (isMobile) {
       setIsOpen(false);
     }
   };
 
-  // For mobile, use Sheet component
+  // Sidebar për mobile (me Sheet)
   if (isMobile) {
     return (
-      <Sheet open={effectiveIsOpen} onOpenChange={effectiveToggleSidebar}>
+      <Sheet open={sidebarHapur} onOpenChange={toggleSidebar}>
         <SheetContent side="left" className="w-[250px] p-0 bg-gray-800 text-white">
           <div className="flex flex-col h-full">
             <div className="flex items-center justify-between p-5 border-b border-gray-700">
@@ -70,16 +67,16 @@ export function AppSidebar({
             </div>
             <nav className="flex-1 p-4">
               <ul className="space-y-2">
-                {items.map((item) => (
+                {artikujt.map((item) => (
                   <li key={item.title}>
                     <Button
                       variant="ghost"
                       className={`w-full justify-start ${
-                        isActive(item.path)
+                        ështëAktive(item.path)
                           ? "bg-gray-700"
                           : "hover:bg-gray-700"
                       }`}
-                      onClick={() => handleNavigation(item.path)}
+                      onClick={() => shkoTe(item.path)}
                     >
                       <item.icon className="h-5 w-5 mr-2" />
                       <span>{item.title}</span>
@@ -94,33 +91,35 @@ export function AppSidebar({
     );
   }
 
-  // For desktop
+  // Sidebar për desktop
   return (
     <div
       className={`${
-        effectiveIsOpen ? "w-64" : "w-0 lg:w-20"
+        sidebarHapur ? "w-64" : "w-0 lg:w-20"
       } bg-gray-800 text-white transition-all duration-300 h-full overflow-hidden flex-shrink-0`}
     >
       <div className="h-full flex flex-col">
         <div className="flex items-center justify-between p-5">
-          <h2 className={`font-bold text-xl ${!effectiveIsOpen && "hidden"}`}>
-          Orari i Universitetit
+          <h2 className={`font-bold text-xl ${!sidebarHapur && "hidden"}`}>
+            Orari i Universitetit
           </h2>
         </div>
 
         <nav className="mt-8 px-4 flex-1">
           <ul className="space-y-2">
-            {items.map((item) => (
+            {artikujt.map((item) => (
               <li key={item.title}>
                 <Button
                   variant="ghost"
                   className={`w-full justify-start ${
-                    isActive(item.path) ? "bg-gray-700" : "hover:bg-gray-700"
-                  } ${!effectiveIsOpen && "lg:justify-center"}`}
-                  onClick={() => handleNavigation(item.path)}
+                    ështëAktive(item.path)
+                      ? "bg-gray-700"
+                      : "hover:bg-gray-700"
+                  } ${!sidebarHapur && "lg:justify-center"}`}
+                  onClick={() => shkoTe(item.path)}
                 >
                   <item.icon className="h-5 w-5 mr-2" />
-                  <span className={`${!effectiveIsOpen ? "hidden" : ""}`}>
+                  <span className={`${!sidebarHapur ? "hidden" : ""}`}>
                     {item.title}
                   </span>
                 </Button>

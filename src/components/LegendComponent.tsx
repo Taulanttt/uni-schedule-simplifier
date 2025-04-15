@@ -3,12 +3,12 @@ import React from "react";
 const LegendComponent: React.FC = () => {
   return (
     <div className="mb-6 flex items-center gap-6">
-      <h3 className="text-lg font-semibold">Legend</h3>
+      <h3 className="text-lg font-semibold">Legjenda</h3>
 
-      {/* Ligjerata */}
+      {/* Ligjërata */}
       <div className="flex items-center">
         <div className="w-4 h-4 bg-purple-50 border border-purple-200 rounded mr-2"></div>
-        <span className="text-purple-700">Ligjerata</span>
+        <span className="text-purple-700">Ligjërata</span>
       </div>
 
       {/* Ushtrime */}

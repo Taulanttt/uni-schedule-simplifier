@@ -9,65 +9,65 @@ import { Menu } from "lucide-react";
 
 import Index from "./pages/Index";
 import Exams from "./pages/Exams";
-import AdminLogin from "@/components/admin/AdminLogin"; 
+import AdminLogin from "@/components/admin/AdminLogin";
 import NotFound from "./pages/NotFound";
 import AppSidebar from "./components/AppSidebar";
 import AdminDashboard from "@/components/admin/AdminDashboard";
 
+// Krijimi i klientit për react-query
 const queryClient = new QueryClient();
 
-// A small function to get the heading for the main layout
-function getPageTitle(pathname: string) {
+// Funksion për të marrë titullin sipas faqes
+function merrTitullinFaqes(pathname: string) {
   switch (pathname) {
     case "/":
-      return "Orari i Ligjeratave dhe Ushtrimeve";
+      return "Orari i Ligjëratave dhe Ushtrimeve";
     case "/exams":
       return "Orari i Provimeve";
     default:
-      return "Schedule";
+      return "Orari";
   }
 }
 
-// A PrivateRoute to protect /admin
-function PrivateRoute({ children }: { children: React.ReactNode }) {
+// Rrugë private që kërkon autentikim
+function RrugëPrivate({ children }: { children: React.ReactNode }) {
   const token = localStorage.getItem("token");
-  // If no token => redirect to /login
   if (!token) {
     return <Navigate to="/login" replace />;
   }
   return <>{children}</>;
 }
 
-// The main layout with side nav for /, /exams, etc.
-function MainLayout() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const location = useLocation();
-  const headingText = getPageTitle(location.pathname);
+// Layout-i kryesor për faqet publike
+function PamjeKryesore() {
+  const [hapSidebarin, vendosHapjenSidebarit] = useState(false);
+  const vendndodhja = useLocation();
+  const titulliFaqes = merrTitullinFaqes(vendndodhja.pathname);
 
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+  const ndërroSidebarin = () => vendosHapjenSidebarit(!hapSidebarin);
 
   return (
     <div className="flex h-screen w-full overflow-hidden">
-      <AppSidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
+      <AppSidebar isOpen={hapSidebarin} toggleSidebar={ndërroSidebarin} />
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <div className="p-4 lg:p-6 flex-1 overflow-auto">
-          {/* Top row: Sidebar toggle button & centered heading */}
+          {/* Rreshti sipër: butoni i menytë + titulli në qendër */}
           <div className="flex justify-between items-center mb-4">
             <button
-              onClick={toggleSidebar}
+              onClick={ndërroSidebarin}
               className="p-2 bg-gray-800 text-white rounded-md"
-              aria-label="Toggle menu"
+              aria-label="Ndërro menynë"
             >
               <Menu className="h-5 w-5" />
             </button>
 
             <div className="flex-1 flex justify-center">
-              <h1 className="text-2xl font-bold text-center">{headingText}</h1>
+              <h1 className="text-2xl font-bold text-center">{titulliFaqes}</h1>
             </div>
           </div>
 
-          {/* Content Routes */}
+          {/* Rrugët e përmbajtjes */}
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/exams" element={<Exams />} />
@@ -79,29 +79,30 @@ function MainLayout() {
   );
 }
 
-// The main router
-function MainApp() {
+// Rrugëzimi kryesor i aplikacionit
+function AplikacioniKryesor() {
   return (
     <Routes>
-      {/* Public route for login */}
+      {/* Rrugë publike për hyrje në panel */}
       <Route path="/login" element={<AdminLogin />} />
 
-      {/* Protected /admin route */}
+      {/* Rrugë e mbrojtur për /admin */}
       <Route
         path="/admin"
         element={
-          <PrivateRoute>
+          <RrugëPrivate>
             <AdminDashboard />
-          </PrivateRoute>
+          </RrugëPrivate>
         }
       />
 
-      {/* The main layout for /, /exams, etc. */}
-      <Route path="*" element={<MainLayout />} />
+      {/* Layout-i kryesor për përdoruesit */}
+      <Route path="*" element={<PamjeKryesore />} />
     </Routes>
   );
 }
 
+// Komponenti kryesor i aplikacionit
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
@@ -109,7 +110,7 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <MainApp />
+          <AplikacioniKryesor />
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

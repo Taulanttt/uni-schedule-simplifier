@@ -172,9 +172,9 @@ const ScheduleManagementForm: React.FC = () => {
   return (
     <div className="bg-white p-8 md:p-10 rounded-lg shadow max-w-5xl mx-auto">
       <h2 className="text-2xl font-bold mb-6 text-center">Menaxhimi i Orarit</h2>
-      <p className="text-gray-600 mb-6 text-center">
+      {/* <p className="text-gray-600 mb-6 text-center">
         Shto ose përditëso një ngjarje në orar për një klasë apo provim.
-      </p>
+      </p> */}
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">

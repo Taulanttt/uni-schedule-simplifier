@@ -4,10 +4,11 @@ import MonthView from "@/components/MonthView";
 import WeekView from "@/components/weekViewExams";
 import LegendComponent from "@/components/LegendComponent";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { format, addWeeks, subWeeks } from "date-fns";
+import { addWeeks, subWeeks, format } from "date-fns";
+import { sq } from "date-fns/locale"; // Importimi i lokalizimit shqip
 import axiosInstance from "@/utils/axiosInstance";
 
-// 1) Mappimi i emrave të afatit (muajve)
+// Harta e muajve të afatit
 const afatiMonthMap: Record<string, number> = {
   Janar: 0,
   Shkurt: 1,
@@ -23,7 +24,7 @@ const afatiMonthMap: Record<string, number> = {
   Dhjetor: 11,
 };
 
-// 2) parseAcademicYear
+// parseAcademicYear: p.sh. “2024/25” -> [2024, 2025]
 function parseAcademicYear(ay: string): [number, number] {
   const [startStr, endStr] = ay.split("/");
   const startYear = parseInt(startStr, 10);
@@ -31,21 +32,19 @@ function parseAcademicYear(ay: string): [number, number] {
   return [startYear, endYear];
 }
 
-// 3) Struktura e ExamItem
+// Struktura e një provimi
 export interface ExamItem {
   id: string;
   eventType: string;
   studyYear: number;
-  date: string; // p.sh. "2025-09-09"
-  hour: string; // "HH:MM:SS"
+  date: string;
+  hour: string;
   afatiId: string;
   subjectId: string;
   instructorId: string;
-
   Afati?: { id: string; name: string };
   Subject?: { id: string; name: string };
   Instructor?: { id: string; name: string };
-  // AcademicYear pritet nga serveri -> exam.AcademicYear?.name
   AcademicYear?: {
     id: string;
     name: string;
@@ -53,14 +52,14 @@ export interface ExamItem {
   };
 }
 
-// 4) Filtrat
+// Filtrat
 interface FilterOptionsexam {
-  academicYear: string;  // p.sh. "2024/25"
-  afati: string;         // p.sh. "Shtator"
-  yearOfStudy: string;   // p.sh. "Viti 1"
+  academicYear: string;
+  afati: string;
+  yearOfStudy: string;
 }
 
-// 5) Filtri
+// Filtrimi i listës së provimeve
 function getFilteredExams(
   data: ExamItem[],
   academicYear: string,
@@ -68,19 +67,12 @@ function getFilteredExams(
   yearOfStudy: string
 ) {
   return data.filter((exam) => {
-    // Krahaso me exam.AcademicYear?.name
-    if (exam.AcademicYear?.name !== academicYear) {
-      return false;
-    }
-    // Krahaso me exam.Afati?.name
-    if (exam.Afati?.name !== afati) {
-      return false;
-    }
-    // Krahaso me exam.studyYear
+    if (exam.AcademicYear?.name !== academicYear) return false;
+    if (exam.Afati?.name !== afati) return false;
+
     const numericYear = parseInt(yearOfStudy.replace(/\D/g, ""), 10) || 1;
-    if (exam.studyYear !== numericYear) {
-      return false;
-    }
+    if (exam.studyYear !== numericYear) return false;
+
     return true;
   });
 }
@@ -88,19 +80,18 @@ function getFilteredExams(
 const Exams: React.FC = () => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
 
-  // 6) Filtrat fillestarë -> DUHET t'i vendosni vlera reale
-  // p.sh. "2024/25", "Shtator", "Viti 1"
+  // Filtrat fillestarë
   const [filters, setFilters] = useState<FilterOptionsexam>({
     academicYear: "2024/25",
     afati: "Shtator",
     yearOfStudy: "Viti 1",
   });
 
-  // 7) Lista e provimeve
+  // Lista e provimeve
   const [exams, setExams] = useState<ExamItem[]>([]);
   const isMobile = useIsMobile();
 
-  // 8) Marrim provimet
+  // Marrja e provimeve
   useEffect(() => {
     async function fetchExams() {
       try {
@@ -113,28 +104,19 @@ const Exams: React.FC = () => {
     fetchExams();
   }, []);
 
-  /*
-    9) Kur ndryshon filters.afati ose filters.academicYear,
-       vendos currentDate sipas logjikës:
-         - parseAcademicYear
-         - if monthIndex >= 9 -> chosenYear = startYear
-           else chosenYear = endYear
-  */
+  // Caktojmë currentDate sipas afatit dhe vitit akademik
   useEffect(() => {
     const { afati, academicYear } = filters;
     const monthIndex = afatiMonthMap[afati];
     if (monthIndex !== undefined && academicYear) {
       const [startYear, endYear] = parseAcademicYear(academicYear);
-
       let chosenYear = endYear;
-      if (monthIndex >= 9) {
-        chosenYear = startYear;
-      }
+      if (monthIndex >= 9) chosenYear = startYear;
       setCurrentDate(new Date(chosenYear, monthIndex, 1));
     }
   }, [filters.afati, filters.academicYear]);
 
-  // 10) Filtrimi
+  // Lista e provimeve të filtruar
   const filteredEvents = getFilteredExams(
     exams,
     filters.academicYear,
@@ -142,9 +124,9 @@ const Exams: React.FC = () => {
     filters.yearOfStudy
   );
 
-  // 11) Lëvizja javor (mobile)
-  const goToPreviousWeek = () => setCurrentDate(subWeeks(currentDate, 1));
-  const goToNextWeek = () => setCurrentDate(addWeeks(currentDate, 1));
+  // Për mobile: kalimi javor
+  const shkoJavaPara = () => setCurrentDate(subWeeks(currentDate, 1));
+  const shkoJavaPas = () => setCurrentDate(addWeeks(currentDate, 1));
 
   return (
     <div className="flex flex-col">
@@ -157,26 +139,33 @@ const Exams: React.FC = () => {
         <FilterPanelExams filters={filters} setFilters={setFilters} compact />
       </div>
 
-      {/* Pamja kryesore */}
+      {/* Zona kryesore e provimeve */}
       <div className="bg-white rounded-lg shadow p-2 md:p-4">
         {isMobile ? (
           <>
-            {/* Shigjetat javore + label */}
+            {/* Butonat e lëvizjes në javë, me titullin në mes: "< Shtator 2025 >" */}
             <div className="flex items-center justify-center text-lg font-semibold mb-2">
               <button
                 className="px-2 py-1 text-gray-600 hover:bg-gray-100 rounded"
-                onClick={goToPreviousWeek}
+                onClick={shkoJavaPara}
               >
                 &lt;
               </button>
-              <div className="mx-4">{format(currentDate, "MMMM yyyy")}</div>
+
+              {/* Ky <div> në mes do të shfaq "Shtator 2025" (ose muaji/viti sipas date-fns/locale sq) */}
+              <div className="mx-4">
+                {/* Përdor date-fns me locale sq për muajin në shqip */}
+                {format(currentDate, "MMMM yyyy", { locale: sq })}
+              </div>
+
               <button
                 className="px-2 py-1 text-gray-600 hover:bg-gray-100 rounded"
-                onClick={goToNextWeek}
+                onClick={shkoJavaPas}
               >
                 &gt;
               </button>
             </div>
+
             <WeekView events={filteredEvents} currentDate={currentDate} />
           </>
         ) : (
@@ -188,6 +177,7 @@ const Exams: React.FC = () => {
         )}
       </div>
 
+      {/* Legjenda vetëm kur s’është mobile */}
       {!isMobile && <LegendComponent />}
     </div>
   );
