@@ -5,10 +5,16 @@ import WeekView from "@/components/weekViewExams";
 import LegendComponent from "@/components/LegendComponent";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { addWeeks, subWeeks, format } from "date-fns";
-import { sq } from "date-fns/locale"; // Importimi i lokalizimit shqip
+import { sq } from "date-fns/locale";
 import axiosInstance from "@/utils/axiosInstance";
+import { Button } from "@/components/ui/button";
 
-// Harta e muajve të afatit
+// -------------  PDF  -----------------
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
+// -------------------------------------
+
+/* ---------- Harta e muajve të afatit ---------- */
 const afatiMonthMap: Record<string, number> = {
   Janar: 0,
   Shkurt: 1,
@@ -24,15 +30,13 @@ const afatiMonthMap: Record<string, number> = {
   Dhjetor: 11,
 };
 
-// parseAcademicYear: p.sh. “2024/25” -> [2024, 2025]
+/* ---------- Ndihmës  ---------- */
 function parseAcademicYear(ay: string): [number, number] {
   const [startStr, endStr] = ay.split("/");
-  const startYear = parseInt(startStr, 10);
-  const endYear = parseInt(endStr, 10) + 2000;
-  return [startYear, endYear];
+  return [parseInt(startStr, 10), parseInt(endStr, 10) + 2000];
 }
 
-// Struktura e një provimi
+/* ---------- Tipet ---------- */
 export interface ExamItem {
   id: string;
   eventType: string;
@@ -45,21 +49,16 @@ export interface ExamItem {
   Afati?: { id: string; name: string };
   Subject?: { id: string; name: string };
   Instructor?: { id: string; name: string };
-  AcademicYear?: {
-    id: string;
-    name: string;
-    isActive: boolean;
-  };
+  AcademicYear?: { id: string; name: string; isActive: boolean };
 }
 
-// Filtrat
 interface FilterOptionsexam {
   academicYear: string;
   afati: string;
   yearOfStudy: string;
 }
 
-// Filtrimi i listës së provimeve
+/* ---------- Filtrimi ---------- */
 function getFilteredExams(
   data: ExamItem[],
   academicYear: string,
@@ -69,54 +68,44 @@ function getFilteredExams(
   return data.filter((exam) => {
     if (exam.AcademicYear?.name !== academicYear) return false;
     if (exam.Afati?.name !== afati) return false;
-
     const numericYear = parseInt(yearOfStudy.replace(/\D/g, ""), 10) || 1;
-    if (exam.studyYear !== numericYear) return false;
-
-    return true;
+    return exam.studyYear === numericYear;
   });
 }
 
 const Exams: React.FC = () => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
-
-  // Filtrat fillestarë
   const [filters, setFilters] = useState<FilterOptionsexam>({
     academicYear: "2024/25",
     afati: "Shtator",
     yearOfStudy: "Viti 1",
   });
-
-  // Lista e provimeve
   const [exams, setExams] = useState<ExamItem[]>([]);
   const isMobile = useIsMobile();
 
-  // Marrja e provimeve
+  /* --- Marr provimet ------ */
   useEffect(() => {
-    async function fetchExams() {
+    (async () => {
       try {
         const res = await axiosInstance.get<ExamItem[]>("/exams");
         setExams(res.data);
-      } catch (error) {
-        console.error("Gabim gjatë marrjes së provimeve:", error);
+      } catch (e) {
+        console.error("Gabim gjatë marrjes së provimeve:", e);
       }
-    }
-    fetchExams();
+    })();
   }, []);
 
-  // Caktojmë currentDate sipas afatit dhe vitit akademik
+  /* --- Përditëso currentDate kur ndryshon filtri --- */
   useEffect(() => {
     const { afati, academicYear } = filters;
     const monthIndex = afatiMonthMap[afati];
-    if (monthIndex !== undefined && academicYear) {
+    if (monthIndex !== undefined) {
       const [startYear, endYear] = parseAcademicYear(academicYear);
-      let chosenYear = endYear;
-      if (monthIndex >= 9) chosenYear = startYear;
+      const chosenYear = monthIndex >= 9 ? startYear : endYear;
       setCurrentDate(new Date(chosenYear, monthIndex, 1));
     }
   }, [filters.afati, filters.academicYear]);
 
-  // Lista e provimeve të filtruar
   const filteredEvents = getFilteredExams(
     exams,
     filters.academicYear,
@@ -124,13 +113,39 @@ const Exams: React.FC = () => {
     filters.yearOfStudy
   );
 
-  // Për mobile: kalimi javor
+  /* ---------- PDF ---------- */
+  const handlePrintPDF = () => {
+    const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "A4" });
+
+    const title = `Provimet – ${filters.afati} | ${filters.academicYear}`;
+    doc.setFontSize(14);
+    doc.text(title, 40, 40);
+
+    const body = filteredEvents.map((ex) => [
+      format(new Date(ex.date), "dd/MM/yyyy"),
+      ex.hour.slice(0, 5),
+      `Viti ${ex.studyYear}`,
+      ex.Subject?.name || "-",
+      ex.Instructor?.name || "-",
+    ]);
+
+    autoTable(doc, {
+      startY: 60,
+      head: [["Data", "Ora", "Viti", "Lënda", "Profesori"]],
+      body,
+      styles: { fontSize: 10 },
+    });
+
+    doc.save("Provimet.pdf");
+  };
+
+  /* ---------- Lëvizje javore (mobile) ---------- */
   const shkoJavaPara = () => setCurrentDate(subWeeks(currentDate, 1));
   const shkoJavaPas = () => setCurrentDate(addWeeks(currentDate, 1));
 
   return (
     <div className="flex flex-col">
-      {/* Paneli i filtrit */}
+      {/* --- Paneli i filtrave --- */}
       <div
         className={`flex flex-col ${
           isMobile ? "mb-2" : "md:flex-row"
@@ -139,11 +154,16 @@ const Exams: React.FC = () => {
         <FilterPanelExams filters={filters} setFilters={setFilters} compact />
       </div>
 
-      {/* Zona kryesore e provimeve */}
+      {/* --- Butoni Printo PDF (i dukshëm kudo) --- */}
+      <div className="flex justify-end mb-2">
+        <Button onClick={handlePrintPDF}>Printo PDF</Button>
+      </div>
+
+      {/* --- Zona kryesore --- */}
       <div className="bg-white rounded-lg shadow p-2 md:p-4">
         {isMobile ? (
           <>
-            {/* Butonat e lëvizjes në javë, me titullin në mes: "< Shtator 2025 >" */}
+            {/* Navigimi javë‑më‑javë + titulli në mes */}
             <div className="flex items-center justify-center text-lg font-semibold mb-2">
               <button
                 className="px-2 py-1 text-gray-600 hover:bg-gray-100 rounded"
@@ -152,9 +172,7 @@ const Exams: React.FC = () => {
                 &lt;
               </button>
 
-              {/* Ky <div> në mes do të shfaq "Shtator 2025" (ose muaji/viti sipas date-fns/locale sq) */}
               <div className="mx-4">
-                {/* Përdor date-fns me locale sq për muajin në shqip */}
                 {format(currentDate, "MMMM yyyy", { locale: sq })}
               </div>
 
@@ -177,7 +195,7 @@ const Exams: React.FC = () => {
         )}
       </div>
 
-      {/* Legjenda vetëm kur s’është mobile */}
+      {/* --- Legjenda (vetëm desktop) --- */}
       {!isMobile && <LegendComponent />}
     </div>
   );

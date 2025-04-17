@@ -4,111 +4,89 @@ import { useForm } from "react-hook-form";
 import FilterPanel from "@/components/FilterPanel";
 
 interface FilterOptions {
-  academicYear: string;  // Will store either "All Years" or an AcademicYearItem.id
-  semester: string;      // Will store either "All Semesters" or a semester name
-  yearOfStudy: string;   // Will store either "All Years" or a numeric string
+  academicYear: string; // "All Years" ose id‑ja e vitit akademik
+  semester: string;     // "All Semesters" ose emri i semestrit
+  yearOfStudy: string;  // "All Years" ose numër
 }
 
-// Struktura e orarit (tani me academicYearId)
 interface ScheduleItem {
   id: string;
   eventType: string;
   startTime: string;
   endTime: string;
-  daysOfWeek: string[];
-  // Now we store only the ID from the server; AcademicYear is optional or null
-  academicYearId: string | null;
+  daysOfWeek: string[];       // vlera në anglisht
+  academicYearId: string|null;
   studyYear: number;
   subjectName: string;
   instructorName: string;
   semesterName: string;
   locationName: string;
-  // Fusha Foreign Key
   subjectId: string;
   instructorId: string;
   semesterId: string;
   classLocationId: string;
 }
 
-// Të dhëna për dropdown
-interface SubjectData {
-  id: string;
-  name: string;
-  code: string;
-}
-interface InstructorData {
-  id: string;
-  name: string;
-  role: string;
-}
-interface SemesterData {
-  id: string;
-  name: string;
-}
-interface ClassLocationData {
-  id: string;
-  roomName: string;
-}
+interface SubjectData    { id: string; name: string; code: string; }
+interface InstructorData { id: string; name: string; role: string; }
+interface SemesterData   { id: string; name: string; }
+interface ClassLocationData { id: string; roomName: string; }
+interface AcademicYearItem { id: string; name: string; isActive: boolean; }
 
-// Viti Akademik nga backend
-interface AcademicYearItem {
-  id: string;
-  name: string;    // p.sh. "2025/26"
-  isActive: boolean;
-}
-
-// Ditët e javës (për <select> në modal)
+/* -------------------------------------------------------
+   Ditët e javës: vlera => etiketë (anglisht => shqip)
+-------------------------------------------------------- */
 const DAY_OPTIONS = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-];
+  { value: "Monday",    label: "E hënë"    },
+  { value: "Tuesday",   label: "E martë"   },
+  { value: "Wednesday", label: "E mërkurë" },
+  { value: "Thursday",  label: "E enjte"   },
+  { value: "Friday",    label: "E premte"  },
+  { value: "Saturday",  label: "E shtunë"  },
+  { value: "Sunday",    label: "E diel"    },
+] as const;
+
+// Krijojmë map për kthim të shpejtë (p.sh. Monday -> E hënë)
+const DAY_LABELS: Record<string, string> = DAY_OPTIONS.reduce(
+  (acc, cur) => ({ ...acc, [cur.value]: cur.label }),
+  {} as Record<string, string>
+);
 
 const SchedulesAdminPage: React.FC = () => {
-  // Lista e orareve
+  /* ------------------- state‑et kryesore ------------------- */
   const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Filtrat
   const [filters, setFilters] = useState<FilterOptions>({
     academicYear: "All Years",
     semester: "All Semesters",
     yearOfStudy: "All Years",
   });
 
-  // Modal state
   const [editId, setEditId] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  // Hook form
   const { register, handleSubmit, reset, setValue } = useForm<any>();
 
-  // Të dhëna për dropdown
-  const [subjects, setSubjects] = useState<SubjectData[]>([]);
+  const [subjects, setSubjects]       = useState<SubjectData[]>([]);
   const [instructors, setInstructors] = useState<InstructorData[]>([]);
-  const [semesters, setSemesters] = useState<SemesterData[]>([]);
-  const [locations, setLocations] = useState<ClassLocationData[]>([]);
+  const [semesters, setSemesters]     = useState<SemesterData[]>([]);
+  const [locations, setLocations]     = useState<ClassLocationData[]>([]);
   const [academicYears, setAcademicYears] = useState<AcademicYearItem[]>([]);
 
-  // 1) Marrim oraret
+  /* --------------------- API thirrjet --------------------- */
   async function fetchSchedules() {
     setLoading(true);
     try {
-      // Server should return academicYearId (and possibly academicYear = null)
       const res = await axiosInstance.get<ScheduleItem[]>("/schedules");
       setSchedules(res.data);
-    } catch (error) {
-      console.error("Gabim gjatë marrjes së orareve:", error);
+    } catch (err) {
+      console.error("Gabim gjatë marrjes së orareve:", err);
     } finally {
       setLoading(false);
     }
   }
 
-  // 2) Marrim subject, instructor, semester, location
   async function fetchDropdownData() {
     try {
       const [subRes, insRes, semRes, locRes] = await Promise.all([
@@ -121,20 +99,17 @@ const SchedulesAdminPage: React.FC = () => {
       setInstructors(insRes.data);
       setSemesters(semRes.data);
       setLocations(locRes.data);
-    } catch (error) {
-      console.error("Gabim gjatë marrjes së dropdown-ve:", error);
+    } catch (err) {
+      console.error("Gabim gjatë marrjes së dropdown‑eve:", err);
     }
   }
 
-  // 3) Marrim vitet akademike aktive
   async function fetchAcademicYears() {
     try {
       const res = await axiosInstance.get<AcademicYearItem[]>("/academic-year");
-      // filtrojmë vetëm isActive == true
-      const activeAY = res.data.filter((ay) => ay.isActive);
-      setAcademicYears(activeAY);
-    } catch (error) {
-      console.error("Gabim gjatë marrjes së viteve akademike:", error);
+      setAcademicYears(res.data.filter((ay) => ay.isActive));
+    } catch (err) {
+      console.error("Gabim gjatë viteve akademike:", err);
     }
   }
 
@@ -144,81 +119,60 @@ const SchedulesAdminPage: React.FC = () => {
     fetchAcademicYears();
   }, []);
 
-  // 4) Filtrim client-side
+  /* -------------------- filtrimi lokal -------------------- */
   const filteredSchedules = schedules.filter((sch) => {
-    // Filtri: academicYear => compare sch.academicYearId with filters.academicYear
     if (
       filters.academicYear !== "All Years" &&
       sch.academicYearId !== filters.academicYear
-    ) {
+    )
       return false;
-    }
-
-    // Filtri: semestri (compare sch.semesterName with filters.semester)
     if (
       filters.semester !== "All Semesters" &&
       sch.semesterName !== filters.semester
-    ) {
+    )
       return false;
-    }
-
-    // Filtri: viti i studimeve
     if (filters.yearOfStudy !== "All Years") {
-      const numericYear = parseInt(filters.yearOfStudy.replace(/\D/g, ""), 10);
-      if (sch.studyYear !== numericYear) {
-        return false;
-      }
+      const y = parseInt(filters.yearOfStudy.replace(/\D/g, ""), 10);
+      if (sch.studyYear !== y) return false;
     }
-
     return true;
   });
 
-  // 5) Fillojmë editimin => hapim modalin
+  /* -------------------- editimi i orarit ------------------- */
   const startEdit = (sch: ScheduleItem) => {
     setEditId(sch.id);
-
-    // Mbushim formularin me vlerat ekzistuese
     setValue("eventType", sch.eventType);
     setValue("startTime", sch.startTime);
     setValue("endTime", sch.endTime);
-    setValue("academicYearId", sch.academicYearId || ""); // set the ID
+    setValue("academicYearId", sch.academicYearId || "");
     setValue("studyYear", String(sch.studyYear));
     setValue("subjectId", sch.subjectId);
     setValue("instructorId", sch.instructorId);
     setValue("semesterId", sch.semesterId);
     setValue("classLocationId", sch.classLocationId);
-    // daysOfWeek might be multiple
     setValue("daysOfWeek", sch.daysOfWeek);
-
     setShowEditModal(true);
   };
 
-  // Mbyllja e modalit
   const closeModal = () => {
     setEditId(null);
     reset({});
     setShowEditModal(false);
   };
 
-  // 6) Ruaj me PUT
   const onSubmit = async (data: any) => {
     if (!editId) return;
     try {
-      let daysArr = data.daysOfWeek;
-      if (!daysArr) daysArr = [];
-      // Në rast se user-i ka zgjedhur një vlerë të vetme
-      if (typeof daysArr === "string") {
-        daysArr = [daysArr];
-      }
-
+      let daysArr = data.daysOfWeek || [];
+      if (typeof daysArr === "string") daysArr = [daysArr];
       const numericYear = parseInt(data.studyYear, 10) || 1;
 
       await axiosInstance.put(`/schedules/${editId}`, {
         eventType: data.eventType,
         startTime: data.startTime,
         endTime: data.endTime,
-        daysOfWeek: daysArr,
-        academicYearId: data.academicYearId, // ID e vitit akademik
+        daysOfWeek: daysArr, // mbeten në anglisht
+        academicYearId: data.academicYearId,
         studyYear: numericYear,
         subjectId: data.subjectId,
         instructorId: data.instructorId,
@@ -228,24 +182,23 @@ const SchedulesAdminPage: React.FC = () => {
 
       fetchSchedules();
       closeModal();
-    } catch (error) {
-      console.error("Gabim gjatë përditësimit:", error);
+    } catch (err) {
+      console.error("Gabim gjatë përditësimit:", err);
     }
   };
 
-  // 7) Fshirja
   const deleteSchedule = async (id: string) => {
-    if (!window.confirm("A jeni i sigurt që dëshironi ta fshini këtë orar?")) {
+    if (!window.confirm("A jeni i sigurt që dëshironi ta fshini këtë orar?"))
       return;
-    }
     try {
       await axiosInstance.delete(`/schedules/${id}`);
       fetchSchedules();
-    } catch (error) {
-      console.error("Gabim gjatë fshirjes:", error);
+    } catch (err) {
+      console.error("Gabim gjatë fshirjes:", err);
     }
   };
 
+  /* ------------------------- JSX ------------------------- */
   return (
     <div className="max-w-6xl mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Admin i Orareve</h1>
@@ -279,11 +232,9 @@ const SchedulesAdminPage: React.FC = () => {
               </thead>
               <tbody>
                 {filteredSchedules.map((sch) => {
-                  // Lookup the academic year by its ID in our academicYears array
                   const yearObj = academicYears.find(
                     (ay) => ay.id === sch.academicYearId
                   );
-
                   return (
                     <tr key={sch.id} className="border-b">
                       <td className="p-2">{sch.eventType}</td>
@@ -291,12 +242,11 @@ const SchedulesAdminPage: React.FC = () => {
                         {sch.startTime} - {sch.endTime}
                       </td>
                       <td className="p-2">
-                        {sch.daysOfWeek.join(", ")}
+                        {sch.daysOfWeek
+                          .map((d) => DAY_LABELS[d] || d)
+                          .join(", ")}
                       </td>
-                      {/* Show the academic year name by looking it up; default to "—" if not found */}
-                      <td className="p-2">
-                        {yearObj?.name || "—"}
-                      </td>
+                      <td className="p-2">{yearObj?.name || "—"}</td>
                       <td className="p-2">{sch.studyYear}</td>
                       <td className="p-2">{sch.subjectName}</td>
                       <td className="p-2">{sch.instructorName}</td>
@@ -334,11 +284,10 @@ const SchedulesAdminPage: React.FC = () => {
         )}
       </div>
 
-      {/* Modal-i për Editim (shfaqet veç kur showEditModal === true) */}
+      {/* Modal‑i për Editim */}
       {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white w-full max-w-2xl p-6 rounded shadow relative">
-            {/* Butoni i mbylljes (X) */}
             <button
               onClick={closeModal}
               className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
@@ -359,7 +308,7 @@ const SchedulesAdminPage: React.FC = () => {
                   />
                 </div>
 
-                {/* Dita e Javës (shumësia e ditëve, ose një e vetme) */}
+                {/* Dita e Javës */}
                 <div>
                   <label className="block font-medium mb-1">Dita e Javës</label>
                   <select
@@ -367,9 +316,9 @@ const SchedulesAdminPage: React.FC = () => {
                     className="border p-1 rounded w-full"
                   >
                     <option value="">-- Zgjidh Ditën --</option>
-                    {DAY_OPTIONS.map((day) => (
-                      <option key={day} value={day}>
-                        {day}
+                    {DAY_OPTIONS.map(({ value, label }) => (
+                      <option key={value} value={value}>
+                        {label}
                       </option>
                     ))}
                   </select>
@@ -395,7 +344,7 @@ const SchedulesAdminPage: React.FC = () => {
                   />
                 </div>
 
-                {/* Viti Akademik (ID, jo string) */}
+                {/* Viti Akademik */}
                 <div>
                   <label className="block font-medium mb-1">Viti Akademik</label>
                   <select
@@ -506,7 +455,6 @@ const SchedulesAdminPage: React.FC = () => {
           </div>
         </div>
       )}
-      {/* fundi i modalit */}
     </div>
   );
 };
