@@ -27,3 +27,5 @@ const LegendComponent: React.FC = () => {
 };
 
 export default LegendComponent;
+
+
