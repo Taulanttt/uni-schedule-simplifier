@@ -5,7 +5,7 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: mode === "production" ? "/uni-schedule-simplifier/" : "/",
+  base: "/", // ✅ Always use root for Netlify
   server: {
     host: "::",
     port: 8080,
