@@ -78,8 +78,21 @@ const AdminCrudPage: React.FC = () => {
   useEffect(() => {
     fetchItems();
     setEditId(null);
-    reset({});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  
+    // Reset form depending on resource
+    switch (resource) {
+      case "instructors":
+        reset({ name: "", role: "Asistent" });
+        break;
+      case "academic-year":
+        reset({ name: "", isActive: false });
+        break;
+      case "class-locations":
+        reset({ roomName: "" });
+        break;
+      default:
+        reset({ name: "" }); // for semesters, subjects, afati
+    }
   }, [resource]);
 
   // 3) onSubmit => nëse ka editId bëjmë PUT, përndryshe POST
