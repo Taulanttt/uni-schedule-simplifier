@@ -165,8 +165,8 @@ const AdminCrudPage: React.FC = () => {
             />
             <label className="block font-medium mt-2">Roli</label>
             <select {...register("role")} className="border px-3 py-1 rounded w-full">
-              <option value="assistant">Asistent</option>
-              <option value="professor">Profesor</option>
+            <option value="Asistent">Asistent</option>
+            <option value="Profesor">Profesor</option>
             </select>
           </>
         );
