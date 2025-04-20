@@ -34,7 +34,7 @@ const AdminDashboard: React.FC = () => {
       case "exams":
         return "Orari i Provimeve";
       case "crud":
-        return "Menaxhimi CRUD";
+        return "Menaxhimi";
       case "schedulesAdmin":
         return "Admin i Orareve";
       case "examsAdmin":
