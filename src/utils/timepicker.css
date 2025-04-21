@@ -1,0 +1,28 @@
+.react-time-picker__inputGroup__input {
+    background-color: white !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    font-size: 1rem;
+    font-family: inherit;
+  }
+  
+  .react-time-picker__inputGroup__divider {
+    margin: 0 !important;         /* removes spacing around colon */
+    padding: 0 !important;
+  }
+  
+  .react-time-picker__wrapper {
+    border: 1px solid #d1d5db;    /* Tailwind border-input */
+    border-radius: 0.375rem;      /* Tailwind rounded-md */
+    padding: 0.5rem 0.75rem;
+    background-color: white;
+    display: flex;
+    align-items: center;
+  }
+  
+  .react-time-picker__inputGroup {
+    gap: 0.25rem;
+    align-items: center;
+  }
+  

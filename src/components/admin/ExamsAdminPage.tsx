@@ -71,8 +71,9 @@ const ExamsAdminPage: React.FC = () => {
   const [afatis, setAfatis] = useState<AfatiData[]>([]);
   const [academicYears, setAcademicYears] = useState<AcademicYearItem[]>([]);
 
+
   // React Hook Form
-  const { register, handleSubmit, reset, setValue } = useForm<any>();
+  const { register, handleSubmit, reset, setValue, watch } = useForm<any>();
 
   // Filtrat (ruaj si string ID ose "All Years")
   const [filters, setFilters] = useState<FilterOptionsexam>({
@@ -212,9 +213,26 @@ const ExamsAdminPage: React.FC = () => {
     }
   };
 
+  const formatMaskedTime = (raw: string) => {
+    const cleaned = raw.replace(/\D/g, "").slice(0, 4);
+    const chars = cleaned.split("");
+    return `${chars[0] ?? "-"}${chars[1] ?? "-"}:${chars[2] ?? "-"}${chars[3] ?? "-"}`;
+  };
+  
+  const normalizeTime = (val: string) => {
+    const digits = val.replace(/\D/g, "");
+    if (digits.length !== 4) return val;
+    const hour = Math.min(Math.max(parseInt(digits.slice(0, 2)), 0), 23);
+    const minute = Math.min(Math.max(parseInt(digits.slice(2, 4)), 0), 59);
+    return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+  };
+  
+  
+  
+
   return (
     <div className="max-w-4xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Admin i Provimeve</h1>
+      <h1 className="text-2xl font-bold mb-4">Menaxho Provime</h1>
 
       {/* Paneli i filtrit */}
       <div className="mb-6">
@@ -355,16 +373,27 @@ const ExamsAdminPage: React.FC = () => {
                 </div>
 
                 {/* Ora */}
-                <div>
-                  <label className="block font-medium mb-1">
-                    Ora e Provimit
-                  </label>
-                  <input
-                    type="time"
-                    {...register("hour")}
-                    className="border p-1 rounded w-full"
-                  />
-                </div>
+{/* Ora e Provimit */}
+<div>
+  <label className="block font-medium mb-1">Ora e Provimit</label>
+  <input
+    type="text"
+    inputMode="numeric"
+    maxLength={5}
+    className="border p-1 rounded w-full text-center font-normal tracking-widest"
+    value={formatMaskedTime(watch("hour") || "")}
+    onChange={(e) => {
+      const digitsOnly = e.target.value.replace(/\D/g, "").slice(0, 4);
+      setValue("hour", digitsOnly);
+    }}
+    onBlur={() => {
+      const formatted = normalizeTime(watch("hour") || "");
+      setValue("hour", formatted, { shouldValidate: true });
+    }}
+  />
+</div>
+
+
 
                 {/* Lënda */}
                 <div>

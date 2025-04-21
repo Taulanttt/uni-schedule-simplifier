@@ -159,8 +159,22 @@ const SchedulesAdminPage: React.FC = () => {
     reset({});
     setShowEditModal(false);
   };
-
+  const [startTimeInput, setStartTimeInput] = useState("");
+  const [endTimeInput, setEndTimeInput] = useState("");
+  const handleTimeInputChange = (value: string, setter: (val: string) => void) => {
+    let cleaned = value.replace(/\D/g, "");
+    if (cleaned.length > 4) cleaned = cleaned.slice(0, 4);
+  
+    if (cleaned.length >= 3) {
+      cleaned = `${cleaned.slice(0, 2)}:${cleaned.slice(2)}`;
+    }
+  
+    setter(cleaned);
+  };
+  
   const onSubmit = async (data: any) => {
+    data.startTime = normalizeTime(data.startTime);
+  data.endTime = normalizeTime(data.endTime);
     if (!editId) return;
     try {
       let daysArr = data.daysOfWeek || [];
@@ -197,11 +211,27 @@ const SchedulesAdminPage: React.FC = () => {
       console.error("Gabim gjatë fshirjes:", err);
     }
   };
+  const normalizeTime = (val) => {
+    const match = val.match(/^(\d{1,2}):?(\d{2})$/);
+    if (!match) return val;
+    let [_, h, m] = match;
+    let hour = Math.min(Math.max(parseInt(h), 0), 23);
+    let minute = Math.min(Math.max(parseInt(m), 0), 59);
+    return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+  };
+  
+  const formatMaskedTime = (raw: string) => {
+    const cleaned = raw.replace(/\D/g, "").slice(0, 4); // only digits, max 4
+    const chars = cleaned.split("");
+  
+    return `${chars[0] ?? "-"}${chars[1] ?? "-"}:${chars[2] ?? "-"}${chars[3] ?? "-"}`;
+  };
+  
 
   /* ------------------------- JSX ------------------------- */
   return (
     <div className="max-w-6xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Admin i Orareve</h1>
+      <h1 className="text-2xl font-bold mb-4">Menaxho Orare</h1>
 
       {/* Filter Panel */}
       <div className="mb-6">
@@ -325,24 +355,41 @@ const SchedulesAdminPage: React.FC = () => {
                 </div>
 
                 {/* Ora e fillimit */}
-                <div>
-                  <label className="block font-medium mb-1">Ora e Fillimit</label>
-                  <input
-                    type="time"
-                    {...register("startTime")}
-                    className="border p-1 rounded w-full"
-                  />
-                </div>
+             {/* Ora e Fillimit */}
+{/* Ora e Fillimit */}
+{/* Ora e Fillimit */}
+<div>
+  <label className="block font-medium mb-1">Ora e Fillimit</label>
+  <input
+    type="text"
+    inputMode="numeric"
+    value={formatMaskedTime(startTimeInput)}
+    onChange={(e) => {
+      const digitsOnly = e.target.value.replace(/\D/g, "").slice(0, 4);
+      setStartTimeInput(digitsOnly);
+    }}
+    onBlur={() => setStartTimeInput(normalizeTime(startTimeInput).replace(":", ""))}
+    className="border p-1 rounded w-full text-center font-normal tracking-widest"
+  />
+</div>
 
-                {/* Ora e përfundimit */}
-                <div>
-                  <label className="block font-medium mb-1">Ora e Përfundimit</label>
-                  <input
-                    type="time"
-                    {...register("endTime")}
-                    className="border p-1 rounded w-full"
-                  />
-                </div>
+{/* Ora e Përfundimit */}
+<div>
+  <label className="block font-medium mb-1">Ora e Përfundimit</label>
+  <input
+    type="text"
+    inputMode="numeric"
+    value={formatMaskedTime(endTimeInput)}
+    onChange={(e) => {
+      const digitsOnly = e.target.value.replace(/\D/g, "").slice(0, 4);
+      setEndTimeInput(digitsOnly);
+    }}
+    onBlur={() => setEndTimeInput(normalizeTime(endTimeInput).replace(":", ""))}
+    className="border p-1 rounded w-full text-center font-normal tracking-widest"
+  />
+</div>
+
+
 
                 {/* Viti Akademik */}
                 <div>

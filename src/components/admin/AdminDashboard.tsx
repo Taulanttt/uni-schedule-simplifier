@@ -28,7 +28,7 @@ const AdminDashboard: React.FC = () => {
   const getPageTitle = () => {
     switch (currentPage) {
       case "schedule":
-        return "Menaxhimi i Orarit";
+        return "Krijimi i Orarit";
       case "notifications":
         return "Dërgo Njoftime për Studentët";
       case "exams":

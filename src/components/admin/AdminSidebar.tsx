@@ -1,4 +1,3 @@
-// AdminSidebar.tsx
 import React from "react";
 import {
   BellRing,
@@ -42,121 +41,128 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
     }
   };
 
-  const labels = {
-    schedule: "Orari",
-    exams: "Provimet",
-    notifications: "Njoftimet",
-    crud: "Menaxhimi",
-    schedulesAdmin: "Menaxhimi i Orarit",
-    examsAdmin: "Menaxhimi i Provimeve",
-  };
+  const renderMenuItems = () => (
+    <ul className="space-y-2 text-sm">
+      {/* ORARI MËSIMOR */}
+      {isOpen && (
+        <li className="text-gray-400 uppercase font-bold px-2 mt-4">
+          Orari Mësimor
+        </li>
+      )}
+      <li>
+        <Button
+          variant="ghost"
+          className={`w-full justify-start ${
+            currentPage === "schedule" ? "bg-gray-700" : "hover:bg-gray-700"
+          } ${!isOpen && "lg:justify-center"}`}
+          onClick={() => handleNavigation("schedule")}
+        >
+          <Calendar className="h-5 w-5 mr-2" />
+          {isOpen && <span>Shto</span>}
+        </Button>
+      </li>
+      <li>
+        <Button
+          variant="ghost"
+          className={`w-full justify-start ${
+            currentPage === "schedulesAdmin" ? "bg-gray-700" : "hover:bg-gray-700"
+          } ${!isOpen && "lg:justify-center"}`}
+          onClick={() => handleNavigation("schedulesAdmin")}
+        >
+          <ListOrdered className="h-5 w-5 mr-2" />
+          {isOpen && <span>Menaxho</span>}
+        </Button>
+      </li>
+  
+      {/* ORARI I PROVIMEVE */}
+      {isOpen && (
+        <li className="text-gray-400 uppercase font-bold px-2 mt-6">
+          Orari i Provimeve
+        </li>
+      )}
+      <li>
+        <Button
+          variant="ghost"
+          className={`w-full justify-start ${
+            currentPage === "exams" ? "bg-gray-700" : "hover:bg-gray-700"
+          } ${!isOpen && "lg:justify-center"}`}
+          onClick={() => handleNavigation("exams")}
+        >
+          <BookOpen className="h-5 w-5 mr-2" />
+          {isOpen && <span>Shto</span>}
+        </Button>
+      </li>
+      <li>
+        <Button
+          variant="ghost"
+          className={`w-full justify-start ${
+            currentPage === "examsAdmin" ? "bg-gray-700" : "hover:bg-gray-700"
+          } ${!isOpen && "lg:justify-center"}`}
+          onClick={() => handleNavigation("examsAdmin")}
+        >
+          <ClipboardList className="h-5 w-5 mr-2" />
+          {isOpen && <span>Menaxho</span>}
+        </Button>
+      </li>
+  
+      {/* NJOFTIMET */}
+      {isOpen && (
+        <li className="text-gray-400 uppercase font-bold px-2 mt-6">
+          Njoftimet
+        </li>
+      )}
+      <li>
+        <Button
+          variant="ghost"
+          className={`w-full justify-start ${
+            currentPage === "notifications" ? "bg-gray-700" : "hover:bg-gray-700"
+          } ${!isOpen && "lg:justify-center"}`}
+          onClick={() => handleNavigation("notifications")}
+        >
+          <BellRing className="h-5 w-5 mr-2" />
+          {isOpen && <span>Email</span>}
+        </Button>
+      </li>
+  
+      {/* KONFIGURIMET */}
+      {isOpen && (
+        <li className="text-gray-400 uppercase font-bold px-2 mt-6">
+          Konfigurimet
+        </li>
+      )}
+      <li>
+        <Button
+          variant="ghost"
+          className={`w-full justify-start ${
+            currentPage === "crud" ? "bg-gray-700" : "hover:bg-gray-700"
+          } ${!isOpen && "lg:justify-center"}`}
+          onClick={() => handleNavigation("crud")}
+        >
+          <Database className="h-5 w-5 mr-2" />
+          {isOpen && <span>Menaxho</span>}
+        </Button>
+      </li>
+    </ul>
+  );
+  
 
+  // MOBILE SIDEBAR
   if (isMobile) {
     return (
       <Sheet open={isOpen} onOpenChange={toggleSidebar}>
-        <SheetContent
-          side="left"
-          className="w-[250px] p-0 bg-gray-800 text-white"
-        >
+        <SheetContent side="left" className="w-[250px] p-0 bg-gray-800 text-white">
           <div className="flex flex-col h-full">
             <div className="flex items-center justify-between p-5 border-b border-gray-700">
               <h2 className="font-bold text-xl">Paneli i Adminit</h2>
             </div>
-            <nav className="flex-1 p-4">
-              <ul className="space-y-2">
-                <li>
-                  <Button
-                    variant="ghost"
-                    className={`w-full justify-start ${
-                      currentPage === "schedule"
-                        ? "bg-gray-700"
-                        : "hover:bg-gray-700"
-                    }`}
-                    onClick={() => handleNavigation("schedule")}
-                  >
-                    <Calendar className="h-5 w-5 mr-2" />
-                    <span>{labels.schedule}</span>
-                  </Button>
-                </li>
-                <li>
-                  <Button
-                    variant="ghost"
-                    className={`w-full justify-start ${
-                      currentPage === "exams"
-                        ? "bg-gray-700"
-                        : "hover:bg-gray-700"
-                    }`}
-                    onClick={() => handleNavigation("exams")}
-                  >
-                    <BookOpen className="h-5 w-5 mr-2" />
-                    <span>{labels.exams}</span>
-                  </Button>
-                </li>
-                <li>
-                  <Button
-                    variant="ghost"
-                    className={`w-full justify-start ${
-                      currentPage === "notifications"
-                        ? "bg-gray-700"
-                        : "hover:bg-gray-700"
-                    }`}
-                    onClick={() => handleNavigation("notifications")}
-                  >
-                    <BellRing className="h-5 w-5 mr-2" />
-                    <span>{labels.notifications}</span>
-                  </Button>
-                </li>
-                <li>
-                  <Button
-                    variant="ghost"
-                    className={`w-full justify-start ${
-                      currentPage === "crud"
-                        ? "bg-gray-700"
-                        : "hover:bg-gray-700"
-                    }`}
-                    onClick={() => handleNavigation("crud")}
-                  >
-                    <Database className="h-5 w-5 mr-2" />
-                    <span>{labels.crud}</span>
-                  </Button>
-                </li>
-                <li>
-                  <Button
-                    variant="ghost"
-                    className={`w-full justify-start ${
-                      currentPage === "schedulesAdmin"
-                        ? "bg-gray-700"
-                        : "hover:bg-gray-700"
-                    }`}
-                    onClick={() => handleNavigation("schedulesAdmin")}
-                  >
-                    <ListOrdered className="h-5 w-5 mr-2" />
-                    <span>{labels.schedulesAdmin}</span>
-                  </Button>
-                </li>
-                <li>
-                  <Button
-                    variant="ghost"
-                    className={`w-full justify-start ${
-                      currentPage === "examsAdmin"
-                        ? "bg-gray-700"
-                        : "hover:bg-gray-700"
-                    }`}
-                    onClick={() => handleNavigation("examsAdmin")}
-                  >
-                    <ClipboardList className="h-5 w-5 mr-2" />
-                    <span>{labels.examsAdmin}</span>
-                  </Button>
-                </li>
-              </ul>
-            </nav>
+            <nav className="mt-8 px-4 flex-1">{renderMenuItems()}</nav>
           </div>
         </SheetContent>
       </Sheet>
     );
   }
 
-  // Desktop
+  // DESKTOP SIDEBAR
   return (
     <div
       className={`${
@@ -165,40 +171,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
     >
       <div className="h-full flex flex-col">
         <div className="flex items-center justify-between p-5">
-          <h2 className={`font-bold text-xl ${!isOpen && "hidden"}`}>
-            Admin
-          </h2>
+          <h2 className={`font-bold text-xl ${!isOpen && "hidden"}`}>Admin</h2>
         </div>
-
-        <nav className="mt-8 px-4 flex-1">
-          <ul className="space-y-2">
-            {(
-              [
-                ["schedule", <Calendar className="h-5 w-5 mr-2" />],
-                ["exams", <BookOpen className="h-5 w-5 mr-2" />],
-                ["notifications", <BellRing className="h-5 w-5 mr-2" />],
-                ["crud", <Database className="h-5 w-5 mr-2" />],
-                ["schedulesAdmin", <ListOrdered className="h-5 w-5 mr-2" />],
-                ["examsAdmin", <ClipboardList className="h-5 w-5 mr-2" />],
-              ] as [AdminPage, JSX.Element][]
-            ).map(([page, icon]) => (
-              <li key={page}>
-                <Button
-                  variant="ghost"
-                  className={`w-full justify-start ${
-                    currentPage === page ? "bg-gray-700" : "hover:bg-gray-700"
-                  } ${!isOpen && "lg:justify-center"}`}
-                  onClick={() => handleNavigation(page)}
-                >
-                  {icon}
-                  <span className={`${!isOpen ? "hidden" : ""}`}>
-                    {labels[page]}
-                  </span>
-                </Button>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        <nav className="mt-8 px-4 flex-1">{renderMenuItems()}</nav>
       </div>
     </div>
   );

@@ -141,6 +141,20 @@ const ExamsScheduleForm: React.FC = () => {
       });
     }
   };
+  const formatMaskedTime = (raw: string) => {
+    const cleaned = raw.replace(/\D/g, "").slice(0, 4);
+    const chars = cleaned.split("");
+    return `${chars[0] ?? "-"}${chars[1] ?? "-"}:${chars[2] ?? "-"}${chars[3] ?? "-"}`;
+  };
+  
+  const normalizeTime = (val: string) => {
+    const digits = val.replace(/\D/g, "");
+    if (digits.length !== 4) return val;
+    const hour = Math.min(Math.max(parseInt(digits.slice(0, 2)), 0), 23);
+    const minute = Math.min(Math.max(parseInt(digits.slice(2, 4)), 0), 59);
+    return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+  };
+  
 
   return (
     <div className="max-w-xl mx-auto bg-white p-6 rounded-md shadow">
@@ -303,21 +317,36 @@ const ExamsScheduleForm: React.FC = () => {
 
             {/* hour */}
             <FormField
-              control={form.control}
-              name="hour"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Ora e Provimit</FormLabel>
-                  <div className="relative">
-                    <FormControl>
-                      <Input type="time" {...field} className="pl-10" />
-                    </FormControl>
-                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+  name="hour"
+  control={form.control}
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Ora e Provimit</FormLabel>
+      <FormControl>
+        <div className="relative">
+          <input
+            type="text"
+            inputMode="numeric"
+            className="pl-10 w-full border rounded-md px-3 py-2 text-center font-normal tracking-widest"
+            value={formatMaskedTime(field.value || "")}
+            onChange={(e) => {
+              const digitsOnly = e.target.value.replace(/\D/g, "").slice(0, 4);
+              form.setValue("hour", digitsOnly);
+            }}
+            onBlur={() => {
+              const formatted = normalizeTime(field.value || "");
+              form.setValue("hour", formatted, { shouldValidate: true });
+            }}
+          />
+          <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+        </div>
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+
+
           </div>
 
           <Button type="submit" className="mt-4">

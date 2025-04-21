@@ -25,6 +25,11 @@ import { ChevronsUpDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import axiosInstance from "@/utils/axiosInstance";
 import { Label } from "@radix-ui/react-label";
+import TimePicker from 'react-time-picker';
+import 'react-time-picker/dist/TimePicker.css';
+import '../../utils/timepicker.css';
+const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
+const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0"));
 
 // 1) Zod schema
 const formSchema = z.object({
@@ -168,10 +173,28 @@ const ScheduleManagementForm: React.FC = () => {
       });
     }
   };
+  const formatMaskedTime = (raw: string) => {
+    const cleaned = raw.replace(/\D/g, "").slice(0, 4);
+    const chars = cleaned.split("");
+    return `${chars[0] ?? "-"}${chars[1] ?? "-"}:${chars[2] ?? "-"}${chars[3] ?? "-"}`;
+  };
+  
+  const normalizeTime = (val: string) => {
+    const digits = val.replace(/\D/g, "");
+    if (digits.length !== 4) return val;
+  
+    const hour = Math.min(Math.max(parseInt(digits.slice(0, 2)), 0), 23);
+    const minute = Math.min(Math.max(parseInt(digits.slice(2, 4)), 0), 59);
+  
+    return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+  };
+  
 
+  
+  
   return (
     <div className="bg-white p-8 md:p-10 rounded-lg shadow max-w-5xl mx-auto">
-      <h2 className="text-2xl font-bold mb-6 text-center">Menaxhimi i Orarit</h2>
+      <h2 className="text-2xl font-bold mb-6 text-center">Krijo Orare</h2>
       {/* <p className="text-gray-600 mb-6 text-center">
         Shto ose përditëso një ngjarje në orar për një klasë apo provim.
       </p> */}
@@ -351,39 +374,65 @@ const ScheduleManagementForm: React.FC = () => {
               )}
             />
           </div>
-
           {/* Rreshti 4: Orët (startTime, endTime) + daysOfWeek */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                name="startTime"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ora e Fillimit</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <FormField
+  name="startTime"
+  control={form.control}
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Ora e Fillimit</FormLabel>
+      <FormControl>
+        <input
+          type="text"
+          inputMode="numeric"
+          className="w-full border rounded-md px-3 py-2 text-center font-normal tracking-widest"
+          value={formatMaskedTime(field.value || "")}
+          onChange={(e) => {
+            const digitsOnly = e.target.value.replace(/\D/g, "").slice(0, 4);
+            form.setValue("startTime", digitsOnly);
+          }}
+          onBlur={() => {
+            const formatted = normalizeTime(field.value || "");
+            form.setValue("startTime", formatted, { shouldValidate: true });
+          }}
+        />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
 
-              <FormField
-                name="endTime"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ora e Përfundimit</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+<FormField
+  name="endTime"
+  control={form.control}
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Ora e Përfundimit</FormLabel>
+      <FormControl>
+        <input
+          type="text"
+          inputMode="numeric"
+          className="w-full border rounded-md px-3 py-2 text-center font-normal tracking-widest"
+          value={formatMaskedTime(field.value || "")}
+          onChange={(e) => {
+            const digitsOnly = e.target.value.replace(/\D/g, "").slice(0, 4);
+            form.setValue("endTime", digitsOnly);
+          }}
+          onBlur={() => {
+            const formatted = normalizeTime(field.value || "");
+            form.setValue("endTime", formatted, { shouldValidate: true });
+          }}
+        />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+
+
             </div>
-
             <FormField
               name="daysOfWeek"
               control={form.control}
