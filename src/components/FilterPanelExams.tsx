@@ -10,20 +10,19 @@ import axiosInstance from "@/utils/axiosInstance";
 import { yearsOfStudy } from "@/data/scheduleData";
 import { FilterOptionsexam } from "@/types";
 
-// Struktura e props për komponentin
+// Props
 interface FilterPanelProps {
   filters: FilterOptionsexam;
   setFilters: React.Dispatch<React.SetStateAction<FilterOptionsexam>>;
   compact?: boolean;
 }
 
-// Struktura e Afatit
+// Models
 interface AfatiData {
   id: string;
   name: string;
 }
 
-// Struktura e Vitit Akademik
 interface AcademicYearData {
   id: string;
   name: string;
@@ -38,7 +37,6 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
   const [afatiList, setAfatiList] = useState<AfatiData[]>([]);
   const [academicYears, setAcademicYears] = useState<AcademicYearData[]>([]);
 
-  // Marrim listën e afateve nga API
   useEffect(() => {
     async function fetchAfati() {
       try {
@@ -51,42 +49,33 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
     fetchAfati();
   }, []);
 
-  // Marrim listën e viteve akademike (vetëm ata që janë aktivë)
   useEffect(() => {
     async function fetchAcademicYears() {
       try {
         const res = await axiosInstance.get<AcademicYearData[]>("/academic-year");
-        // Filtrojmë vetëm ata aktivë
         const active = res.data.filter((ay) => ay.isActive);
         setAcademicYears(active);
       } catch (error) {
-        console.error("Gabim gjatë marrjes së viteve akademike:", error);
+        console.error("Gabim gjatë viteve akademike:", error);
       }
     }
     fetchAcademicYears();
   }, []);
 
-  // Funksion për ndryshimin e filtrave
   const updateFilters = (key: keyof FilterOptionsexam, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
-  /*
-   * Në këtë variant, nuk kemi “Të gjitha Vitet” apo “Të gjithë Afatët”.
-   * Përdoruesi duhet të zgjedhë një vlerë ekzistuese.
-   */
-
-  // 1) Layout i thjeshtë (compact)
+  // Compact version
   if (compact) {
     return (
       <div className="flex gap-2 items-center">
-        {/* Viti Akademik */}
         <Select
           value={filters.academicYear}
-          onValueChange={(value) => updateFilters("academicYear", value)}
+          onValueChange={(val) => updateFilters("academicYear", val)}
         >
-          <SelectTrigger className="w-[100px] h-8">
-            <SelectValue placeholder="Viti" />
+          <SelectTrigger className="w-[130px] h-8">
+            <SelectValue placeholder="Viti Akademik" />
           </SelectTrigger>
           <SelectContent>
             {academicYears.map((ay) => (
@@ -97,10 +86,9 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
           </SelectContent>
         </Select>
 
-        {/* Afati */}
         <Select
           value={filters.afati}
-          onValueChange={(value) => updateFilters("afati", value)}
+          onValueChange={(val) => updateFilters("afati", val)}
         >
           <SelectTrigger className="w-[120px] h-8">
             <SelectValue placeholder="Afati" />
@@ -114,13 +102,12 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
           </SelectContent>
         </Select>
 
-        {/* Viti i Studimeve */}
         <Select
           value={filters.yearOfStudy}
-          onValueChange={(value) => updateFilters("yearOfStudy", value)}
+          onValueChange={(val) => updateFilters("yearOfStudy", val)}
         >
           <SelectTrigger className="w-[100px] h-8">
-            <SelectValue placeholder="Viti Studimeve" />
+            <SelectValue placeholder="Viti" />
           </SelectTrigger>
           <SelectContent>
             {yearsOfStudy.map((yr) => (
@@ -134,17 +121,16 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
     );
   }
 
-  // 2) Layout i plotë (me etiketa dhe hapësira)
+  // Full version
   return (
     <div className="bg-white p-4 rounded-lg shadow mb-4">
       <h2 className="text-lg font-semibold mb-3">Filtro Provimet</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Viti Akademik */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Viti Akademik</label>
           <Select
             value={filters.academicYear}
-            onValueChange={(value) => updateFilters("academicYear", value)}
+            onValueChange={(val) => updateFilters("academicYear", val)}
           >
             <SelectTrigger>
               <SelectValue placeholder="Zgjidh Vitin Akademik" />
@@ -159,12 +145,11 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
           </Select>
         </div>
 
-        {/* Afati */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">Afati (Periudha e Provimit)</label>
+          <label className="text-sm font-medium">Afati</label>
           <Select
             value={filters.afati}
-            onValueChange={(value) => updateFilters("afati", value)}
+            onValueChange={(val) => updateFilters("afati", val)}
           >
             <SelectTrigger>
               <SelectValue placeholder="Zgjidh Afatin" />
@@ -179,12 +164,11 @@ const FilterPanelExams: React.FC<FilterPanelProps> = ({
           </Select>
         </div>
 
-        {/* Viti i Studimeve */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Viti i Studimeve</label>
           <Select
             value={filters.yearOfStudy}
-            onValueChange={(value) => updateFilters("yearOfStudy", value)}
+            onValueChange={(val) => updateFilters("yearOfStudy", val)}
           >
             <SelectTrigger>
               <SelectValue placeholder="Zgjidh Vitin e Studimeve" />

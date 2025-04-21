@@ -77,9 +77,9 @@ const ExamsAdminPage: React.FC = () => {
 
   // Filtrat (ruaj si string ID ose "All Years")
   const [filters, setFilters] = useState<FilterOptionsexam>({
-    academicYear: "All Years",
-    afati: "All Afati",
-    yearOfStudy: "All Years",
+    academicYear: "",
+    afati: "",
+    yearOfStudy: "",
   });
 
   // 1) Marrim listën e provimeve
@@ -231,7 +231,7 @@ const ExamsAdminPage: React.FC = () => {
   
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
+    <div className="w-full px-4 md:px-8">
       <h1 className="text-2xl font-bold mb-4">Menaxho Provime</h1>
 
       {/* Paneli i filtrit */}
@@ -240,7 +240,7 @@ const ExamsAdminPage: React.FC = () => {
       </div>
 
       {/* Tabela e provimeve */}
-      <div className="bg-white p-4 rounded shadow">
+      <div className="bg-white p-4 rounded shadow w-full">
         <h2 className="text-lg font-semibold mb-3">Lista e Provimeve</h2>
         {loading ? (
           <p>Po ngarkohet lista e provimeve...</p>

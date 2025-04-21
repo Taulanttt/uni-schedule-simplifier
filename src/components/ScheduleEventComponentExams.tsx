@@ -31,7 +31,7 @@ const ScheduleEventComponentExams: React.FC<ScheduleEventProps> = ({ event }) =>
   return (
     <div className={containerClass}>
       {/* Subject name */}
-      <div className="font-semibold truncate">
+      <div className="font-semibold ">
         {event.Subject?.name || "No subject"}
       </div>
       {/* Instructor */}

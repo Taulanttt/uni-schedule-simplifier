@@ -157,7 +157,8 @@ const ExamsScheduleForm: React.FC = () => {
   
 
   return (
-    <div className="max-w-xl mx-auto bg-white p-6 rounded-md shadow">
+    <div className="w-full max-w-6xl mx-auto bg-white p-6 md:p-10 rounded-md shadow">
+
       <h2 className="text-xl font-bold mb-4">Cakto Provim të Ri</h2>
 
       <Form {...form}>

@@ -17,9 +17,9 @@ const Index: React.FC = () => {
 
   // Gjendja e filtrit
   const [filters, setFilters] = useState<FilterOptions>({
-    academicYear: "2024/25",
-    semester: "Verore",
-    yearOfStudy: "Viti 1",
+    academicYear: "",
+    semester: "",
+    yearOfStudy: "",
   });
 
   // Lista e orareve nga API

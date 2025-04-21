@@ -58,9 +58,9 @@ const SchedulesAdminPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const [filters, setFilters] = useState<FilterOptions>({
-    academicYear: "All Years",
-    semester: "All Semesters",
-    yearOfStudy: "All Years",
+    academicYear: "",
+    semester: "",
+    yearOfStudy: "",
   });
 
   const [editId, setEditId] = useState<string | null>(null);
@@ -230,7 +230,7 @@ const SchedulesAdminPage: React.FC = () => {
 
   /* ------------------------- JSX ------------------------- */
   return (
-    <div className="max-w-6xl mx-auto p-4">
+    <div className="w-full px-4 md:px-8">
       <h1 className="text-2xl font-bold mb-4">Menaxho Orare</h1>
 
       {/* Filter Panel */}
@@ -239,7 +239,7 @@ const SchedulesAdminPage: React.FC = () => {
       </div>
 
       {/* Tabela e orareve */}
-      <div className="bg-white p-4 rounded shadow">
+      <div className="bg-white p-4 rounded shadow w-full">
         <h2 className="text-lg font-semibold mb-3">Të Gjitha Oraret</h2>
         {loading ? (
           <p>Po ngarkohet lista e orareve...</p>

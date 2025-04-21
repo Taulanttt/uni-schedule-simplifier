@@ -71,7 +71,8 @@ const NotificationForm: React.FC = () => {
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow max-w-xl mx-auto">
+    <div className="w-full bg-white p-6 md:p-8 rounded-lg shadow">
+
       <h2 className="text-xl font-semibold mb-4">Dërgo Njoftim me Email</h2>
 
       <Form {...form}>

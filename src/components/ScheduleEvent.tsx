@@ -57,7 +57,7 @@ const ScheduleEventComponent: React.FC<ScheduleEventProps> = ({ event }) => {
   // Desktop layout
   return (
     <div className={cn(containerClass, "mb-2 p-2 text-xs")}>
-      <div className="font-semibold truncate">{subject}</div>
+      <div className="font-semibold ">{subject}</div>
       {professor && <div className="mt-0.5 font-medium truncate">{professor}</div>}
       <div className="mt-0.5 truncate">{typeLabel}</div>
       <div className="mt-0.5">{timeRange}</div>

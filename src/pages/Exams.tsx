@@ -76,9 +76,9 @@ function getFilteredExams(
 const Exams: React.FC = () => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [filters, setFilters] = useState<FilterOptionsexam>({
-    academicYear: "2024/25",
-    afati: "Shtator",
-    yearOfStudy: "Viti 1",
+    academicYear: "",
+    afati: "",
+    yearOfStudy: "",
   });
   const [exams, setExams] = useState<ExamItem[]>([]);
   const isMobile = useIsMobile();
