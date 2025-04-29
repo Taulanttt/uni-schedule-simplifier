@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -17,19 +17,24 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-// 1) Skema e validimit (Zod)
+// 1) Validimi
 const formSchema = z.object({
   recipients: z.string().min(1, "Të paktën një marrës është i nevojshëm"),
-  subject: z.string().min(5, "Subjekti duhet të ketë të paktën 5 karaktere"),
-  message: z.string().min(10, "Mesazhi duhet të ketë të paktën 10 karaktere"),
+  subject: z.string().min(1, "Subjekti duhet të ketë të paktën 5 karaktere"),
+  message: z.string().min(1, "Mesazhi duhet të ketë të paktën 10 karaktere"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
+// 2) Tipi për listat e emailave
+interface EmailList {
+  id: string;
+  name: string;
+  emails: string[];
+}
+
 const NotificationForm: React.FC = () => {
   const { toast } = useToast();
-
-  // 2) React Hook Form
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -39,15 +44,28 @@ const NotificationForm: React.FC = () => {
     },
   });
 
-  // 3) Kur dërgohet formulari → POST në /email/send
+  const [emailLists, setEmailLists] = useState<EmailList[]>([]);
+
+  // Merr listat e emailave
+  useEffect(() => {
+    const fetchEmailLists = async () => {
+      try {
+        const res = await axiosInstance.get("/emailList");
+        setEmailLists(res.data);
+      } catch (error) {
+        console.error("Gabim në marrjen e listave të emailave:", error);
+      }
+    };
+    fetchEmailLists();
+  }, []);
+
+  // 3) Submit i formës
   const onSubmit = async (data: FormValues) => {
     try {
-      // Ndaj adresat e email-it nga string në array
       const toArray = data.recipients
         .split(/[\s,]+/)
         .filter(Boolean);
 
-      // POST për dërgimin e email-it
       await axiosInstance.post("/email/send", {
         to: toArray,
         subject: data.subject,
@@ -59,7 +77,7 @@ const NotificationForm: React.FC = () => {
         description: `Email-i është dërguar te: ${toArray.join(", ")}`,
       });
 
-      form.reset();
+      form.reset(); // 🔥 reset pas dërgimit
     } catch (error) {
       console.error("Gabim në dërgimin e email-it:", error);
       toast({
@@ -75,8 +93,33 @@ const NotificationForm: React.FC = () => {
 
       <h2 className="text-xl font-semibold mb-4">Dërgo Njoftim me Email</h2>
 
+      {/* Dropdown për zgjedhjen e listes së emailave */}
+      <div className="mb-6">
+        <label className="block font-semibold mb-2">Zgjidh një Listë Emailash</label>
+        <select
+          onChange={(e) => {
+            const selectedId = e.target.value;
+            const selectedList = emailLists.find((list) => list.id === selectedId);
+            if (selectedList) {
+              form.setValue("recipients", selectedList.emails.join(", "));
+            }
+          }}
+          className="border px-3 py-2 rounded w-full"
+          defaultValue=""
+        >
+          <option value="" disabled>Zgjidh Listën</option>
+          {emailLists.map((list) => (
+            <option key={list.id} value={list.id}>
+              {list.name} 
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Forma për dërgimin e emailit */}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          
           {/* Marrësit */}
           <FormField
             control={form.control}
@@ -134,6 +177,7 @@ const NotificationForm: React.FC = () => {
           <Button type="submit" className="w-full md:w-auto">
             Dërgo Email
           </Button>
+
         </form>
       </Form>
     </div>

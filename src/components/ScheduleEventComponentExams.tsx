@@ -36,7 +36,7 @@ const ScheduleEventComponentExams: React.FC<ScheduleEventProps> = ({ event }) =>
       </div>
       {/* Instructor */}
       {event.Instructor && (
-        <div className="truncate">{event.Instructor.name}</div>
+        <div className="">{event.Instructor.name}</div>
       )}
       {/* Type */}
       {/* <div className="truncate">{event.eventType}</div> */}

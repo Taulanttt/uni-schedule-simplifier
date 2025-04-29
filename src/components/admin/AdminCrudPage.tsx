@@ -9,7 +9,8 @@ type ResourceType =
   | "subjects"
   | "class-locations"
   | "afati"
-  | "academic-year";  // SHTUAR
+  | "academic-year"
+  | "emailList";  
 
 // 2) Definojmë strukturat bazë
 interface Semester {
@@ -40,6 +41,11 @@ interface AcademicYear {
   name: string;
   isActive: boolean;
 }
+interface ListEmail {
+  id: string;
+  name: string;
+  emails: string[]; // një array i emailave
+}
 
 // 3) Unifikojmë të gjitha modelet si ResourceItem
 type ResourceItem =
@@ -48,7 +54,8 @@ type ResourceItem =
   | Subject
   | ClassLocation
   | Afati
-  | AcademicYear;
+  | AcademicYear
+  | ListEmail;
 
 const AdminCrudPage: React.FC = () => {
   const [resource, setResource] = useState<ResourceType>("semesters");
@@ -98,16 +105,20 @@ const AdminCrudPage: React.FC = () => {
   // 3) onSubmit => nëse ka editId bëjmë PUT, përndryshe POST
   const onSubmit = async (data: any) => {
     try {
+      if (resource === "emailList" && typeof data.emails === "string") {
+        data.emails = data.emails.split(",").map((email: string) => email.trim());
+      }
+  
       if (editId) {
-        // Update
         await axiosInstance.put(`/${resource}/${editId}`, data);
       } else {
-        // Create
         await axiosInstance.post(`/${resource}`, data);
       }
-      fetchItems();
-      reset({});
-      setEditId(null);
+  
+      // Fillo: Reset logjik korrekt
+      setEditId(null); // 1) Hiq editId PARA resetimit
+      reset();         // 2) Pastaj pastro formen
+      fetchItems();    // 3) Rifresko listen
     } catch (error) {
       console.error("Gabim në ruajtje:", error);
     }
@@ -116,7 +127,7 @@ const AdminCrudPage: React.FC = () => {
   // 4) fillojmë editimin
   const startEdit = (item: ResourceItem) => {
     setEditId((item as any).id);
-
+  
     // Mbushim formën sipas resource
     switch (resource) {
       case "semesters":
@@ -139,8 +150,15 @@ const AdminCrudPage: React.FC = () => {
         setValue("name", (item as AcademicYear).name);
         setValue("isActive", (item as AcademicYear).isActive);
         break;
+      case "emailList": {
+        const list = item as ListEmail;
+        setValue("name", list.name);
+        setValue("emails", list.emails.join(", "));
+        break;
+      }
     }
   };
+  
 
   // 5) Fshirja
   const deleteItem = async (id: string) => {
@@ -234,7 +252,25 @@ const AdminCrudPage: React.FC = () => {
             <span className="text-sm">Po (Nëse e lini të klikuar do të jetë aktiv)</span>
           </>
         );
+        case "emailList":
+  return (
+    <>
+      <label className="block font-medium mt-2">Emri i Listës së Emailave</label>
+      <input
+        {...register("name")}
+        placeholder=""
+        className="border px-3 py-1 rounded w-full"
+      />
+      <label className="block font-medium mt-2">Emailat (ndaj me presje)</label>
+      <textarea
+        {...register("emails")}
+        placeholder=""
+        className="border px-3 py-1 rounded w-full"
+      />
+    </>
+  );
     }
+
   }
 
   // 7) Tabela: kokat
@@ -262,8 +298,16 @@ const AdminCrudPage: React.FC = () => {
             <th className="p-2 text-left">Aktiv?</th>
           </>
         );
+      case "emailList":
+        return (
+          <>
+            <th className="p-2 text-left">Emri i Listës</th>
+            <th className="p-2 text-left">Numri i Emailave</th>
+          </>
+        );
     }
   }
+  
 
   // 8) Tabela: rreshtat
   function renderTableRow(item: ResourceItem) {
@@ -302,8 +346,20 @@ const AdminCrudPage: React.FC = () => {
           </>
         );
       }
+      case "emailList": {
+        const list = item as ListEmail;
+        return (
+          <>
+            <td className="p-2">{list.name}</td>
+            <td className="p-2">
+              {Array.isArray(list.emails) ? list.emails.length : "Pa Emaila"}
+            </td>
+          </>
+        );
+      }      
     }
   }
+  
 
   return (
     <div className="max-w-5xl mx-auto p-6">
@@ -324,6 +380,7 @@ const AdminCrudPage: React.FC = () => {
           <option value="class-locations">Sallat</option>
           <option value="afati">Afatet</option>
           <option value="academic-year">Vitet Akademike</option>
+          <option value="emailList">Listat e Emailave</option>
         </select>
       </div>
 

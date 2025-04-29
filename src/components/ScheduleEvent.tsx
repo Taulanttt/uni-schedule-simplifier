@@ -58,10 +58,10 @@ const ScheduleEventComponent: React.FC<ScheduleEventProps> = ({ event }) => {
   return (
     <div className={cn(containerClass, "mb-2 p-2 text-xs")}>
       <div className="font-semibold ">{subject}</div>
-      {professor && <div className="mt-0.5 font-medium truncate">{professor}</div>}
-      <div className="mt-0.5 truncate">{typeLabel}</div>
+      {professor && <div className="mt-0.5 font-medium ">{professor}</div>}
+      <div className="mt-0.5 ">{typeLabel}</div>
       <div className="mt-0.5">{timeRange}</div>
-      <div className="truncate">{location}</div>
+      <div className="">{location}</div>
     </div>
   );
 };
