@@ -1,18 +1,74 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sq">
   <head>
+    <!-- Meta bazë -->
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>uni-schedule-simplifier</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
-    <meta property="og:image" content="/og-image.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>UniSchedule</title>
+    <meta
+      name="description"
+      content="UniSchedule – platforma për menaxhimin dhe shikimin e orareve universitare."
+    />
+
+    <!-- Favicon (32 × 32 ose më i madh) -->
+    <link rel="icon" type="image/png" href="/logo.png" />
+
+    <!-- Open‑Graph / Facebook -->
+    <meta property="og:title" content="UniSchedule" />
+    <meta
+      property="og:description"
+      content="Platforma për oraret universitare – lehtëson krijimin, menaxhimin dhe shikimin e orareve."
+    />
+    <meta property="og:image" content="/logo.png" />
+    <meta property="og:type" content="website" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="UniSchedule" />
+    <meta
+      name="twitter:description"
+      content="Platforma praktike për oraret universitare."
+    />
+    <meta name="twitter:image" content="/logo.png" />
+
+    <!-- Opsionale: stil i shpejtë nëse do “splash” rrethor -->
+    <style>
+      .splash {
+        display: grid;
+        place-items: center;
+        height: 100vh;
+      }
+      .logo-circle {
+        width: 64px;
+        height: 64px;
+        border-radius: 90%;
+        object-fit: cover;
+      }
+    </style>
   </head>
 
   <body>
+    <!-- Splash (hiqe nëse nuk të duhet) -->
+    <!--
+    <div class="splash" id="splash">
+      <img src="/logo.png" alt="UniSchedule" class="logo-circle" />
+    </div>
+    -->
+
+    <!-- React mount point -->
     <div id="root"></div>
-    <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
+
+    <!-- (Mos e hiq) GPT‑Engineer script -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
+    <!-- Entrypoint i Vite/React -->
     <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Nëse përdore splash, hiqe sapo React ngarkohet -->
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        const splash = document.getElementById("splash");
+        if (splash) splash.remove();
+      });
+    </script>
   </body>
 </html>

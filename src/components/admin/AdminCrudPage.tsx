@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axiosInstance from "@/utils/axiosInstance";
 import { useForm } from "react-hook-form";
 
-// 1) Zgjedhim llojet e mundshme të burimeve
+/* -------------------- Tipet / Modelet -------------------- */
 type ResourceType =
   | "semesters"
   | "instructors"
@@ -10,44 +10,16 @@ type ResourceType =
   | "class-locations"
   | "afati"
   | "academic-year"
-  | "emailList";  
+  | "emailList";
 
-// 2) Definojmë strukturat bazë
-interface Semester {
-  id: string;
-  name: string;
-}
-interface Instructor {
-  id: string;
-  name: string;
-  role: string;
-}
-interface Subject {
-  id: string;
-  name: string;
-}
-interface ClassLocation {
-  id: string;
-  roomName: string;
-}
-interface Afati {
-  id: string;
-  name: string;
-}
+interface Semester       { id: string; name: string }
+interface Instructor     { id: string; name: string; role: string }
+interface Subject        { id: string; name: string }
+interface ClassLocation  { id: string; roomName: string }
+interface Afati          { id: string; name: string }
+interface AcademicYear   { id: string; name: string; isActive: boolean }
+interface ListEmail      { id: string; name: string; emails: string[] }
 
-// SHTOJMË modelin e vitit akademik
-interface AcademicYear {
-  id: string;
-  name: string;
-  isActive: boolean;
-}
-interface ListEmail {
-  id: string;
-  name: string;
-  emails: string[]; // një array i emailave
-}
-
-// 3) Unifikojmë të gjitha modelet si ResourceItem
 type ResourceItem =
   | Semester
   | Instructor
@@ -57,18 +29,24 @@ type ResourceItem =
   | AcademicYear
   | ListEmail;
 
+/* ========================================================= */
+
 const AdminCrudPage: React.FC = () => {
   const [resource, setResource] = useState<ResourceType>("semesters");
-  const [items, setItems] = useState<ResourceItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [items, setItems]       = useState<ResourceItem[]>([]);
+  const [loading, setLoading]   = useState(false);
+  const [editId, setEditId]     = useState<string | null>(null);
 
-  // React Hook Form për Krijim / Update
-  const { register, handleSubmit, reset, setValue } = useForm<any>();
+  /* React-hook-form --------------------------------------- */
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors },
+  } = useForm<any>();
 
-  // Ruajmë ID-në e artikullit në modë "edit"
-  const [editId, setEditId] = useState<string | null>(null);
-
-  // 1) Marrim të dhënat nga backend sipas llojit të "resource"
+  /* ---------------- API fetch për listën ---------------- */
   async function fetchItems() {
     setLoading(true);
     try {
@@ -81,12 +59,11 @@ const AdminCrudPage: React.FC = () => {
     }
   }
 
-  // 2) Kur ndryshon resource, rifreskojmë listën dhe pastrojmë formën
+  /* ---------------- kur ndryshon resource ---------------- */
   useEffect(() => {
     fetchItems();
     setEditId(null);
-  
-    // Reset form depending on resource
+
     switch (resource) {
       case "instructors":
         reset({ name: "", role: "Asistent" });
@@ -98,37 +75,35 @@ const AdminCrudPage: React.FC = () => {
         reset({ roomName: "" });
         break;
       default:
-        reset({ name: "" }); // for semesters, subjects, afati
+        reset({ name: "" });
     }
   }, [resource]);
 
-  // 3) onSubmit => nëse ka editId bëjmë PUT, përndryshe POST
+  /* ---------------- POST / PUT ---------------- */
   const onSubmit = async (data: any) => {
     try {
       if (resource === "emailList" && typeof data.emails === "string") {
-        data.emails = data.emails.split(",").map((email: string) => email.trim());
+        data.emails = data.emails.split(",").map((e: string) => e.trim());
       }
-  
+
       if (editId) {
         await axiosInstance.put(`/${resource}/${editId}`, data);
       } else {
         await axiosInstance.post(`/${resource}`, data);
       }
-  
-      // Fillo: Reset logjik korrekt
-      setEditId(null); // 1) Hiq editId PARA resetimit
-      reset();         // 2) Pastaj pastro formen
-      fetchItems();    // 3) Rifresko listen
+
+      setEditId(null);
+      reset();
+      fetchItems();
     } catch (error) {
       console.error("Gabim në ruajtje:", error);
     }
   };
 
-  // 4) fillojmë editimin
+  /* ---------------- Fillim editimi ---------------- */
   const startEdit = (item: ResourceItem) => {
     setEditId((item as any).id);
-  
-    // Mbushim formën sipas resource
+
     switch (resource) {
       case "semesters":
         setValue("name", (item as Semester).name);
@@ -150,19 +125,17 @@ const AdminCrudPage: React.FC = () => {
         setValue("name", (item as AcademicYear).name);
         setValue("isActive", (item as AcademicYear).isActive);
         break;
-      case "emailList": {
-        const list = item as ListEmail;
-        setValue("name", list.name);
-        setValue("emails", list.emails.join(", "));
+      case "emailList":
+        setValue("name", (item as ListEmail).name);
+        setValue("emails", (item as ListEmail).emails.join(", "));
         break;
-      }
     }
   };
-  
 
-  // 5) Fshirja
+  /* ---------------- Delete ---------------- */
   const deleteItem = async (id: string) => {
-    if (!window.confirm("A jeni i sigurt që dëshironi ta fshini këtë artikull?")) return;
+    if (!window.confirm("A jeni i sigurt që dëshironi ta fshini këtë artikull?"))
+      return;
     try {
       await axiosInstance.delete(`/${resource}/${id}`);
       fetchItems();
@@ -171,113 +144,183 @@ const AdminCrudPage: React.FC = () => {
     }
   };
 
-  // 6) Render fushat e formës sipas llojit
+  /* ---------------- Form fields ---------------- */
   function renderFormFields() {
     switch (resource) {
+      /* ---------- Semestrat ---------- */
       case "semesters":
         return (
           <>
             <label className="block font-medium mt-2">Emri i Semestrit</label>
             <input
-              {...register("name")}
+              {...register("name", { required: "Fusha është e detyrueshme" })}
               placeholder="p.sh. Vjeshta"
               className="border px-3 py-1 rounded w-full"
             />
+            {errors.name && (
+              <p className="text-red-600 text-sm mt-1">
+                {errors.name?.message as string}
+              </p>
+            )}
           </>
         );
+
+      /* ---------- Profesorët ---------- */
       case "instructors":
         return (
           <>
             <label className="block font-medium mt-2">Emri i Profesorit</label>
             <input
-              {...register("name")}
+              {...register("name", { required: "Fusha është e detyrueshme" })}
               placeholder="p.sh. Prof. John Doe"
               className="border px-3 py-1 rounded w-full"
             />
+            {errors.name && (
+              <p className="text-red-600 text-sm mt-1">
+                {errors.name?.message as string}
+              </p>
+            )}
+
             <label className="block font-medium mt-2">Roli</label>
-            <select {...register("role")} className="border px-3 py-1 rounded w-full">
-            <option value="Asistent">Asistent</option>
-            <option value="Profesor">Profesor</option>
+            <select
+              {...register("role", { required: true })}
+              className="border px-3 py-1 rounded w-full"
+            >
+              <option value="Asistent">Asistent</option>
+              <option value="Profesor">Profesor</option>
             </select>
           </>
         );
+
+      /* ---------- Lëndët ---------- */
       case "subjects":
         return (
           <>
             <label className="block font-medium mt-2">Emri i Lëndës</label>
             <input
-              {...register("name")}
+              {...register("name", { required: "Fusha është e detyrueshme" })}
               placeholder="p.sh. Matematika 1"
               className="border px-3 py-1 rounded w-full"
             />
+            {errors.name && (
+              <p className="text-red-600 text-sm mt-1">
+                {errors.name?.message as string}
+              </p>
+            )}
           </>
         );
+
+      /* ---------- Sallat ---------- */
       case "class-locations":
         return (
           <>
             <label className="block font-medium mt-2">Emri i Sallës</label>
             <input
-              {...register("roomName")}
+              {...register("roomName", { required: "Fusha është e detyrueshme" })}
               placeholder="p.sh. Salla 205"
               className="border px-3 py-1 rounded w-full"
             />
+            {errors.roomName && (
+              <p className="text-red-600 text-sm mt-1">
+                {errors.roomName?.message as string}
+              </p>
+            )}
           </>
         );
+
+      /* ---------- Afatet ---------- */
       case "afati":
         return (
           <>
             <label className="block font-medium mt-2">Emri i Afatit</label>
             <input
-              {...register("name")}
+              {...register("name", { required: "Fusha është e detyrueshme" })}
               placeholder="p.sh. Qershor"
               className="border px-3 py-1 rounded w-full"
             />
+            {errors.name && (
+              <p className="text-red-600 text-sm mt-1">
+                {errors.name?.message as string}
+              </p>
+            )}
           </>
         );
+
+      /* ---------- Vitet Akademike ---------- */
       case "academic-year":
         return (
           <>
-            <label className="block font-medium mt-2">Emri i Vitit Akademik</label>
+            <label className="block font-medium mt-2">
+              Emri i Vitit Akademik
+            </label>
             <input
-              {...register("name")}
-              placeholder="p.sh. 2024/25"
+              {...register("name", {
+                required: "Fusha është e detyrueshme",
+                pattern: {
+                  value: /^\d{4}\/\d{2}$/,
+                  message: "Formati duhet të jetë p.sh. 2025/26",
+                },
+              })}
+              placeholder="p.sh. 2025/26"
               className="border px-3 py-1 rounded w-full"
             />
+            {errors.name && (
+              <p className="text-red-600 text-sm mt-1">
+                {errors.name?.message as string}
+              </p>
+            )}
+
             <label className="block font-medium mt-2">Aktiv?</label>
-            <input
-              type="checkbox"
-              {...register("isActive")}
-              className="mr-2"
-            />
-            <span className="text-sm">Po (Nëse e lini të klikuar do të jetë aktiv)</span>
+            <input type="checkbox" {...register("isActive")} className="mr-2" />
+            <span className="text-sm">
+              Po (Nëse e lini të shënuar, viti do të jetë aktiv)
+            </span>
           </>
         );
-        case "emailList":
-  return (
-    <>
-      <label className="block font-medium mt-2">Emri i Listës së Emailave</label>
-      <input
-        {...register("name")}
-        placeholder=""
-        className="border px-3 py-1 rounded w-full"
-      />
-      <label className="block font-medium mt-2">Emailat (ndaj me presje)</label>
-      <textarea
-        {...register("emails")}
-        placeholder=""
-        className="border px-3 py-1 rounded w-full"
-      />
-    </>
-  );
-    }
 
+      /* ---------- Lista e emailave ---------- */
+      case "emailList":
+        return (
+          <>
+            <label className="block font-medium mt-2">
+              Emri i Listës së Emailave
+            </label>
+            <input
+              {...register("name", { required: "Fusha është e detyrueshme" })}
+              className="border px-3 py-1 rounded w-full"
+            />
+            {errors.name && (
+              <p className="text-red-600 text-sm mt-1">
+                {errors.name?.message as string}
+              </p>
+            )}
+
+            <label className="block font-medium mt-2">
+              Emailat (ndaj me presje)
+            </label>
+            <textarea
+              {...register("emails", { required: "Fusha është e detyrueshme" })}
+              className="border px-3 py-1 rounded w-full"
+            />
+            {errors.emails && (
+              <p className="text-red-600 text-sm mt-1">
+                {errors.emails?.message as string}
+              </p>
+            )}
+          </>
+        );
+    }
   }
 
-  // 7) Tabela: kokat
+  /* ---------------- Table headers ---------------- */
   function renderTableHeaders() {
     switch (resource) {
       case "semesters":
+      case "subjects":
+      case "class-locations":
+      case "afati":
         return <th className="p-2 text-left">Emri</th>;
+
       case "instructors":
         return (
           <>
@@ -285,12 +328,7 @@ const AdminCrudPage: React.FC = () => {
             <th className="p-2 text-left">Roli</th>
           </>
         );
-      case "subjects":
-        return <th className="p-2 text-left">Emri</th>;
-      case "class-locations":
-        return <th className="p-2 text-left">Salla</th>;
-      case "afati":
-        return <th className="p-2 text-left">Emri</th>;
+
       case "academic-year":
         return (
           <>
@@ -298,6 +336,7 @@ const AdminCrudPage: React.FC = () => {
             <th className="p-2 text-left">Aktiv?</th>
           </>
         );
+
       case "emailList":
         return (
           <>
@@ -307,66 +346,59 @@ const AdminCrudPage: React.FC = () => {
         );
     }
   }
-  
 
-  // 8) Tabela: rreshtat
+  /* ---------------- Table rows ---------------- */
   function renderTableRow(item: ResourceItem) {
     switch (resource) {
-      case "semesters": {
-        const sem = item as Semester;
-        return <td className="p-2">{sem.name}</td>;
-      }
-      case "instructors": {
-        const ins = item as Instructor;
+      case "semesters":
+        return <td className="p-2">{(item as Semester).name}</td>;
+
+      case "instructors":
         return (
           <>
-            <td className="p-2">{ins.name}</td>
-            <td className="p-2">{ins.role}</td>
+            <td className="p-2">{(item as Instructor).name}</td>
+            <td className="p-2">{(item as Instructor).role}</td>
           </>
         );
-      }
-      case "subjects": {
-        const sub = item as Subject;
-        return <td className="p-2">{sub.name}</td>;
-      }
-      case "class-locations": {
-        const loc = item as ClassLocation;
-        return <td className="p-2">{loc.roomName}</td>;
-      }
-      case "afati": {
-        const a = item as Afati;
-        return <td className="p-2">{a.name}</td>;
-      }
-      case "academic-year": {
-        const ay = item as AcademicYear;
+
+      case "subjects":
+        return <td className="p-2">{(item as Subject).name}</td>;
+
+      case "class-locations":
+        return <td className="p-2">{(item as ClassLocation).roomName}</td>;
+
+      case "afati":
+        return <td className="p-2">{(item as Afati).name}</td>;
+
+      case "academic-year":
         return (
           <>
-            <td className="p-2">{ay.name}</td>
-            <td className="p-2">{ay.isActive ? "Po" : "Jo"}</td>
-          </>
-        );
-      }
-      case "emailList": {
-        const list = item as ListEmail;
-        return (
-          <>
-            <td className="p-2">{list.name}</td>
+            <td className="p-2">{(item as AcademicYear).name}</td>
             <td className="p-2">
-              {Array.isArray(list.emails) ? list.emails.length : "Pa Emaila"}
+              {(item as AcademicYear).isActive ? "Po" : "Jo"}
             </td>
           </>
         );
-      }      
+
+      case "emailList":
+        return (
+          <>
+            <td className="p-2">{(item as ListEmail).name}</td>
+            <td className="p-2">
+              {(item as ListEmail).emails?.length ?? 0}
+            </td>
+          </>
+        );
     }
   }
-  
+
+  /* ========================================================= */
 
   return (
     <div className="max-w-5xl mx-auto p-6">
-      {/* Titulli */}
       <h1 className="text-2xl font-bold mb-4">Konfigurimet</h1>
 
-      {/* Zgjedhja e burimit */}
+      {/* ---------------- Selector ---------------- */}
       <div className="mb-6 bg-white p-4 rounded shadow">
         <label className="font-semibold mr-2">Zgjidh Burimin:</label>
         <select
@@ -384,15 +416,15 @@ const AdminCrudPage: React.FC = () => {
         </select>
       </div>
 
-      {/* Forma për Krijim / Edit */}
+      {/* ---------------- Form ---------------- */}
       <div className="mb-6 bg-white p-4 rounded shadow">
         <h2 className="text-lg font-semibold mb-3">
           {editId ? "Përditëso Artikullin" : "Krijo Artikull të Ri"}
         </h2>
+
         <form onSubmit={handleSubmit(onSubmit)}>
           {renderFormFields()}
 
-          {/* Butonat */}
           <div className="mt-4 space-x-2">
             <button
               type="submit"
@@ -400,6 +432,7 @@ const AdminCrudPage: React.FC = () => {
             >
               {editId ? "Përditëso" : "Krijo"}
             </button>
+
             {editId && (
               <button
                 type="button"
@@ -416,7 +449,7 @@ const AdminCrudPage: React.FC = () => {
         </form>
       </div>
 
-      {/* Tabela e artikujve */}
+      {/* ---------------- Table ---------------- */}
       <div className="bg-white p-4 rounded shadow">
         <h2 className="text-lg font-semibold mb-3">Artikujt Ekzistues</h2>
 
@@ -431,6 +464,7 @@ const AdminCrudPage: React.FC = () => {
                   <th className="p-2 text-left">Veprime</th>
                 </tr>
               </thead>
+
               <tbody>
                 {items.map((item) => (
                   <tr key={(item as any).id} className="border-b">
@@ -451,20 +485,11 @@ const AdminCrudPage: React.FC = () => {
                     </td>
                   </tr>
                 ))}
+
                 {items.length === 0 && (
                   <tr>
-                    {/* Numri i kolonave ndryshon sipas resource */}
                     <td
-                      colSpan={
-                        resource === "instructors"
-                          ? 3
-                          : resource === "afati" ||
-                            resource === "academic-year"
-                          ? 3
-                          : resource === "subjects"
-                          ? 2
-                          : 2
-                      }
+                      colSpan={resource === "instructors" ? 3 : 2}
                       className="p-2 text-center text-gray-500"
                     >
                       Asnjë artikull nuk u gjet
