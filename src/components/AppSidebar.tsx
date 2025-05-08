@@ -1,9 +1,11 @@
-import { Book, CalendarDays, Menu } from "lucide-react";
+import { Book, CalendarDays } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+
+import Logo from "/logo.png"; // skedari logo.png në public/
 
 interface AppSidebarProps {
   isOpen?: boolean;
@@ -19,52 +21,39 @@ export function AppSidebar({
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
 
-  const ndërroSidebarin = () => {
-    setIsOpen(!isOpen);
-  };
-
+  const toggleLocal = () => setIsOpen((p) => !p);
   const sidebarHapur = propsIsOpen !== undefined ? propsIsOpen : isOpen;
-  const toggleSidebar = propsToggleSidebar || ndërroSidebarin;
+  const toggleSidebar = propsToggleSidebar || toggleLocal;
 
-  // Mbylle sidebarin kur ndryshon faqja në pajisjet mobile
+  // mbyll sidebar në mobile pas navigimit
   useEffect(() => {
-    if (isMobile && sidebarHapur) {
-      toggleSidebar();
-    }
+    if (isMobile && sidebarHapur) toggleSidebar();
   }, [location.pathname, isMobile]);
 
   const ështëAktive = (path: string) => location.pathname === path;
 
-  // Artikujt për navigim
   const artikujt = [
-    {
-      title: "Ligjëratat dhe ushtrimet",
-      path: "/",
-      icon: Book,
-    },
-    {
-      title: "Provimet",
-      path: "/exams",
-      icon: CalendarDays,
-    },
+    { title: "Ligjëratat dhe ushtrimet", path: "/", icon: Book },
+    { title: "Provimet", path: "/exams", icon: CalendarDays },
   ];
 
   const shkoTe = (path: string) => {
     navigate(path);
-    if (isMobile) {
-      setIsOpen(false);
-    }
+    if (isMobile) setIsOpen(false);
   };
 
-  // Sidebar për mobile (me Sheet)
+  /* ---------- Mobile sidebar (Sheet) ---------- */
   if (isMobile) {
     return (
       <Sheet open={sidebarHapur} onOpenChange={toggleSidebar}>
         <SheetContent side="left" className="w-[250px] p-0 bg-gray-800 text-white">
           <div className="flex flex-col h-full">
-            <div className="flex items-center justify-between p-5 border-b border-gray-700">
-              <h2 className="font-bold text-xl">Orari i Universitetit</h2>
+            {/* logo + emër */}
+            <div className="flex items-center gap-2 p-5 border-b border-gray-700">
+              <img src={Logo} alt="UniSchedule" className="h-6 w-6 rounded-full object-cover" />
+              <h2 className="font-bold text-xl">UniSchedule</h2>
             </div>
+
             <nav className="flex-1 p-4">
               <ul className="space-y-2">
                 {artikujt.map((item) => (
@@ -72,9 +61,7 @@ export function AppSidebar({
                     <Button
                       variant="ghost"
                       className={`w-full justify-start ${
-                        ështëAktive(item.path)
-                          ? "bg-gray-700"
-                          : "hover:bg-gray-700"
+                        ështëAktive(item.path) ? "bg-gray-700" : "hover:bg-gray-700"
                       }`}
                       onClick={() => shkoTe(item.path)}
                     >
@@ -91,7 +78,7 @@ export function AppSidebar({
     );
   }
 
-  // Sidebar për desktop
+  /* ---------- Desktop sidebar ---------- */
   return (
     <div
       className={`${
@@ -99,10 +86,10 @@ export function AppSidebar({
       } bg-gray-800 text-white transition-all duration-300 h-full overflow-hidden flex-shrink-0`}
     >
       <div className="h-full flex flex-col">
-        <div className="flex items-center justify-between p-5">
-          <h2 className={`font-bold text-xl ${!sidebarHapur && "hidden"}`}>
-            Orari i Universitetit
-          </h2>
+        {/* logo + emër */}
+        <div className="flex items-center gap-2 p-5">
+          <img src={Logo} alt="UniSchedule" className="h-6 w-6 rounded-full object-cover" />
+          <h2 className={`font-bold text-xl ${!sidebarHapur && "hidden"}`}>UniSchedule</h2>
         </div>
 
         <nav className="mt-8 px-4 flex-1">
@@ -112,16 +99,12 @@ export function AppSidebar({
                 <Button
                   variant="ghost"
                   className={`w-full justify-start ${
-                    ështëAktive(item.path)
-                      ? "bg-gray-700"
-                      : "hover:bg-gray-700"
+                    ështëAktive(item.path) ? "bg-gray-700" : "hover:bg-gray-700"
                   } ${!sidebarHapur && "lg:justify-center"}`}
                   onClick={() => shkoTe(item.path)}
                 >
                   <item.icon className="h-5 w-5 mr-2" />
-                  <span className={`${!sidebarHapur ? "hidden" : ""}`}>
-                    {item.title}
-                  </span>
+                  <span className={`${!sidebarHapur ? "hidden" : ""}`}>{item.title}</span>
                 </Button>
               </li>
             ))}

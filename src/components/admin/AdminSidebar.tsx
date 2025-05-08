@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 
+import Logo from "/logo.png"; // → vendose logo.png në public/
+
 type AdminPage =
   | "notifications"
   | "schedule"
@@ -36,11 +38,10 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
 
   const handleNavigation = (page: AdminPage) => {
     setCurrentPage(page);
-    if (isMobile) {
-      toggleSidebar();
-    }
+    if (isMobile) toggleSidebar();
   };
 
+  /* ------------ MENU ITEMS (shared) ------------ */
   const renderMenuItems = () => (
     <ul className="space-y-2 text-sm">
       {/* ORARI MËSIMOR */}
@@ -73,7 +74,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
           {isOpen && <span>Menaxho</span>}
         </Button>
       </li>
-  
+
       {/* ORARI I PROVIMEVE */}
       {isOpen && (
         <li className="text-gray-400 uppercase font-bold px-2 mt-6">
@@ -104,12 +105,10 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
           {isOpen && <span>Menaxho</span>}
         </Button>
       </li>
-  
+
       {/* NJOFTIMET */}
       {isOpen && (
-        <li className="text-gray-400 uppercase font-bold px-2 mt-6">
-          Njoftimet
-        </li>
+        <li className="text-gray-400 uppercase font-bold px-2 mt-6">Njoftimet</li>
       )}
       <li>
         <Button
@@ -123,7 +122,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
           {isOpen && <span>Email</span>}
         </Button>
       </li>
-  
+
       {/* KONFIGURIMET */}
       {isOpen && (
         <li className="text-gray-400 uppercase font-bold px-2 mt-6">
@@ -144,16 +143,23 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
       </li>
     </ul>
   );
-  
 
-  // MOBILE SIDEBAR
+  /* --------------- MOBILE --------------- */
   if (isMobile) {
     return (
       <Sheet open={isOpen} onOpenChange={toggleSidebar}>
-        <SheetContent side="left" className="w-[250px] p-0 bg-gray-800 text-white">
+        <SheetContent
+          side="left"
+          className="w-[250px] p-0 bg-gray-800 text-white"
+        >
           <div className="flex flex-col h-full">
-            <div className="flex items-center justify-between p-5 border-b border-gray-700">
-              <h2 className="font-bold text-xl">Paneli i Adminit</h2>
+            <div className="flex items-center gap-2 p-5 border-b border-gray-700">
+              <img
+                src={Logo}
+                alt="UniSchedule"
+                className="h-6 w-6 rounded-full object-cover"
+              />
+              <h2 className="font-bold text-xl">UniSchedule Admin</h2>
             </div>
             <nav className="mt-8 px-4 flex-1">{renderMenuItems()}</nav>
           </div>
@@ -162,7 +168,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
     );
   }
 
-  // DESKTOP SIDEBAR
+  /* --------------- DESKTOP --------------- */
   return (
     <div
       className={`${
@@ -170,9 +176,19 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
       } bg-gray-800 text-white transition-all duration-300 h-full overflow-hidden flex-shrink-0`}
     >
       <div className="h-full flex flex-col">
-        <div className="flex items-center justify-between p-5">
-          <h2 className={`font-bold text-xl ${!isOpen && "hidden"}`}>Admin</h2>
+        {/* Header me logo */}
+        <div className="flex items-center gap-2 p-5">
+          <img
+            src={Logo}
+            alt="UniSchedule"
+            className="h-6 w-6 rounded-full object-cover"
+          />
+          {/* fsheh tekstin kur sidebar është i ngushtë */}
+          <h2 className={`font-bold text-xl ${!isOpen && "hidden"}`}>
+            UniSchedule Admin
+          </h2>
         </div>
+
         <nav className="mt-8 px-4 flex-1">{renderMenuItems()}</nav>
       </div>
     </div>
