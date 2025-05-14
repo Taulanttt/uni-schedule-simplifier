@@ -1,111 +1,126 @@
-import React, { useState, useEffect } from "react";
+/* pages/Index.tsx */
+import React, { useEffect, useState } from "react";
 import FilterPanel from "@/components/FilterPanel";
 import WeekView from "@/components/WeekView";
 import DayView from "@/components/DayView";
 import LegendComponent from "@/components/LegendComponent";
-import { FilterOptions, ScheduleItem } from "@/types";
+import { FilterOptions } from "@/types";
 import { Button } from "@/components/ui/button";
 import axiosInstance from "@/utils/axiosInstance";
-
-// Importimi i nevojshëm për PDF
+import { format } from "date-fns";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 
+/* -------------------------------------------------- */
+/* local helpers & extended type                      */
+/* -------------------------------------------------- */
+interface ScheduleItem {
+  id: string;
+  eventType: string;
+  startTime: string;
+  endTime: string;
+  daysOfWeek: string[];
+  academicYear: string | null;
+  studyYear: number;
+  subjectName: string | null;
+  instructorName: string | null;
+  semesterName: string | null;
+  locationName: string | null;
+  subjectId: string;
+  instructorId: string;
+  semesterId: string;
+  classLocationId: string;
+  academicYearId: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/* “Ligjerata” ➜ “Ligjërata”, etj.  */
+const prettifyType = (t = ""): string =>
+  t.toLowerCase().startsWith("ligj") ? "Ligjërata" :
+  t.toLowerCase().startsWith("ush")  ? "Ushtrime"  :
+  t;
+
+/* -------------------------------------------------- */
+/* component                                          */
+/* -------------------------------------------------- */
 const Index: React.FC = () => {
-  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<"day" | "week">("week");
 
-  // Gjendja e filtrit
   const [filters, setFilters] = useState<FilterOptions>({
-    academicYear: "",
-    semester: "",
-    yearOfStudy: "",
+    academicYear: "2024/25",
+    semester: "Veror",
+    yearOfStudy: "Viti 1",
   });
 
-  // Lista e orareve nga API
   const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
+  const [lastUpdated, setLastUpdated] = useState("—");
 
-  // Marrim oraret kur komponenti ngarkohet
+  /* fetch */
   useEffect(() => {
-    async function fetchSchedules() {
+    (async () => {
       try {
         const res = await axiosInstance.get<ScheduleItem[]>("/schedules");
         setSchedules(res.data);
+
+        const latest = res.data
+          .flatMap((s) => [s.updatedAt, s.createdAt])
+          .filter(Boolean)
+          .map((d) => new Date(d as string))
+          .sort((a, b) => b.getTime() - a.getTime())[0];
+
+        if (latest) setLastUpdated(format(latest, "dd.MM.yyyy"));
       } catch (err) {
         console.error("Gabim gjatë marrjes së orareve:", err);
       }
-    }
-    fetchSchedules();
+    })();
   }, []);
 
-  // Filtrimi i orareve
-  const filteredSchedules = schedules.filter((item) => {
-    // Sipas vitit akademik
+  /* filter */
+  const filtered = schedules.filter((i) => {
     if (
       filters.academicYear !== "All Semesters" &&
-      item.academicYear !== filters.academicYear
-    ) {
+      i.academicYear !== filters.academicYear
+    )
       return false;
-    }
-
-    // Sipas semestrit
     if (
       filters.semester !== "All Semesters" &&
-      item.semesterName !== filters.semester
-    ) {
+      i.semesterName !== filters.semester
+    )
       return false;
-    }
-
-    // Sipas vitit të studimeve
     if (filters.yearOfStudy !== "All Years") {
-      const numericYear = parseInt(filters.yearOfStudy.replace(/\D/g, ""), 10);
-      if (item.studyYear !== numericYear) {
-        return false;
-      }
+      const n = parseInt(filters.yearOfStudy.replace(/\D/g, ""), 10);
+      if (i.studyYear !== n) return false;
     }
-
     return true;
   });
 
-  // Funksion për gjenerimin e PDF-it
+  /* -------------------------------------------------- */
+  /* PDF                                                */
+  /* -------------------------------------------------- */
   const handlePrintPDF = () => {
-    // Krijojmë një instance të jsPDF
-    const doc = new jsPDF({
-      orientation: "portrait",
-      unit: "pt",
-      format: "A4",
-    });
+    const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "A4" });
 
-    // Titulli dinamik me vitin akademik dhe semestrin
-    const academicYearTitle =
-      filters.academicYear !== "All Semesters"
-        ? filters.academicYear
-        : "Të gjithë vitet akademike";
+    const acad = filters.academicYear || "—";
+    const sem = filters.semester || "—";
 
-    const semesterTitle =
-      filters.semester !== "All Semesters" ? filters.semester : "Të gjithë semestrat";
-
+    /*   DEPARTAMENTI …  |  VITI AKADEMIK 2024/25, SEMESTRI VEROR   */
     doc.setFontSize(14);
-    doc.text(`Orari - ${academicYearTitle} / ${semesterTitle}`, 40, 40);
+    doc.setFont("helvetica", "bold");
+    doc.text(
+      `DEPARTAMENTI SHKENCA KOMPJUTERIKE DHE INXHINIERI\nVITI AKADEMIK ${acad}, SEMESTRI ${sem.toUpperCase()}`,
+      40,
+      40
+    );
 
-    // Rreshtat për tabelë
-    const body = filteredSchedules.map((item) => [
-      item.eventType,
-      item.startTime,
-      item.endTime,
-      item.daysOfWeek.join(", "),
-      item.studyYear,
-      item.subjectName,
-      item.instructorName,
-      item.locationName,
-    ]);
+    doc.setFont("helvetica", "normal");
 
-    // Krijojmë tabelën në PDF
     autoTable(doc, {
-      startY: 60,
+      startY: 80,
       head: [
         [
-          "Lloji i Ngjarjes",
+          "Tipi",
           "Fillimi",
           "Mbarimi",
           "Ditët",
@@ -115,26 +130,29 @@ const Index: React.FC = () => {
           "Salla",
         ],
       ],
-      body: body,
-      styles: {
-        fontSize: 10,
-        halign: "left",
-        valign: "middle",
-      },
-      headStyles: {
-        fillColor: "#f2f2f2",
-        textColor: "#333",
-        lineWidth: 0.5,
-      },
+      body: filtered.map((i) => [
+        prettifyType(i.eventType),
+        i.startTime.slice(0, 5),
+        i.endTime.slice(0, 5),
+        i.daysOfWeek.join(", "),
+        i.studyYear,
+        i.subjectName ?? "—",
+        i.instructorName ?? "—",
+        i.locationName ?? "—",
+      ]),
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: "#e5e5e5", textColor: "#000" },
     });
 
-    // Ruajmë PDF-in me emrin "Orari.pdf"
     doc.save("Orari.pdf");
   };
 
+  /* -------------------------------------------------- */
+  /* render                                             */
+  /* -------------------------------------------------- */
   return (
     <div className="flex flex-col">
-      {/* Koka: Paneli i filtrit + zgjedhja (Ditë / Javë) + Printo PDF */}
+      {/* header */}
       <div className="flex flex-col md:flex-row items-center justify-between mb-4 gap-4">
         <FilterPanel filters={filters} setFilters={setFilters} compact />
         <div className="flex space-x-2">
@@ -150,33 +168,32 @@ const Index: React.FC = () => {
           >
             Javë
           </Button>
-
-          {/* Butoni për PDF */}
-          <Button variant="default" onClick={handlePrintPDF}>
-            Printo PDF
-          </Button>
+          <Button onClick={handlePrintPDF}>Printo PDF</Button>
         </div>
       </div>
 
-      {/* Zona kryesore e orarit */}
+      {/* main area */}
       <div className="bg-white rounded-lg shadow p-4 flex-1 overflow-auto">
-        {view === "day" && (
+        {view === "day" ? (
           <DayView
-            events={filteredSchedules}
+            events={filtered}
             currentDate={currentDate}
             setCurrentDate={setCurrentDate}
             view={view}
             setView={setView}
           />
-        )}
-
-        {view === "week" && (
-          <WeekView events={filteredSchedules} currentDate={currentDate} />
+        ) : (
+          <WeekView events={filtered} currentDate={currentDate} />
         )}
       </div>
 
-      {/* Legjenda poshtë */}
-      <LegendComponent />
+      {/* legend + timestamp */}
+      <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <LegendComponent />
+        <p className="text-xs sm:text-sm text-gray-500 text-center sm:text-right">
+          Last updated: {lastUpdated}
+        </p>
+      </div>
     </div>
   );
 };

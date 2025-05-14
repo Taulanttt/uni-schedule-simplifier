@@ -1,9 +1,11 @@
+/* components/WeekView.tsx */
 import React from "react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { ScheduleItem } from "@/types";
 import ScheduleEventComponent from "./ScheduleEvent";
+import { useIsMobile } from "@/hooks/use-mobile";   // NEW
 
-// Harta e ditëve anglisht → shqip
+/* Anglisht → Shqip */
 const dayMap: Record<string, string> = {
   Monday: "E hënë",
   Tuesday: "E martë",
@@ -19,60 +21,53 @@ interface WeekViewProps {
   currentDate: Date;
 }
 
-// Konverton "HH:MM:SS" në minuta për renditje
-function parseTimeToMinutes(timeStr: string): number {
-  if (!timeStr) return 0;
-  const [hour, minute] = timeStr.split(":").map(Number);
-  return hour * 60 + minute;
-}
+/* helper: "HH:MM:SS" → total minutes (për renditje) */
+const toMinutes = (t?: string) =>
+  !t ? 0 : t.split(":").slice(0, 2).map(Number).reduce((h, m, i) => (i ? h + m : h * 60));
 
 const WeekView: React.FC<WeekViewProps> = ({ events, currentDate }) => {
-  // Fillojmë javën me të hënën (weekStartsOn: 1)
+  const isMobile = useIsMobile();
+
+  /* fillojmë javën me të hënën (weekStartsOn = 1) */
   const startDate = startOfWeek(currentDate, { weekStartsOn: 1 });
 
-  // Krijojmë një varg me 7 ditë (E hënë - E diel)
-  const days = Array.from({ length: 7 }, (_, i) => {
+  /* krijojmë vargun e ditëve */
+  const allDays = Array.from({ length: 7 }, (_, i) => {
     const date = addDays(startDate, i);
+    const eng = format(date, "EEEE");          // Monday …
+    const alb = dayMap[eng] ?? eng;            // E hënë …
 
-    // p.sh. "Monday", "Tuesday"
-    const englishDayName = format(date, "EEEE");
-    // Ndërsa për shfaqje marrim p.sh. "E hënë"
-    const albanianDayName = dayMap[englishDayName] || englishDayName;
+    const dayEvents = events
+      .filter((e) => e.daysOfWeek?.includes(eng))
+      .sort((a, b) => toMinutes(a.startTime) - toMinutes(b.startTime));
 
-    // Filtrimi i event-eve → event.daysOfWeek?.includes("Monday") ...
-    let dayEvents = events.filter((event) =>
-      event.daysOfWeek?.includes(englishDayName)
-    );
-
-    // Rendisim sipas startTime në minuta
-    dayEvents = dayEvents.sort(
-      (a, b) => parseTimeToMinutes(a.startTime) - parseTimeToMinutes(b.startTime)
-    );
-
-    return {
-      date,
-      englishDayName,
-      albanianDayName,
-      events: dayEvents,
-    };
+    return { eng, alb, events: dayEvents };
   });
 
+  /* 📱 Në mobile heqim ditët pa ngjarje */
+  const days = isMobile ? allDays.filter((d) => d.events.length > 0) : allDays;
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
-      {days.map((day, index) => (
-        <div key={index} className="border rounded-lg">
+    <div
+      className={
+        isMobile
+          ? "space-y-4"                       /* një kolonë – vetëm ditët me ngjarje */
+          : "grid grid-cols-1 md:grid-cols-7 gap-4" /* 7 kolona në desktop */
+      }
+    >
+      {days.map((day) => (
+        <div key={day.eng} className="border rounded-lg">
           <div className="bg-gray-100 p-2 text-center rounded-t-lg">
-            <div className="text-lg font-bold">{day.albanianDayName}</div>
+            <div className="text-lg font-bold">{day.alb}</div>
           </div>
+
           <div className="p-2 min-h-[200px]">
-            {day.events.length > 0 ? (
-              day.events.map((event) => (
-                <ScheduleEventComponent key={event.id} event={event} />
+            {day.events.length ? (
+              day.events.map((ev) => (
+                <ScheduleEventComponent key={ev.id} event={ev} />
               ))
             ) : (
-              <div className="text-center text-gray-400 mt-8">
-                Asnjë ngjarje
-              </div>
+              <div className="text-center text-gray-400 mt-8">Asnjë ngjarje</div>
             )}
           </div>
         </div>

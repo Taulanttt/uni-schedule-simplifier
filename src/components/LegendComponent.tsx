@@ -50,7 +50,8 @@ const LegendItem: React.FC<{ type: ShortType }> = ({ type }) => {
 
 /* ------------ Komponenti kryesor ------------ */
 const LegendComponent: React.FC = () => (
-  <div className="mb-6 flex flex-wrap items-center gap-6">
+  <div className="mb-6 flex flex-wrap items-center gap-4 sm:gap-6">
+
     <h3 className="text-lg font-semibold">Legjenda</h3>
 
     {(["L", "U", "P"] as ShortType[]).map((t) => (
