@@ -1,293 +1,341 @@
-/* SchedulesAdminPage.tsx ------------------------------------------------- */
-import React, { useEffect, useState } from "react";
-import axiosInstance from "@/utils/axiosInstance";
-import { useForm } from "react-hook-form";
-import FilterPanel from "@/components/FilterPanel";
+/* ================================================================== */
+/*  pages/admin/SchedulesAdminPage.tsx                                */
+/*  – group → collapse, full-info table, live update, nice placeholders*/
+/* ================================================================== */
+import React, { useEffect, useMemo, useState } from "react";
+import axios          from "@/utils/axiosInstance";
+import { useForm }    from "react-hook-form";
+import FilterPanel    from "@/components/FilterPanel";
+import clsx           from "clsx";
 
-/* ---------- types ---------- */
-interface FilterOptions {
-  academicYear: string;
-  semester:     string;
-  yearOfStudy:  string;
-}
+/* ---------- DTOs ---------- */
+interface AcademicYear { id: string; name: string }
+interface Option        { id: string; name: string }
+interface Location      { id: string; roomName: string }
+
 interface ScheduleItem {
   id: string;
   eventType: string;
   startTime: string;
-  endTime: string;
+  endTime:   string;
   daysOfWeek: string[];
+  studyYear:  number;
   academicYearId: string|null;
-  studyYear: number;
-  subjectName: string;
-  instructorName: string;
-  semesterName: string;
-  locationName: string;
-  subjectId: string;
-  instructorId: string;
-  semesterId: string;
-  classLocationId: string;
+  semesterId:     string;
+  semesterName:   string;
+  subjectId:      string; subjectName:     string;
+  instructorId:   string; instructorName:  string;
+  classLocationId:string; locationName:    string;
+  status: "draft"|"published";
 }
-interface SubjectData       { id:string; name:string; code:string }
-interface InstructorData    { id:string; name:string; role:string }
-interface SemesterData      { id:string; name:string }
-interface ClassLocationData { id:string; roomName:string }
-interface AcademicYearItem  { id:string; name:string; isActive:boolean }
 
-/* ---------- constants ---------- */
-const DAY_OPTIONS = [
-  { value:"Monday",    label:"E hënë"    },
-  { value:"Tuesday",   label:"E martë"   },
-  { value:"Wednesday", label:"E mërkurë" },
-  { value:"Thursday",  label:"E enjte"   },
-  { value:"Friday",    label:"E premte"  },
-  { value:"Saturday",  label:"E shtunë"  },
-  { value:"Sunday",    label:"E diel"    },
-] as const;
-const DAY_LABELS:Record<string,string> = DAY_OPTIONS.reduce(
-  (acc,c)=>({ ...acc,[c.value]:c.label }),{}
-);
+/* ---------- helpers ---------- */
+const DIG   = (v:string)=>v.replace(/\D/g,"").slice(0,4);
+const toUi  = (d:string)=>`${d.padEnd(4,"-").slice(0,2)}:${d.padEnd(4,"-").slice(2)}`;
+const toSql = (d:string)=>`${DIG(d).slice(0,2)}:${DIG(d).slice(2)}:00`;
 
-/* ---------- time helpers ---------- */
-const maskToDigits = (raw:string) => raw.replace(/\D/g,"").slice(0,4);       // HHMM
-const toPgTime     = (digitsOrVal:string) => {                               // HH:MM:00
-  const d = maskToDigits(digitsOrVal).padEnd(4,"0");
-  const h = d.slice(0,2), m = d.slice(2);
-  return `${h}:${m}:00`;
+const DAY:{[k:string]:string}= {
+  Monday:"E hënë", Tuesday:"E martë", Wednesday:"E mërkurë",
+  Thursday:"E enjte", Friday:"E premte", Saturday:"E shtunë", Sunday:"E diel",
 };
-const uiMask = (digits:string) => `${digits.padEnd(4,"-").slice(0,2)}:${digits.padEnd(4,"-").slice(2)}`;
 
-/* ---------- main page ---------- */
+/* ---------- UI filter model ---------- */
+type Filters = {
+  academicYear : string;
+  semester     : string;
+  yearOfStudy  : string;
+  status       : string;
+};
+
+/* ================================================================= */
 const SchedulesAdminPage:React.FC = () => {
-  /* data state */
-  const [schedules,setSchedules] = useState<ScheduleItem[]>([]);
-  const [subjects,setSubjects]   = useState<SubjectData[]>([]);
-  const [instructors,setInstructors] = useState<InstructorData[]>([]);
-  const [semesters,setSemesters] = useState<SemesterData[]>([]);
-  const [locations,setLocations] = useState<ClassLocationData[]>([]);
-  const [academicYears,setAcademicYears] = useState<AcademicYearItem[]>([]);
-  const [loading,setLoading] = useState(false);
+  /* ------------ data ------------- */
+  const [rows      , setRows]       = useState<ScheduleItem[]>([]);
+  const [years     , setYears]      = useState<AcademicYear[]>([]);
+  const [subjects  , setSubjects]   = useState<Option[]>([]);
+  const [instructors,setInstructors]= useState<Option[]>([]);
+  const [semesters , setSemesters]  = useState<Option[]>([]);
+  const [locations , setLocations]  = useState<Location[]>([]);
+  const [loading   , setLoading]    = useState(true);
 
-  /* UI/logic state */
-  const [filters,setFilters] = useState<FilterOptions>({ academicYear:"",semester:"",yearOfStudy:"" });
-  const [editId,setEditId]   = useState<string|null>(null);
-  const [showEdit,setShowEdit] = useState(false);
+  /* ------------ filters ---------- */
+  const [filters, setFilters] = useState<Filters>({
+    academicYear : "All Semesters",
+    semester     : "All Semesters",
+    yearOfStudy  : "All Years",
+    status       : "All",
+  });
 
-  /* form */
-  const { register, handleSubmit, setValue, reset, watch } = useForm<any>();
+  /* groups that are EXPANDED (default = none → all collapsed) */
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
-  /* ---------- fetch ---------- */
+  /* ------------ edit modal -------- */
+  const [open   , setOpen]   = useState(false);
+  const [editing, setEditing]= useState<ScheduleItem|null>(null);
+  const {register, handleSubmit, reset, watch, setValue} = useForm<any>();
+
+  /* ------------ fetch ------------- */
   useEffect(()=>{
     (async()=>{
       setLoading(true);
       try{
-        const res = await axiosInstance.get<ScheduleItem[]>("/schedules");
-        setSchedules(res.data);
-      }catch(e){ console.error(e);}finally{ setLoading(false); }
-      try{
-        const [sub,ins,sem,loc,yrs] = await Promise.all([
-          axiosInstance.get<SubjectData[]>("/subjects"),
-          axiosInstance.get<InstructorData[]>("/instructors"),
-          axiosInstance.get<SemesterData[]>("/semesters"),
-          axiosInstance.get<ClassLocationData[]>("/class-locations"),
-          axiosInstance.get<AcademicYearItem[]>("/academic-year"),
+        const [sch,yr,sub,ins,sem,loc] = await Promise.all([
+          axios.get<ScheduleItem[]>("/schedules"),
+          axios.get<AcademicYear[]>("/academic-year"),
+          axios.get<Option[]>("/subjects"),
+          axios.get<Option[]>("/instructors"),
+          axios.get<Option[]>("/semesters"),
+          axios.get<Location[]>("/class-locations"),
         ]);
-        setSubjects(sub.data); setInstructors(ins.data);
-        setSemesters(sem.data); setLocations(loc.data);
-        setAcademicYears(yrs.data.filter(a=>a.isActive));
-      }catch(e){ console.error(e); }
+        setRows(sch.data);
+        setYears(yr.data);
+        setSubjects(sub.data);
+        setInstructors(ins.data);
+        setSemesters(sem.data);
+        setLocations(loc.data);
+      }finally{ setLoading(false); }
     })();
   },[]);
 
-  /* ---------- filters ---------- */
-  const filtered = schedules.filter(s=>{
-    const yearName = academicYears.find(a=>a.id===s.academicYearId)?.name;
-    if(filters.academicYear && filters.academicYear!==yearName) return false;
-    if(filters.semester && filters.semester!==s.semesterName) return false;
-    if(filters.yearOfStudy){
-      if(s.studyYear!==+filters.yearOfStudy.replace(/\D/g,"")) return false;
-    }
-    return true;
-  });
+  const yearName = (id?:string|null) => years.find(y=>y.id===id)?.name ?? "—";
 
-  /* ---------- edit helpers ---------- */
-  const startEdit = (s:ScheduleItem)=>{
-    setEditId(s.id);
-    reset({
-      eventType:s.eventType,
-      daysOfWeek:s.daysOfWeek,
-      startTime:maskToDigits(s.startTime),            // 0830
-      endTime:  maskToDigits(s.endTime),
-      academicYearId:s.academicYearId||"",
-      studyYear:String(s.studyYear),
-      subjectId:s.subjectId,
-      instructorId:s.instructorId,
-      semesterId:s.semesterId,
-      classLocationId:s.classLocationId,
+  /* ------------ grouping ---------- */
+  interface Group { key:string; title:string; status:"draft"|"published"; rows:ScheduleItem[] }
+  const groups:Group[] = useMemo(()=>{
+    const map=new Map<string,Group>();
+    rows.forEach(r=>{
+      /* filter gate */
+      if(filters.academicYear!=="All Semesters" && yearName(r.academicYearId)!==filters.academicYear) return;
+      if(filters.semester!=="All Semesters" && r.semesterName!==filters.semester) return;
+      if(filters.yearOfStudy!=="All Years"){
+        const n=parseInt(filters.yearOfStudy.replace(/\D/g,""),10);
+        if(r.studyYear!==n) return;
+      }
+      if(filters.status!=="All" && r.status!==filters.status) return;
+
+      const key=`${r.academicYearId}-${r.semesterId}-${r.studyYear}-${r.status}`;
+      if(!map.has(key)){
+        map.set(key,{
+          key,
+          status:r.status,
+          title:`Orari ${yearName(r.academicYearId)} – ${r.semesterName} – Viti ${r.studyYear} (${r.status})`,
+          rows:[],
+        });
+      }
+      map.get(key)!.rows.push(r);
     });
-    setShowEdit(true);
-  };
-  const closeEdit = ()=>{ setEditId(null); reset({}); setShowEdit(false); };
+    return [...map.values()].sort((a,b)=>a.title.localeCompare(b.title));
+  },[rows,filters,years]);
 
-  /* ---------- delete ---------- */
-  const deleteSchedule = async(id:string)=>{
-    if(!confirm("A jeni i sigurt që dëshironi ta fshini këtë orar?")) return;
-    try{ await axiosInstance.delete(`/schedules/${id}`); setSchedules(p=>p.filter(x=>x.id!==id)); }
-    catch(e){ console.error(e); }
+  /* ------------ CRUD helpers ------ */
+  const openModal = (r:ScheduleItem)=>{
+    setEditing(r);
+    reset({
+      eventType:r.eventType,
+      daysOfWeek:r.daysOfWeek[0],
+      startTime:DIG(r.startTime),
+      endTime:DIG(r.endTime),
+      academicYearId:r.academicYearId||"",
+      studyYear:String(r.studyYear),
+      subjectId:r.subjectId,
+      instructorId:r.instructorId,
+      semesterId:r.semesterId,
+      classLocationId:r.classLocationId,
+    });
+    setOpen(true);
+    /* ensure its group is expanded so the update is visible later */
+    const gKey=`${r.academicYearId}-${r.semesterId}-${r.studyYear}-${r.status}`;
+    setExpanded(s=>new Set(s).add(gKey));
   };
 
-  /* ---------- submit ---------- */
-  const onSubmit = async(data:any)=>{
-    if(!editId) return;
-    const payload = {
+  const save = async(data:any)=>{
+    if(!editing) return;
+    const payload={
+      ...editing,
       eventType:data.eventType,
-      startTime:toPgTime(data.startTime),
-      endTime:  toPgTime(data.endTime),
-      daysOfWeek:Array.isArray(data.daysOfWeek)?data.daysOfWeek:[data.daysOfWeek],
-      academicYearId:data.academicYearId,
+      startTime:toSql(data.startTime),
+      endTime  :toSql(data.endTime),
+      daysOfWeek:[data.daysOfWeek],
+      academicYearId:data.academicYearId||null,
       studyYear:+data.studyYear,
       subjectId:data.subjectId,
       instructorId:data.instructorId,
       semesterId:data.semesterId,
       classLocationId:data.classLocationId,
     };
-    try{
-      await axiosInstance.put(`/schedules/${editId}`,payload);
-      setSchedules(p=>p.map(x=>x.id===editId ? {...x,...payload,startTime:payload.startTime.slice(0,5),endTime:payload.endTime.slice(0,5)} : x));
-      closeEdit();
-    }catch(e){ console.error(e); }
+    await axios.put(`/schedules/${editing.id}`,payload);
+    setRows(rs=>rs.map(r=>r.id===editing.id
+      ? {...r,...payload,startTime:payload.startTime.slice(0,5),endTime:payload.endTime.slice(0,5)}
+      : r
+    ));
+    setOpen(false);
   };
 
-  /* ---------- little lookup util ---------- */
-  const lookup = (id:string, arr:{id:string;name:string}[]) => arr.find(x=>x.id===id)?.name||"—";
+  const remove = async(id:string)=>{
+    if(!confirm("Fshij këtë rresht?")) return;
+    await axios.delete(`/schedules/${id}`);
+    setRows(rs=>rs.filter(r=>r.id!==id));
+  };
 
-  /* ======================== UI ======================== */
-  return (
+  const publish = async(g:Group)=>{
+    if(g.status!=="draft") return;
+    if(!confirm(`Publikoj “${g.title}”?`)) return;
+    await Promise.all(g.rows.map(r=>axios.put(`/schedules/${r.id}`,{status:"published"})));
+    setRows(rs=>rs.map(r=>g.rows.find(x=>x.id===r.id)?{...r,status:"published"}:r));
+  };
+
+  /* ------------ UI --------------- */
+  return(
     <div className="w-full px-4 md:px-8">
-      <h1 className="text-2xl font-bold mb-4">Menaxho Orare</h1>
-      <div className="mb-6"><FilterPanel filters={filters} setFilters={setFilters}/></div>
+      <h1 className="text-2xl font-bold mb-6">Menaxho Orare</h1>
 
-      <div className="bg-white p-4 rounded shadow w-full">
-        <h2 className="text-lg font-semibold mb-3">Të Gjitha Oraret</h2>
-        {loading?(<p>Po ngarkohet...</p>):(
-          <div className="overflow-x-auto">
-            <table className="min-w-full border text-sm">
-              <thead>
-                <tr className="bg-gray-100 border-b">
-                  {["Lloji","Ora","Ditët","Viti Ak.","Viti Stud.","Lënda","Profesori","Semestri","Salla","Veprime"]
-                    .map(h=><th key={h} className="p-2 text-left">{h}</th>)}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map(s=>{
-                  const yr=lookup(s.academicYearId||"",academicYears);
-                  return(
-                    <tr key={s.id} className="border-b">
-                      <td className="p-2">{s.eventType}</td>
-                      <td className="p-2">{s.startTime} - {s.endTime}</td>
-                      <td className="p-2">{s.daysOfWeek.map(d=>DAY_LABELS[d]||d).join(", ")}</td>
-                      <td className="p-2">{yr}</td>
-                      <td className="p-2">{s.studyYear}</td>
-                      <td className="p-2">{s.subjectName}</td>
-                      <td className="p-2">{s.instructorName}</td>
-                      <td className="p-2">{s.semesterName}</td>
-                      <td className="p-2">{s.locationName}</td>
-                      <td className="p-2">
-                        <button onClick={()=>startEdit(s)} className="bg-blue-600 text-white px-2 py-1 rounded mr-1">Edito</button>
-                        <button onClick={()=>deleteSchedule(s.id)} className="bg-red-600 text-white px-2 py-1 rounded">Fshij</button>
-                      </td>
-                    </tr>
-                  );
-                })}
-                {!filtered.length && <tr><td colSpan={10} className="p-2 text-center text-gray-500">Asnjë orar nuk u gjet</td></tr>}
-              </tbody>
-            </table>
-          </div>
-        )}
+      <div className="mb-6">
+        <FilterPanel filters={filters} setFilters={setFilters}/>
       </div>
 
-      {/* ---------------- Edit Modal ---------------- */}
-      {showEdit && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white max-w-2xl w-full p-6 rounded shadow relative">
-            <button onClick={closeEdit} className="absolute top-2 right-2 text-gray-600 text-xl leading-none">×</button>
-            <h2 className="text-lg font-semibold mb-4">Edito Orarin</h2>
-
-            <form onSubmit={handleSubmit(onSubmit)}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                {/* eventType */}
-                <div><label className="block mb-1">Lloji i Ngjarjes</label>
-                  <input {...register("eventType")} className="border p-1 rounded w-full"/></div>
-
-                {/* daysOfWeek (simple select) */}
-                <div><label className="block mb-1">Dita e Javës</label>
-                  <select {...register("daysOfWeek")} className="border p-1 rounded w-full">
-                    <option value="">-- Zgjidh --</option>
-                    {DAY_OPTIONS.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}
-                  </select></div>
-
-                {/* time inputs (component) */}
-                {(["startTime","endTime"] as const).map(name=>(
-                  <div key={name}>
-                    <label className="block mb-1">{name==="startTime"?"Ora e Fillimit":"Ora e Përfundimit"}</label>
-                    <input
-                      type="text" inputMode="numeric" placeholder="--:--"
-                      className="border p-1 rounded w-full text-center font-mono"
-                      value={uiMask(watch(name)||"")}
-                      onChange={e=>setValue(name,maskToDigits(e.target.value))}
-                      onKeyDown={e=>{
-                        if(e.key==="Backspace"||e.key==="Delete"){
-                          e.preventDefault();
-                          setValue(name,maskToDigits(watch(name).slice(0,-1)));
-                        }
-                      }}
-                      onBlur={()=>setValue(name,maskToDigits(watch(name)))}
-                    />
+      {loading ? "Po ngarkohet…" : (
+        <div className="space-y-4">
+          {groups.map(g=>{
+            const open=expanded.has(g.key);
+            const toggle=()=>setExpanded(s=>{
+              const n=new Set(s);
+              open?n.delete(g.key):n.add(g.key);
+              return n;
+            });
+            return(
+              <div key={g.key} className="border rounded shadow-sm">
+                <button onClick={toggle}
+                        className="w-full flex items-center justify-between px-4 py-3 bg-gray-100 hover:bg-gray-200">
+                  <span className="font-medium">{g.title}</span>
+                  <div className="flex items-center gap-2">
+                    {g.status==="draft" && (
+                      <button onClick={e=>{e.stopPropagation();publish(g);}}
+                              className="px-2 py-0.5 bg-green-600 text-white rounded text-xs">Publiko</button>
+                    )}
+                    <span className={clsx(
+                      "px-2 py-0.5 rounded text-xs",
+                      g.status==="draft"
+                        ?"bg-yellow-200 text-yellow-800"
+                        :"bg-green-200 text-green-800")}>{g.status}</span>
                   </div>
-                ))}
+                </button>
 
-                {/* academic year */}
-                <div><label className="block mb-1">Viti Akademik</label>
-                  <select {...register("academicYearId")} className="border p-1 rounded w-full">
-                    <option value="">-- Zgjidh --</option>
-                    {academicYears.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}
-                  </select></div>
-
-                {/* study year */}
-                <div><label className="block mb-1">Viti i Studimeve</label>
-                  <input type="number" {...register("studyYear")} className="border p-1 rounded w-full"/></div>
-
-                {/* subject */}
-                <div><label className="block mb-1">Lënda</label>
-                  <select {...register("subjectId")} className="border p-1 rounded w-full">
-                    <option value="">-- Zgjidh --</option>
-                    {subjects.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
-                  </select></div>
-
-                {/* instructor */}
-                <div><label className="block mb-1">Profesori</label>
-                  <select {...register("instructorId")} className="border p-1 rounded w-full">
-                    <option value="">-- Zgjidh --</option>
-                    {instructors.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}
-                  </select></div>
-
-                {/* semester */}
-                <div><label className="block mb-1">Semestri</label>
-                  <select {...register("semesterId")} className="border p-1 rounded w-full">
-                    <option value="">-- Zgjidh --</option>
-                    {semesters.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
-                  </select></div>
-
-                {/* location */}
-                <div><label className="block mb-1">Salla</label>
-                  <select {...register("classLocationId")} className="border p-1 rounded w-full">
-                    <option value="">-- Zgjidh --</option>
-                    {locations.map(l=><option key={l.id} value={l.id}>{l.roomName}</option>)}
-                  </select></div>
+                {open && (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-sm">
+                      <thead>
+                        <tr className="bg-gray-50">
+                          {["Lloji","Ora","Ditët","Viti Akademik","Semestri","Viti","Lënda","Profesori","Salla","Status","✎"]
+                            .map(h=><th key={h} className="p-2 text-left">{h}</th>)}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {g.rows.map(r=>(
+                          <tr key={r.id} className="border-t">
+                            <td className="p-2">{r.eventType}</td>
+                            <td className="p-2">{r.startTime} – {r.endTime}</td>
+                            <td className="p-2">{r.daysOfWeek.map(d=>DAY[d]||d).join(", ")}</td>
+                            <td className="p-2">{yearName(r.academicYearId)}</td>
+                            <td className="p-2">{r.semesterName}</td>
+                            <td className="p-2">{r.studyYear}</td>
+                            <td className="p-2">{r.subjectName}</td>
+                            <td className="p-2">{r.instructorName}</td>
+                            <td className="p-2">{r.locationName}</td>
+                            <td className={clsx("p-2",r.status==="draft"?"text-yellow-700":"text-green-700")}>{r.status}</td>
+                            <td className="p-2 whitespace-nowrap">
+                              <button className="px-2 py-0.5 bg-blue-600 text-white rounded mr-1"
+                                      onClick={()=>openModal(r)}>Edito</button>
+                              <button className="px-2 py-0.5 bg-red-600 text-white rounded"
+                                      onClick={()=>remove(r.id)}>Fshij</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
+            );
+          })}
+          {!groups.length && <p className="text-center text-gray-500">S’u gjet asnjë orar.</p>}
+        </div>
+      )}
 
-              <div className="space-x-2">
+      {/* ------------ EDIT MODAL ------------ */}
+      {open && editing && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded shadow w-full max-w-2xl relative">
+            <button className="absolute top-2 right-3 text-xl leading-none"
+                    onClick={()=>setOpen(false)}>×</button>
+
+            <h2 className="text-lg font-semibold mb-4">Edito orarin</h2>
+
+            <form onSubmit={handleSubmit(save)} className="grid md:grid-cols-2 gap-4">
+              {/* eventType */}
+              <div><label className="block mb-1">Lloji</label>
+                <input {...register("eventType")}
+                       className="border p-1 rounded w-full" placeholder="Ligjëratë / Ushtrime"/></div>
+
+              {/* day */}
+              <div><label className="block mb-1">Dita</label>
+                <select {...register("daysOfWeek")} className="border p-1 rounded w-full">
+                  {Object.entries(DAY).map(([v,l])=> <option key={v} value={v}>{l}</option>)}
+                </select></div>
+
+              {/* times */}
+              {(["startTime","endTime"] as const).map(n=>(
+                <div key={n}>
+                  <label className="block mb-1">{n==="startTime"?"Fillimi":"Mbarimi"}</label>
+                  <input className="border p-1 rounded w-full text-center font-mono" inputMode="numeric"
+                         value={toUi(watch(n)||"")} onChange={e=>setValue(n,DIG(e.target.value))}
+                         placeholder="--:--"/>
+                </div>
+              ))}
+
+              {/* academic year */}
+              <div><label className="block mb-1">Viti Akademik</label>
+                <select {...register("academicYearId")} className="border p-1 rounded w-full">
+                  <option value="">Zgjidh vitin akademik</option>
+                  {years.map(y=><option key={y.id} value={y.id}>{y.name}</option>)}
+                </select></div>
+
+              {/* study year */}
+              <div><label className="block mb-1">Viti Studimit</label>
+                <input type="number" {...register("studyYear")}
+                       className="border p-1 rounded w-full" placeholder="1‐3"/></div>
+
+              {/* subject */}
+              <div><label className="block mb-1">Lënda</label>
+                <select {...register("subjectId")} className="border p-1 rounded w-full">
+                  <option value="">Zgjidh lëndën</option>
+                  {subjects.map(s=> <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select></div>
+
+              {/* instructor */}
+              <div><label className="block mb-1">Profesori</label>
+                <select {...register("instructorId")} className="border p-1 rounded w-full">
+                  <option value="">Zgjidh profesorin</option>
+                  {instructors.map(i=> <option key={i.id} value={i.id}>{i.name}</option>)}
+                </select></div>
+
+              {/* semester */}
+              <div><label className="block mb-1">Semestri</label>
+                <select {...register("semesterId")} className="border p-1 rounded w-full">
+                  <option value="">Zgjidh semestrin</option>
+                  {semesters.map(s=> <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select></div>
+
+              {/* room */}
+              <div><label className="block mb-1">Salla</label>
+                <select {...register("classLocationId")} className="border p-1 rounded w-full">
+                  <option value="">Zgjidh sallën</option>
+                  {locations.map(l=> <option key={l.id} value={l.id}>{l.roomName}</option>)}
+                </select></div>
+
+              <div className="md:col-span-2 flex justify-end gap-2 mt-2">
                 <button type="submit" className="bg-blue-600 text-white px-4 py-1.5 rounded">Ruaj</button>
-                <button type="button" onClick={closeEdit} className="bg-gray-400 text-white px-4 py-1.5 rounded">Anulo</button>
+                <button type="button" className="bg-gray-400 text-white px-4 py-1.5 rounded"
+                        onClick={()=>setOpen(false)}>Anulo</button>
               </div>
             </form>
           </div>
