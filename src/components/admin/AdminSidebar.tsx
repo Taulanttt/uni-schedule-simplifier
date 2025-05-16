@@ -6,13 +6,18 @@ import {
   Database,
   ListOrdered,
   ClipboardList,
+  LogOut, // NEW
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { useNavigate } from "react-router-dom"; // NEW
+import { useToast } from "@/hooks/use-toast";   // NEW
+import axiosInstance from "@/utils/axiosInstance"; // NEW
 
 import Logo from "/logo.png"; // → vendose logo.png në public/
 
+/* ---------- Types ---------- */
 type AdminPage =
   | "notifications"
   | "schedule"
@@ -28,6 +33,7 @@ interface AdminSidebarProps {
   setCurrentPage: (page: AdminPage) => void;
 }
 
+/* ================================================================= */
 const AdminSidebar: React.FC<AdminSidebarProps> = ({
   isOpen,
   toggleSidebar,
@@ -35,16 +41,35 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
   setCurrentPage,
 }) => {
   const isMobile = useIsMobile();
+  const navigate  = useNavigate();  // NEW
+  const { toast } = useToast();     // NEW
 
+  /* ---------- Main navigation handler ---------- */
   const handleNavigation = (page: AdminPage) => {
     setCurrentPage(page);
     if (isMobile) toggleSidebar();
   };
 
-  /* ------------ MENU ITEMS (shared) ------------ */
+  /* ---------- Logout handler ---------- */
+  const handleLogout = async () => {
+    try {
+      await axiosInstance.post("/auth/logout"); // harmless if your endpoint is stateless
+    } catch (err) {
+      console.error("Logout error:", err);
+    } finally {
+      localStorage.removeItem("token");
+      toast({
+        title: "Çkyqja u krye",
+        description: "Shihemi herën tjetër!",
+      });
+      navigate("/login");            // <—— redirects to /login
+    }
+  };
+
+  /* ---------- MENU ITEMS (shared) ---------- */
   const renderMenuItems = () => (
     <ul className="space-y-2 text-sm">
-      {/* ORARI MËSIMOR */}
+      {/* ---------- ORARI MËSIMOR ---------- */}
       {isOpen && (
         <li className="text-gray-400 uppercase font-bold px-2 mt-4">
           Orari Mësimor
@@ -75,7 +100,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
         </Button>
       </li>
 
-      {/* ORARI I PROVIMEVE */}
+      {/* ---------- ORARI I PROVIMEVE ---------- */}
       {isOpen && (
         <li className="text-gray-400 uppercase font-bold px-2 mt-6">
           Orari i Provimeve
@@ -106,9 +131,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
         </Button>
       </li>
 
-      {/* NJOFTIMET */}
+      {/* ---------- NJOFTIMET ---------- */}
       {isOpen && (
-        <li className="text-gray-400 uppercase font-bold px-2 mt-6">Njoftimet</li>
+        <li className="text-gray-400 uppercase font-bold px-2 mt-6">
+          Njoftimet
+        </li>
       )}
       <li>
         <Button
@@ -123,7 +150,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
         </Button>
       </li>
 
-      {/* KONFIGURIMET */}
+      {/* ---------- KONFIGURIMET ---------- */}
       {isOpen && (
         <li className="text-gray-400 uppercase font-bold px-2 mt-6">
           Konfigurimet
@@ -141,10 +168,29 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
           {isOpen && <span>Menaxho</span>}
         </Button>
       </li>
+
+      {/* ---------- LOGOUT ---------- */}
+      {isOpen && (
+        <li className="text-gray-400 uppercase font-bold px-2 mt-6">
+          Llogaria
+        </li>
+      )}
+      <li>
+        <Button
+          variant="ghost"
+          className={`w-full justify-start hover:bg-gray-700 ${
+            !isOpen && "lg:justify-center"
+          }`}
+          onClick={handleLogout}
+        >
+          <LogOut className="h-5 w-5 mr-2" />
+          {isOpen && <span>Çkyçu</span>}
+        </Button>
+      </li>
     </ul>
   );
 
-  /* --------------- MOBILE --------------- */
+  /* ---------- MOBILE ---------- */
   if (isMobile) {
     return (
       <Sheet open={isOpen} onOpenChange={toggleSidebar}>
@@ -153,14 +199,16 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
           className="w-[250px] p-0 bg-gray-800 text-white"
         >
           <div className="flex flex-col h-full">
+            {/* Header */}
             <div className="flex items-center gap-2 p-5 border-b border-gray-700">
               <img
                 src={Logo}
                 alt="UniSchedule"
                 className="h-6 w-6 rounded-full object-cover"
               />
-              <h2 className="font-bold text-xl">UniSchedule Admin</h2>
+              <h2 className="font-bold text-xl">UniSchedule Admin</h2>
             </div>
+            {/* Menu */}
             <nav className="mt-8 px-4 flex-1">{renderMenuItems()}</nav>
           </div>
         </SheetContent>
@@ -168,7 +216,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
     );
   }
 
-  /* --------------- DESKTOP --------------- */
+  /* ---------- DESKTOP ---------- */
   return (
     <div
       className={`${
@@ -176,16 +224,16 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
       } bg-gray-800 text-white transition-all duration-300 h-full overflow-hidden flex-shrink-0`}
     >
       <div className="h-full flex flex-col">
-        {/* Header me logo */}
+        {/* Header with logo */}
         <div className="flex items-center gap-2 p-5">
           <img
             src={Logo}
             alt="UniSchedule"
             className="h-6 w-6 rounded-full object-cover"
           />
-          {/* fsheh tekstin kur sidebar është i ngushtë */}
+          {/* Hide text when sidebar is collapsed */}
           <h2 className={`font-bold text-xl ${!isOpen && "hidden"}`}>
-            UniSchedule Admin
+            UniSchedule Admin
           </h2>
         </div>
 

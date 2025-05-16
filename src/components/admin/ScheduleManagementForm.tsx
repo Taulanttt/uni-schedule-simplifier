@@ -350,7 +350,7 @@ const ScheduleManagementForm: React.FC = () => {
                       <FormLabel>{name==="startTime"?"Fillimi":"Mbarimi"}</FormLabel>
                       <FormControl>
                         <input
-                          className="w-full border rounded px-3 py-2 text-center font-mono"
+                          className="w-full border rounded px-3 py-2 text-center font-normal"
                           placeholder="--:--"
                           type="text" inputMode="numeric"
                           value={toUi(field.value)}
@@ -366,43 +366,56 @@ const ScheduleManagementForm: React.FC = () => {
             </div>
 
             {/* days */}
-            <FormField
-              name="daysOfWeek" control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Ditët</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" role="combobox" className="w-full justify-between">
-                        {field.value.length ? field.value.join(", ") : "Zgjidh ditët"}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50"/>
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-2 space-y-2">
-                      {uiDays.map(d => {
-                        const checked = field.value.includes(d);
-                        return (
-                          <FormItem key={d} className="flex items-center space-x-2">
-                            <FormControl>
-                              <Checkbox
-                                checked={checked}
-                                onCheckedChange={(c) =>
-                                  c
-                                    ? field.onChange([...field.value, d])
-                                    : field.onChange(field.value.filter(v => v !== d))
-                                }
-                              />
-                            </FormControl>
-                            <span className="text-sm">{d}</span>
-                          </FormItem>
-                        );
-                      })}
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage/>
-                </FormItem>
-              )}
-            />
+           <FormField
+  name="daysOfWeek"
+  control={form.control}
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Ditët</FormLabel>
+
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            className="w-full justify-between"
+          >
+            {field.value.length
+              ? field.value.join(", ")
+              : "Zgjidh ditët"}
+            <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+
+        {/* Day list */}
+        <PopoverContent className="w-full p-2 space-y-2">
+          {uiDays.map((d) => {
+            const checked = field.value.includes(d);
+            return (
+              <FormItem key={d} className="flex items-center gap-2 ">
+                <FormControl>
+                  <Checkbox
+                    checked={checked}
+                    onCheckedChange={(c) =>
+                      c
+                        ? field.onChange([...field.value, d])
+                        : field.onChange(field.value.filter((v) => v !== d))
+                    }
+                  />
+                </FormControl>
+
+                {/* `leading-none` keeps text vertically centred with the checkbox */}
+                  <span className="text-sm leading-none relative -top-0.5">{d}</span>
+              </FormItem>
+            );
+          })}
+        </PopoverContent>
+      </Popover>
+
+      <FormMessage />
+    </FormItem>
+  )}
+/>
           </div>
 
           {/* buttons */}
