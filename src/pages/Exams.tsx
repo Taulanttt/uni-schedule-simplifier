@@ -1,6 +1,6 @@
 /* pages/Exams.tsx */
 import React, { useEffect, useState } from "react";
-import FilterPanelExams from "@/components/FilterPanelExams";
+import FilterPanelExams from "@/components/FilterPanelExamss";
 import MonthView from "@/components/MonthView";
 import WeekView from "@/components/weekViewExams";
 import LegendComponent from "@/components/LegendComponent";

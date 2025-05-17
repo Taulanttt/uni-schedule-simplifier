@@ -1,6 +1,6 @@
 /* pages/Index.tsx -------------------------------------------------- */
 import React, { useEffect, useMemo, useState } from "react";
-import FilterPanel      from "@/components/FilterPanel";
+import FilterPanel      from "@/components/FilterPanelIndex";
 import WeekView         from "@/components/WeekView";
 import DayView          from "@/components/DayView";
 import LegendComponent  from "@/components/LegendComponent";
